@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# npte-netem: Apply netem shaping to the router's interfaces.
+#
+# Usage: npte-netem <delay_ms>
+#
+# Adds the given delay (in each direction) to both router interfaces.
+# Use delay 0 to remove shaping.
+#
+# Must run as root.
+
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+    echo "error: must run as root" >&2
+    exit 1
+fi
+
+if [[ $# -ne 1 ]]; then
+    echo "usage: npte-netem <delay_ms>" >&2
+    exit 1
+fi
+
+delay_ms="$1"
+
+set -x
+
+if [[ "$delay_ms" -eq 0 ]]; then
+    # Remove shaping
+    ip netns exec npte-router tc qdisc del dev npte-cr-r root 2>/dev/null || true
+    ip netns exec npte-router tc qdisc del dev npte-rs-r root 2>/dev/null || true
+else
+    # Replace or add netem delay on both interfaces
+    ip netns exec npte-router tc qdisc replace dev npte-cr-r root netem delay "${delay_ms}ms"
+    ip netns exec npte-router tc qdisc replace dev npte-rs-r root netem delay "${delay_ms}ms"
+fi

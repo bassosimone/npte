@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# npte-bootstrap: Create a minimal distribution tree using debootstrap.
+#
+# Usage: npte-bootstrap <name> [suite]
+#
+# Creates a minimal Ubuntu/Debian tree at .npte/trees/<name>.
+# Default suite is "noble" (Ubuntu 24.04 LTS).
+#
+# Must run as root.
+
+set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+    echo "error: must run as root" >&2
+    exit 1
+fi
+
+if [[ $# -lt 1 ]]; then
+    echo "usage: npte-bootstrap <name> [suite]" >&2
+    exit 1
+fi
+
+name="$1"
+suite="${2:-noble}"
+tree=".npte/trees/$name"
+
+if [[ -d "$tree" ]]; then
+    echo "error: tree already exists: $tree" >&2
+    echo "hint: remove it with: rm -rf $tree" >&2
+    exit 1
+fi
+
+set -x
+mkdir -p "$(dirname "$tree")"
+debootstrap "$suite" "$tree"
