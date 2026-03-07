@@ -16,23 +16,27 @@ import (
 func netnsRunMain(ctx context.Context, args []string) error {
 	// Parse command line flags
 	var userFlag = os.Getenv("SUDO_USER")
+	var envFlags []string
 
 	fset := vflag.NewFlagSet("npte netns run", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Run a command inside a network namespace. By default, the command runs "+
-			"as $SUDO_USER. Use --user to override (e.g., --user root for admin tasks like tc).",
+			"as $SUDO_USER. Use --user to override (e.g., --user root for admin tasks like tc). "+
+			"Use -e to set environment variables (repeatable).",
 		"The <project> argument selects the project. "+
 			"The <name> argument is the name of the network namespace to enter. "+
 			"The <command> and optional [args...] are executed inside it.",
 		"Example: sudo npte netns run myproj server curl https://example.com/",
 		"Example: sudo npte netns run --user root myproj router tc qdisc show",
+		"Example: sudo npte netns run -e WAYLAND_DISPLAY=wayland-0 myproj client firefox",
 		"This command must be run via sudo.",
 	)
 	usage.PositionalArgumentsUsage = "<project> <name> <command> [args...]"
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.StringVar(&userFlag, 'u', "user", "Run as `USER` (default: $SUDO_USER).")
+	fset.StringSliceVar(&envFlags, 'e', "env", "Set environment variable `KEY=VALUE` (repeatable).")
 	fset.MinPositionalArgs = 3
 	fset.MaxPositionalArgs = math.MaxInt
 	fset.DisablePermute = true
@@ -56,9 +60,22 @@ func netnsRunMain(ctx context.Context, args []string) error {
 		env.Exit(1)
 	}
 
-	// Bernstein pipeline: nsenter enters the namespace, runuser sets the user
+	// Validate -e flags
+	for _, ev := range envFlags {
+		if !strings.Contains(ev, "=") {
+			logAlways("npte netns run: -e value must be KEY=VALUE, got %q\n", ev)
+			env.Exit(2)
+		}
+	}
+
+	// Bernstein pipeline: nsenter enters the namespace, runuser sets the user,
+	// env sets environment variables (if any)
 	logDetails("npte: enter namespace '%s' as user '%s'\n", ns, userFlag)
 	nsenterArgs := []string{"--net=" + nsp, "--", "runuser", "-u", userFlag, "--"}
+	if len(envFlags) > 0 {
+		nsenterArgs = append(nsenterArgs, "env")
+		nsenterArgs = append(nsenterArgs, envFlags...)
+	}
 	nsenterArgs = append(nsenterArgs, fset.Args()[2:]...)
 
 	logDetails("npte: nsenter %s\n", strings.Join(nsenterArgs, " "))
