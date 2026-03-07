@@ -47,12 +47,12 @@ func main() {
 	disp.AddDescription(
 		"Network Performance Testing Environment (npte).",
 		"Creates isolated network namespaces connected through a central router, "+
-			"with the ability to bind the namespaces to lightweight containers via systemd-nspawn.",
-		"Configuration is stored under "+baseDir+"/<project>/.",
+			"with the ability to bind the namespaces to lightweight containers run using systemd-nspawn(1).",
+		"Namespaces are project-scoped. Per-project configuration is stored under "+baseDir+"/<project>/.",
 	)
 	disp.AddCommand("project", projectDisp, "Manage projects.")
 	disp.AddCommand("netns", netnsDisp, "Manage network namespaces.")
-	disp.AddCommand("container", containerDisp, "Manage lightweight containers (systemd-nspawn).")
+	disp.AddCommand("container", containerDisp, "Manage lightweight containers.")
 
 	// Run the root dispatcher
 	vclip.Main(context.Background(), disp, os.Args[1:])

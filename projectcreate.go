@@ -17,8 +17,7 @@ func projectCreateMain(ctx context.Context, args []string) error {
 	usage.AddDescription(
 		"Create the directory skeleton for a new project. "+
 			"This creates the config and trees directories under "+baseDir+"/<name>/.",
-		"The <name> argument is the project name. It is used as a prefix for kernel "+
-			"resource names and as a directory name under "+baseDir+"/.",
+		"The <name> argument is the project name.",
 		"After creating the project, add hosts with 'npte netns create' "+
 			"and bring the network up with 'npte netns up'.",
 		"This command must be run as root (e.g., using sudo).",
