@@ -51,6 +51,7 @@ func main() {
 			"with the ability to bind the namespaces to lightweight containers run using systemd-nspawn(1).",
 		"Namespaces are project-scoped. Per-project configuration is stored under "+baseDir+"/<project>/.",
 	)
+	disp.AddCommand("doctor", vclip.CommandFunc(doctorMain), "Check for required external commands.")
 	disp.AddCommand("project", projectDisp, "Manage projects.")
 	disp.AddCommand("netns", netnsDisp, "Manage network namespaces.")
 	disp.AddCommand("container", containerDisp, "Manage lightweight containers.")

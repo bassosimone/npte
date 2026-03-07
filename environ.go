@@ -23,6 +23,7 @@ type environ struct {
 	Stat             func(name string) (os.FileInfo, error)
 	Remove           func(name string) error
 	RunCommand       func(cmd *exec.Cmd) error
+	LookPath         func(file string) (string, error)
 	LockFile         func(path string) (func(), error)
 	LogFatalOnError0 func(err error)
 }
@@ -39,6 +40,7 @@ func newEnvironOS() *environ {
 		Stat:       os.Stat,
 		Remove:     os.Remove,
 		RunCommand: func(cmd *exec.Cmd) error { return cmd.Run() },
+		LookPath:   exec.LookPath,
 		LockFile: func(path string) (func(), error) {
 			return lockedfile.MutexAt(path).Lock()
 		},
