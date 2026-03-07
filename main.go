@@ -20,17 +20,17 @@ func main() {
 	)
 	projectDisp.AddCommand("create", vclip.CommandFunc(projectCreateMain), "Create a new project.")
 
-	// Create dispatcher for `npte net`
-	netDisp := vclip.NewDispatcherCommand("npte net", vflag.ExitOnError)
-	netDisp.AddDescription(
+	// Create dispatcher for `npte netns`
+	netnsDisp := vclip.NewDispatcherCommand("npte netns", vflag.ExitOnError)
+	netnsDisp.AddDescription(
 		"Manage network namespaces arranged in a star topology around a central router. "+
 			"The router namespace is the only one with internet access via host NAT.",
 		"All subcommands must be run as root (e.g., via sudo).",
 	)
-	netDisp.AddCommand("create", vclip.CommandFunc(netCreateMain), "Add a namespace to the configuration.")
-	netDisp.AddCommand("up", vclip.CommandFunc(netUpMain), "Bring up the network from configuration.")
-	netDisp.AddCommand("down", vclip.CommandFunc(netDownMain), "Tear down the network.")
-	netDisp.AddCommand("run", vclip.CommandFunc(netRunMain), "Run a command inside a namespace.")
+	netnsDisp.AddCommand("create", vclip.CommandFunc(netnsCreateMain), "Add a namespace to the configuration.")
+	netnsDisp.AddCommand("up", vclip.CommandFunc(netnsUpMain), "Bring up the network from configuration.")
+	netnsDisp.AddCommand("down", vclip.CommandFunc(netnsDownMain), "Tear down the network.")
+	netnsDisp.AddCommand("run", vclip.CommandFunc(netnsRunMain), "Run a command inside a namespace.")
 
 	// Create dispatcher for `npte container`
 	containerDisp := vclip.NewDispatcherCommand("npte container", vflag.ExitOnError)
@@ -51,7 +51,7 @@ func main() {
 		"Configuration is stored under "+baseDir+"/<project>/.",
 	)
 	disp.AddCommand("project", projectDisp, "Manage projects.")
-	disp.AddCommand("net", netDisp, "Manage network namespaces.")
+	disp.AddCommand("netns", netnsDisp, "Manage network namespaces.")
 	disp.AddCommand("container", containerDisp, "Manage lightweight containers (systemd-nspawn).")
 
 	// Run the root dispatcher

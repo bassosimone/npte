@@ -13,9 +13,9 @@ import (
 	"github.com/bassosimone/vflag"
 )
 
-func netRunMain(ctx context.Context, args []string) error {
+func netnsRunMain(ctx context.Context, args []string) error {
 	// Parse command line flags
-	fset := vflag.NewFlagSet("npte net run", vflag.ExitOnError)
+	fset := vflag.NewFlagSet("npte netns run", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Run a command inside a network namespace. The command runs with the privileges "+
@@ -23,7 +23,7 @@ func netRunMain(ctx context.Context, args []string) error {
 		"The <project> argument selects the project. "+
 			"The <name> argument is the name of the network namespace to enter. "+
 			"The <command> and optional [args...] are executed inside it.",
-		"Example: sudo npte net run myproj server curl http://example.com",
+		"Example: sudo npte netns run myproj server curl https://example.com/",
 		"This command must be run via sudo.",
 	)
 	usage.PositionalArgumentsUsage = "<project> <name> <command> [args...]"
@@ -39,9 +39,9 @@ func netRunMain(ctx context.Context, args []string) error {
 
 	// Load config and resolve namespace path
 	logDetails("npte: load config from %s\n", configPath(proj))
-	cfg := mustLoadConfig(proj)
+	cfg := mustLoadNetnsConfig(proj)
 	if err := validateEndpointName(cfg.Project, nameFlag); err != nil {
-		logAlways("npte net run: %s\n", err)
+		logAlways("npte netns run: %s\n", err)
 		env.Exit(2)
 	}
 	ns := nsName(proj, nameFlag)
@@ -49,7 +49,7 @@ func netRunMain(ctx context.Context, args []string) error {
 
 	sudoUser := os.Getenv("SUDO_USER")
 	if sudoUser == "" {
-		logAlways("npte net run: $SUDO_USER is not set; this command must be run via sudo\n")
+		logAlways("npte netns run: $SUDO_USER is not set; this command must be run via sudo\n")
 		env.Exit(1)
 	}
 

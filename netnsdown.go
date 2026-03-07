@@ -10,9 +10,9 @@ import (
 	"github.com/bassosimone/vflag"
 )
 
-func netDownMain(ctx context.Context, args []string) error {
+func netnsDownMain(ctx context.Context, args []string) error {
 	// Parse command line flags
-	fset := vflag.NewFlagSet("npte net down", vflag.ExitOnError)
+	fset := vflag.NewFlagSet("npte netns down", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Tear down all network namespaces and iptables rules for a project. "+
@@ -31,12 +31,12 @@ func netDownMain(ctx context.Context, args []string) error {
 
 	proj := fset.Args()[0]
 
-	unlock := mustLockConfig(proj)
+	unlock := mustLockNetnsConfig(proj)
 	defer unlock()
 
 	// Load config
 	logDetails("npte: load config from %s\n", configPath(proj))
-	cfg := mustLoadConfig(proj)
+	cfg := mustLoadNetnsConfig(proj)
 
 	// Destroy all endpoints first
 	for _, hs := range cfg.Hosts {

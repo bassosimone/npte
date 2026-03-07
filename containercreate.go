@@ -22,7 +22,7 @@ func containerCreateMain(ctx context.Context, args []string) error {
 			"with 'npte container enter'.",
 		"The <project> argument selects the project. "+
 			"The <name> argument is the name of the network namespace whose filesystem tree to create. "+
-			"The namespace must already exist (created via 'npte net create').",
+			"The namespace must already exist (created via 'npte netns create').",
 		"This command must be run as root (e.g., via sudo).",
 	)
 	usage.PositionalArgumentsUsage = "<project> <name>"

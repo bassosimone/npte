@@ -23,12 +23,12 @@ func projectDir(proj string) string {
 
 // configPath returns the path to the network config file for a project.
 func configPath(proj string) string {
-	return filepath.Join(baseDir, proj, "config", "net.json")
+	return filepath.Join(baseDir, proj, "config", "netns.json")
 }
 
 // lockPath returns the path to the config lock file for a project.
 func lockPath(proj string) string {
-	return filepath.Join(baseDir, proj, "config", "net.lock")
+	return filepath.Join(baseDir, proj, "config", "netns.lock")
 }
 
 // treePath returns the path to a container filesystem tree.
@@ -36,8 +36,8 @@ func treePath(proj, name string) string {
 	return filepath.Join(baseDir, proj, "trees", name)
 }
 
-// netConfig is the network configuration stored in the config file.
-type netConfig struct {
+// netnsConfig is the network configuration stored in the config file.
+type netnsConfig struct {
 	// Project is the project name (matches the directory name under baseDir).
 	// It is also used as a prefix for kernel resource names (namespaces, interfaces).
 	Project string `json:"project"`
@@ -56,9 +56,9 @@ type hostConfig struct {
 	Subnet string `json:"subnet"`
 }
 
-// mustLockConfig acquires the config lock file. The returned function
+// mustLockNetnsConfig acquires the config lock file. The returned function
 // must be called to release the lock.
-func mustLockConfig(proj string) func() {
+func mustLockNetnsConfig(proj string) func() {
 	lp := lockPath(proj)
 	logDetails("npte: acquire config lock %s\n", lp)
 	env.LogFatalOnError0(env.MkdirAll(filepath.Dir(lp), 0755))
@@ -121,8 +121,8 @@ func nsPath(proj, name string) string {
 	return filepath.Join("/", "var", "run", "netns", nsName(proj, name))
 }
 
-// saveConfig writes the network config to disk.
-func saveConfig(proj string, cfg *netConfig) error {
+// saveNetnsConfig writes the network config to disk.
+func saveNetnsConfig(proj string, cfg *netnsConfig) error {
 	cp := configPath(proj)
 	if err := env.MkdirAll(filepath.Dir(cp), 0755); err != nil {
 		return err
@@ -134,25 +134,25 @@ func saveConfig(proj string, cfg *netConfig) error {
 	return env.WriteFile(cp, append(data, '\n'), 0644)
 }
 
-// loadConfig reads the network config from disk.
-func loadConfig(proj string) (*netConfig, error) {
+// loadNetnsConfig reads the network config from disk.
+func loadNetnsConfig(proj string) (*netnsConfig, error) {
 	data, err := env.ReadFile(configPath(proj))
 	if err != nil {
 		return nil, err
 	}
-	cfg := &netConfig{}
+	cfg := &netnsConfig{}
 	if err := json.Unmarshal(data, cfg); err != nil {
 		return nil, err
 	}
 	return cfg, nil
 }
 
-// mustLoadConfig loads the network config or exits with an error.
-func mustLoadConfig(proj string) *netConfig {
-	cfg, err := loadConfig(proj)
+// mustLoadNetnsConfig loads the network config or exits with an error.
+func mustLoadNetnsConfig(proj string) *netnsConfig {
+	cfg, err := loadNetnsConfig(proj)
 	if err != nil {
-		logAlways("npte: cannot load config: %s\n", err)
-		logAlways("npte: have you run `npte project create' and `npte net create'?\n")
+		logAlways("npte: cannot load netns config: %s\n", err)
+		logAlways("npte: have you run `npte project create' and `npte netns create'?\n")
 		env.Exit(1)
 	}
 	return cfg

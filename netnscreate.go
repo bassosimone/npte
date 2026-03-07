@@ -11,14 +11,14 @@ import (
 	"github.com/bassosimone/vflag"
 )
 
-func netCreateMain(ctx context.Context, args []string) error {
+func netnsCreateMain(ctx context.Context, args []string) error {
 	// Parse command line flags
-	fset := vflag.NewFlagSet("npte net create", vflag.ExitOnError)
+	fset := vflag.NewFlagSet("npte netns create", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Add a network namespace to the project configuration. "+
 			"Automatically allocates a /24 subnet for the new namespace. "+
-			"This command only modifies the config file; use 'npte net up' to create the actual namespaces.",
+			"This command only modifies the config file; use 'npte netns up' to create the actual namespaces.",
 		"The <project> argument selects the project. "+
 			"The <name> argument is the name of the network namespace to add.",
 		"This command must be run as root (e.g., via sudo).",
@@ -34,32 +34,32 @@ func netCreateMain(ctx context.Context, args []string) error {
 	nameFlag := fset.Args()[1]
 
 	if err := validateProject(proj); err != nil {
-		logAlways("npte net create: %s\n", err)
+		logAlways("npte netns create: %s\n", err)
 		env.Exit(2)
 	}
 	if err := validateEndpointName(proj, nameFlag); err != nil {
-		logAlways("npte net create: %s\n", err)
+		logAlways("npte netns create: %s\n", err)
 		env.Exit(2)
 	}
 
 	// Verify the project directory exists
 	if _, err := env.Stat(projectDir(proj)); os.IsNotExist(err) {
-		logAlways("npte net create: project %q not found\n", proj)
-		logAlways("npte net create: run `npte project create %s' first\n", proj)
+		logAlways("npte netns create: project %q not found\n", proj)
+		logAlways("npte netns create: run `npte project create %s' first\n", proj)
 		env.Exit(1)
 	}
 
-	unlock := mustLockConfig(proj)
+	unlock := mustLockNetnsConfig(proj)
 	defer unlock()
 
 	// Load existing config or create a new one
-	cfg, err := loadConfig(proj)
+	cfg, err := loadNetnsConfig(proj)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			logAlways("npte net create: cannot load config: %s\n", err)
+			logAlways("npte netns create: cannot load config: %s\n", err)
 			env.Exit(1)
 		}
-		cfg = &netConfig{
+		cfg = &netnsConfig{
 			Project:         proj,
 			NextSubnetIndex: 1,
 			Hosts:           make(map[string]*hostConfig),
@@ -67,7 +67,7 @@ func netCreateMain(ctx context.Context, args []string) error {
 	}
 
 	if _, exists := cfg.Hosts[nameFlag]; exists {
-		logAlways("npte net create: host %q already exists\n", nameFlag)
+		logAlways("npte netns create: host %q already exists\n", nameFlag)
 		env.Exit(1)
 	}
 
@@ -82,9 +82,9 @@ func netCreateMain(ctx context.Context, args []string) error {
 	cfg.NextSubnetIndex++
 
 	logDetails("npte: save config to %s\n", configPath(proj))
-	env.LogFatalOnError0(saveConfig(proj, cfg))
+	env.LogFatalOnError0(saveNetnsConfig(proj, cfg))
 
 	logDetails("npte: added host %q to config (subnet %s)\n", nameFlag, subnet)
-	logDetails("npte: run `npte net up %s' to create the namespaces\n", proj)
+	logDetails("npte: run `npte netns up %s' to create the network namespaces\n", proj)
 	return nil
 }

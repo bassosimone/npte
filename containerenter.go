@@ -38,7 +38,7 @@ func containerEnterMain(ctx context.Context, args []string) error {
 
 	// Load config and resolve namespace path
 	logDetails("npte: load config from %s\n", configPath(proj))
-	cfg := mustLoadConfig(proj)
+	cfg := mustLoadNetnsConfig(proj)
 	if err := validateEndpointName(cfg.Project, nameFlag); err != nil {
 		logAlways("npte container enter: %s\n", err)
 		env.Exit(2)

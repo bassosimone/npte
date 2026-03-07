@@ -11,9 +11,9 @@ import (
 	"github.com/bassosimone/vflag"
 )
 
-func netUpMain(ctx context.Context, args []string) error {
+func netnsUpMain(ctx context.Context, args []string) error {
 	// Parse command line flags
-	fset := vflag.NewFlagSet("npte net up", vflag.ExitOnError)
+	fset := vflag.NewFlagSet("npte netns up", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Bring up the network namespaces described in the project configuration. "+
@@ -21,7 +21,7 @@ func netUpMain(ctx context.Context, args []string) error {
 			"all endpoint namespaces with their veth pairs and routes.",
 		"The <project> argument selects the project whose network to bring up.",
 		"Run this command after a reboot to recreate the network from the saved configuration. "+
-			"If the network is already up, run 'npte net down' first.",
+			"If the network is already up, run 'npte netns down' first.",
 		"This command must be run as root (e.g., via sudo).",
 	)
 	usage.PositionalArgumentsUsage = "<project>"
@@ -33,12 +33,12 @@ func netUpMain(ctx context.Context, args []string) error {
 
 	proj := fset.Args()[0]
 
-	unlock := mustLockConfig(proj)
+	unlock := mustLockNetnsConfig(proj)
 	defer unlock()
 
 	// Load config
 	logDetails("npte: load config from %s\n", configPath(proj))
-	cfg := mustLoadConfig(proj)
+	cfg := mustLoadNetnsConfig(proj)
 
 	// Create the router namespace
 	_, routerNet, err := net.ParseCIDR(routerSubnet)
