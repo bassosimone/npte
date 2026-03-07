@@ -19,6 +19,7 @@ type dependency struct {
 
 var dependencies = []dependency{
 	{"ip", "iproute2"},
+	{"tc", "iproute2"},
 	{"iptables", "iptables"},
 	{"sysctl", "procps"},
 	{"nsenter", "util-linux"},
