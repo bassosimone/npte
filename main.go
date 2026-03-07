@@ -40,7 +40,7 @@ func main() {
 		"All subcommands must be run as root (e.g., via sudo).",
 	)
 	containerDisp.AddCommand("create", vclip.CommandFunc(containerCreateMain), "Bootstrap a container filesystem tree.")
-	containerDisp.AddCommand("enter", vclip.CommandFunc(containerEnterMain), "Enter a container via systemd-nspawn.")
+	containerDisp.AddCommand("run", vclip.CommandFunc(containerRunMain), "Run a command inside a container.")
 
 	// Create dispatcher for `npte`
 	disp := vclip.NewDispatcherCommand("npte", vflag.ExitOnError)
