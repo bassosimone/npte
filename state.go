@@ -6,12 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/rogpeppe/go-internal/lockedfile"
 )
 
 // netState is the full network state stored in .npte/state/net.json.
@@ -37,19 +34,19 @@ type hostState struct {
 }
 
 var netStatePath = filepath.Join(".npte", "state", "net.json")
-var netStateLock = lockedfile.MutexAt(filepath.Join(".npte", "state", "net.lock"))
+var netStateLockPath = filepath.Join(".npte", "state", "net.lock")
 
 // mustLockNetState acquires the state lock file. The returned function
 // must be called to release the lock.
 func mustLockNetState() func() {
-	fmt.Fprintf(os.Stderr, "npte: acquire state lock %s\n", netStateLock.Path)
-	unlock, err := netStateLock.Lock()
+	fmt.Fprintf(env.Stderr, "npte: acquire state lock %s\n", netStateLockPath)
+	unlock, err := env.LockFile(netStateLockPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "npte: cannot acquire state lock: %s\n", err)
-		os.Exit(1)
+		fmt.Fprintf(env.Stderr, "npte: cannot acquire state lock: %s\n", err)
+		env.Exit(1)
 	}
 	return func() {
-		fmt.Fprintf(os.Stderr, "npte: release state lock %s\n", netStateLock.Path)
+		fmt.Fprintf(env.Stderr, "npte: release state lock %s\n", netStateLockPath)
 		unlock()
 	}
 }
@@ -83,21 +80,21 @@ func validateEndpointName(pfx, name string) error {
 // mustLoadPrefix reads the deployment prefix from .npte/config/name.
 func mustLoadPrefix() string {
 	prefixPath := filepath.Join(".npte", "config", "name")
-	data, err := os.ReadFile(prefixPath)
+	data, err := env.ReadFile(prefixPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "npte: cannot read %s: %s\n", prefixPath, err)
-		fmt.Fprintf(os.Stderr, "npte: run `npte init' first\n")
-		os.Exit(1)
+		fmt.Fprintf(env.Stderr, "npte: cannot read %s: %s\n", prefixPath, err)
+		fmt.Fprintf(env.Stderr, "npte: run `npte init' first\n")
+		env.Exit(1)
 	}
 	pfx := strings.TrimSpace(string(data))
 	if err := validateIdent(pfx); err != nil {
-		fmt.Fprintf(os.Stderr, "npte: invalid prefix: %s\n", err)
-		os.Exit(1)
+		fmt.Fprintf(env.Stderr, "npte: invalid prefix: %s\n", err)
+		env.Exit(1)
 	}
 	// longest router interface name: pfx + "-router-h" (9 chars suffix)
 	if len(pfx)+9 > maxIfNameLen {
-		fmt.Fprintf(os.Stderr, "npte: prefix %q is too long (max %d chars)\n", pfx, maxIfNameLen-9)
-		os.Exit(1)
+		fmt.Fprintf(env.Stderr, "npte: prefix %q is too long (max %d chars)\n", pfx, maxIfNameLen-9)
+		env.Exit(1)
 	}
 	return pfx
 }
@@ -114,19 +111,19 @@ func nsPath(pfx, name string) string {
 
 // saveNetState writes the network state to disk.
 func saveNetState(ns *netState) error {
-	if err := os.MkdirAll(filepath.Dir(netStatePath), 0755); err != nil {
+	if err := env.MkdirAll(filepath.Dir(netStatePath), 0755); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(ns, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(netStatePath, append(data, '\n'), 0644)
+	return env.WriteFile(netStatePath, append(data, '\n'), 0644)
 }
 
 // loadNetState reads the network state from disk.
 func loadNetState() (*netState, error) {
-	data, err := os.ReadFile(netStatePath)
+	data, err := env.ReadFile(netStatePath)
 	if err != nil {
 		return nil, err
 	}
@@ -141,9 +138,9 @@ func loadNetState() (*netState, error) {
 func mustLoadNetState() *netState {
 	ns, err := loadNetState()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "npte: cannot load network state: %s\n", err)
-		fmt.Fprintf(os.Stderr, "npte: run `npte net init' first\n")
-		os.Exit(1)
+		fmt.Fprintf(env.Stderr, "npte: cannot load network state: %s\n", err)
+		fmt.Fprintf(env.Stderr, "npte: run `npte net init' first\n")
+		env.Exit(1)
 	}
 	return ns
 }

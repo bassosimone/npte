@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/bassosimone/runtimex"
@@ -34,32 +33,32 @@ func containerCreateMain(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(fset.Parse(args))
 
 	if nameFlag == "" {
-		fmt.Fprintf(os.Stderr, "npte container create: --name is required\n")
-		fmt.Fprintf(os.Stderr, "npte container create: try `npte container create --help' for more help.\n")
-		os.Exit(2)
+		fmt.Fprintf(env.Stderr, "npte container create: --name is required\n")
+		fmt.Fprintf(env.Stderr, "npte container create: try `npte container create --help' for more help.\n")
+		env.Exit(2)
 	}
 
 	pfx := mustLoadPrefix()
 	if err := validateEndpointName(pfx, nameFlag); err != nil {
-		fmt.Fprintf(os.Stderr, "npte container create: %s\n", err)
-		os.Exit(2)
+		fmt.Fprintf(env.Stderr, "npte container create: %s\n", err)
+		env.Exit(2)
 	}
 
 	tree := filepath.Join(".npte", "trees", nameFlag)
-	if _, err := os.Stat(tree); err == nil {
-		fmt.Fprintf(os.Stderr, "npte container create: tree already exists: %s\n", tree)
-		os.Exit(1)
+	if _, err := env.Stat(tree); err == nil {
+		fmt.Fprintf(env.Stderr, "npte container create: tree already exists: %s\n", tree)
+		env.Exit(1)
 	}
 
 	// Bootstrap the filesystem tree
-	fmt.Fprintf(os.Stderr, "npte: bootstrap '%s' filesystem tree at %s\n", suiteFlag, tree)
-	fmt.Fprintf(os.Stderr, "npte: ensure parent directory exists\n")
-	fmt.Fprintf(os.Stderr, "+ mkdir -p %s\n", filepath.Dir(tree))
-	runtimex.LogFatalOnError0(os.MkdirAll(filepath.Dir(tree), 0755))
+	fmt.Fprintf(env.Stderr, "npte: bootstrap '%s' filesystem tree at %s\n", suiteFlag, tree)
+	fmt.Fprintf(env.Stderr, "npte: ensure parent directory exists\n")
+	fmt.Fprintf(env.Stderr, "+ mkdir -p %s\n", filepath.Dir(tree))
+	env.LogFatalOnError0(env.MkdirAll(filepath.Dir(tree), 0755))
 
-	fmt.Fprintf(os.Stderr, "npte: run debootstrap (this may take a while)\n")
+	fmt.Fprintf(env.Stderr, "npte: run debootstrap (this may take a while)\n")
 	mustRun("debootstrap %s %s", suiteFlag, tree)
 
-	fmt.Fprintf(os.Stderr, "npte: container tree created at %s\n", tree)
+	fmt.Fprintf(env.Stderr, "npte: container tree created at %s\n", tree)
 	return nil
 }

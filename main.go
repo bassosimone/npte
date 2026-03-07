@@ -14,7 +14,7 @@ func main() {
 	// Create dispatcher for `npte net`
 	netDisp := vclip.NewDispatcherCommand("npte net", vflag.ExitOnError)
 	netDisp.AddDescription(
-		"Manage network namespaces arranged in a star topology around a central router. "+
+		"Manage network namespaces arranged in a star topology around a central router. " +
 			"The router namespace is the only one with internet access via host NAT.",
 	)
 	netDisp.AddCommand("init", vclip.CommandFunc(netInitMain), "Create the router and network infrastructure.")
@@ -25,7 +25,7 @@ func main() {
 	// Create dispatcher for `npte container`
 	containerDisp := vclip.NewDispatcherCommand("npte container", vflag.ExitOnError)
 	containerDisp.AddDescription(
-		"Manage lightweight containers backed by systemd-nspawn. "+
+		"Manage lightweight containers backed by systemd-nspawn. " +
 			"Each container is a debootstrap filesystem tree bound to a network namespace.",
 	)
 	containerDisp.AddCommand("create", vclip.CommandFunc(containerCreateMain), "Create a filesystem tree.")

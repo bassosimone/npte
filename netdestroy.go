@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
@@ -30,18 +29,18 @@ func netDestroyMain(ctx context.Context, args []string) error {
 	defer unlock()
 
 	// Load network state
-	fmt.Fprintf(os.Stderr, "npte: load network state from %s\n", netStatePath)
+	fmt.Fprintf(env.Stderr, "npte: load network state from %s\n", netStatePath)
 	state, err := loadNetState()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "npte net destroy: cannot load network state: %s\n", err)
-		os.Exit(1)
+		fmt.Fprintf(env.Stderr, "npte net destroy: cannot load network state: %s\n", err)
+		env.Exit(1)
 	}
 
 	pfx := state.Prefix
 
 	// Destroy all endpoints first
 	for _, hs := range state.Hosts {
-		fmt.Fprintf(os.Stderr, "npte: destroy endpoint '%s'\n", hs.Name)
+		fmt.Fprintf(env.Stderr, "npte: destroy endpoint '%s'\n", hs.Name)
 		routerNs := nsName(pfx, "router")
 		routerVeth := pfx + "-" + hs.Name + "-r"
 		run("ip netns exec %s ip link del %s", routerNs, routerVeth)
@@ -49,25 +48,26 @@ func netDestroyMain(ctx context.Context, args []string) error {
 	}
 
 	// Destroy the router: remove iptables rules, veth, and namespace
-	fmt.Fprintf(os.Stderr, "npte: destroy router\n")
-	_, ipNet := runtimex.LogFatalOnError2(net.ParseCIDR(state.RouterSubnet))
+	fmt.Fprintf(env.Stderr, "npte: destroy router\n")
+	_, ipNet, err := net.ParseCIDR(state.RouterSubnet)
+	env.LogFatalOnError0(err)
 	insideAddr := ipWithOffset(ipNet, 2)
 	hostVeth := pfx + "-router-h"
 
-	fmt.Fprintf(os.Stderr, "npte: remove host NAT and FORWARD rules\n")
+	fmt.Fprintf(env.Stderr, "npte: remove host NAT and FORWARD rules\n")
 	run("iptables -D FORWARD -o %s -j ACCEPT", hostVeth)
 	run("iptables -D FORWARD -i %s -j ACCEPT", hostVeth)
 	run("iptables -t nat -D POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
 
-	fmt.Fprintf(os.Stderr, "npte: remove host veth %s and router namespace\n", hostVeth)
+	fmt.Fprintf(env.Stderr, "npte: remove host veth %s and router namespace\n", hostVeth)
 	run("ip link del %s", hostVeth)
 	run("ip netns del %s", nsName(pfx, "router"))
 
 	// Remove state file
-	fmt.Fprintf(os.Stderr, "npte: remove state file %s\n", netStatePath)
-	fmt.Fprintf(os.Stderr, "+ rm -f %s\n", netStatePath)
-	os.Remove(netStatePath)
+	fmt.Fprintf(env.Stderr, "npte: remove state file %s\n", netStatePath)
+	fmt.Fprintf(env.Stderr, "+ rm -f %s\n", netStatePath)
+	env.Remove(netStatePath)
 
-	fmt.Fprintf(os.Stderr, "npte: network destroyed\n")
+	fmt.Fprintf(env.Stderr, "npte: network destroyed\n")
 	return nil
 }

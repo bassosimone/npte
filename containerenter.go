@@ -34,17 +34,17 @@ func containerEnterMain(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(fset.Parse(args))
 
 	if nameFlag == "" {
-		fmt.Fprintf(os.Stderr, "npte container enter: --name is required\n")
-		fmt.Fprintf(os.Stderr, "npte container enter: try `npte container enter --help' for more help.\n")
-		os.Exit(2)
+		fmt.Fprintf(env.Stderr, "npte container enter: --name is required\n")
+		fmt.Fprintf(env.Stderr, "npte container enter: try `npte container enter --help' for more help.\n")
+		env.Exit(2)
 	}
 
 	// Load network state and resolve namespace path
-	fmt.Fprintf(os.Stderr, "npte: load network state from %s\n", netStatePath)
+	fmt.Fprintf(env.Stderr, "npte: load network state from %s\n", netStatePath)
 	state := mustLoadNetState()
 	if err := validateEndpointName(state.Prefix, nameFlag); err != nil {
-		fmt.Fprintf(os.Stderr, "npte container enter: %s\n", err)
-		os.Exit(2)
+		fmt.Fprintf(env.Stderr, "npte container enter: %s\n", err)
+		env.Exit(2)
 	}
 	pfx := state.Prefix
 	ns := nsName(pfx, nameFlag)
@@ -52,24 +52,24 @@ func containerEnterMain(ctx context.Context, args []string) error {
 
 	// Verify the filesystem tree exists
 	tree := filepath.Join(".npte", "trees", nameFlag)
-	if _, err := os.Stat(tree); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "npte container enter: tree not found: %s\n", tree)
-		fmt.Fprintf(os.Stderr, "npte container enter: create it with `npte container create -n %s'\n", nameFlag)
-		os.Exit(1)
+	if _, err := env.Stat(tree); os.IsNotExist(err) {
+		fmt.Fprintf(env.Stderr, "npte container enter: tree not found: %s\n", tree)
+		fmt.Fprintf(env.Stderr, "npte container enter: create it with `npte container create -n %s'\n", nameFlag)
+		env.Exit(1)
 	}
 
 	// Enter the container with systemd-nspawn
-	fmt.Fprintf(os.Stderr, "npte: enter container '%s' in namespace '%s'\n", nameFlag, ns)
+	fmt.Fprintf(env.Stderr, "npte: enter container '%s' in namespace '%s'\n", nameFlag, ns)
 	nspawnArgs := []string{"-D", tree, "--network-namespace-path=" + nsp}
 	nspawnArgs = append(nspawnArgs, fset.Args()...)
 
-	fmt.Fprintf(os.Stderr, "npte: systemd-nspawn %s\n", strings.Join(nspawnArgs, " "))
+	fmt.Fprintf(env.Stderr, "npte: systemd-nspawn %s\n", strings.Join(nspawnArgs, " "))
 
 	cmd := exec.CommandContext(ctx, "systemd-nspawn", nspawnArgs...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	runtimex.LogFatalOnError0(cmd.Run())
+	env.LogFatalOnError0(env.RunCommand(cmd))
 	return nil
 }

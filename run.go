@@ -18,16 +18,16 @@ func run(format string, args ...any) error {
 		return err
 	}
 	runtimex.Assert(len(argv) > 0)
-	fmt.Fprintf(os.Stderr, "+ %s\n", cmdline)
+	fmt.Fprintf(env.Stderr, "+ %s\n", cmdline)
 
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	return cmd.Run()
+	return env.RunCommand(cmd)
 }
 
 func mustRun(format string, args ...any) {
-	runtimex.LogFatalOnError0(run(format, args...))
+	env.LogFatalOnError0(run(format, args...))
 }
