@@ -16,29 +16,32 @@ func netCreateMain(ctx context.Context, args []string) error {
 	fset := vflag.NewFlagSet("npte net create", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Create a new network endpoint namespace connected to the central router. "+
-			"Automatically allocates a /24 subnet and configures a veth pair between "+
-			"the endpoint and the router namespace.",
-		"The <name> argument is the name of the network namespace to create.",
+		"Create a new network namespace connected to the central router. "+
+			"Automatically allocates a /24 subnet, configures a veth pair between "+
+			"the endpoint and the router namespace, and tunes TCP buffer sizes. "+
+			"The new endpoint has internet access through the router.",
+		"The <project> argument selects the project. "+
+			"The <name> argument is the name of the network namespace to create.",
 		"This command must be run as root (e.g., via sudo).",
 	)
-	usage.PositionalArgumentsUsage = "<name>"
+	usage.PositionalArgumentsUsage = "<project> <name>"
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
-	fset.MinPositionalArgs = 1
-	fset.MaxPositionalArgs = 1
+	fset.MinPositionalArgs = 2
+	fset.MaxPositionalArgs = 2
 	runtimex.PanicOnError0(fset.Parse(args))
 
-	nameFlag := fset.Args()[0]
+	proj := fset.Args()[0]
+	nameFlag := fset.Args()[1]
 
-	unlock := mustLockNetState()
+	unlock := mustLockNetState(proj)
 	defer unlock()
 
 	// Load network state
-	logDetails("npte: load network state from %s\n", netStatePath)
-	state := mustLoadNetState()
+	logDetails("npte: load network state from %s\n", statePath(proj))
+	state := mustLoadNetState(proj)
 
-	if err := validateEndpointName(state.Prefix, nameFlag); err != nil {
+	if err := validateEndpointName(proj, nameFlag); err != nil {
 		logAlways("npte net create: %s\n", err)
 		env.Exit(2)
 	}
@@ -53,12 +56,11 @@ func netCreateMain(ctx context.Context, args []string) error {
 	_, ipNet, err := net.ParseCIDR(subnet)
 	env.LogFatalOnError0(err)
 
-	pfx := state.Prefix
-	ns := nsName(pfx, nameFlag)
-	routerNs := nsName(pfx, "router")
+	ns := nsName(proj, nameFlag)
+	routerNs := nsName(proj, "router")
 
-	endpointVeth := pfx + "-" + nameFlag + "-s"
-	routerVeth := pfx + "-" + nameFlag + "-r"
+	endpointVeth := proj + "-" + nameFlag + "-s"
+	routerVeth := proj + "-" + nameFlag + "-r"
 
 	// Convention: .1 is router side, .2 is endpoint side
 	routerAddr := ipWithOffset(ipNet, 1)
@@ -69,13 +71,13 @@ func netCreateMain(ctx context.Context, args []string) error {
 	logDetails("npte: allocate subnet %s for endpoint '%s'\n", subnet, nameFlag)
 
 	// Save state early so that `npte net destroy` can clean up partial initialization
-	logDetails("npte: save updated state to %s\n", netStatePath)
+	logDetails("npte: save updated state to %s\n", statePath(proj))
 	state.Hosts[nameFlag] = &hostState{
 		Name:   nameFlag,
 		Subnet: subnet,
 	}
 	state.NextSubnetIndex++
-	env.LogFatalOnError0(saveNetState(state))
+	env.LogFatalOnError0(saveNetState(proj, state))
 
 	// Create the endpoint namespace
 	logDetails("npte: create network namespace '%s'\n", ns)

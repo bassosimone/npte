@@ -18,28 +18,34 @@ func containerCreateMain(ctx context.Context, args []string) error {
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Create a lightweight container filesystem tree using debootstrap. "+
-			"The tree is stored under .npte/trees/<name> and can later be entered "+
+			"The tree is stored under "+baseDir+"/<project>/trees/<name> and can later be entered "+
 			"with 'npte container enter'.",
-		"The <name> argument is the name of the network namespace whose filesystem tree to create.",
+		"The <project> argument selects the project. "+
+			"The <name> argument is the name of the network namespace whose filesystem tree to create. "+
+			"The namespace must already exist (created via 'npte net create').",
 		"This command must be run as root (e.g., via sudo).",
 	)
-	usage.PositionalArgumentsUsage = "<name>"
+	usage.PositionalArgumentsUsage = "<project> <name>"
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.StringVar(&suiteFlag, 0, "suite", "The distribution `SUITE` to bootstrap (default: noble).")
-	fset.MinPositionalArgs = 1
-	fset.MaxPositionalArgs = 1
+	fset.MinPositionalArgs = 2
+	fset.MaxPositionalArgs = 2
 	runtimex.PanicOnError0(fset.Parse(args))
 
-	nameFlag := fset.Args()[0]
+	proj := fset.Args()[0]
+	nameFlag := fset.Args()[1]
 
-	pfx := mustLoadPrefix()
-	if err := validateEndpointName(pfx, nameFlag); err != nil {
+	if err := validateProject(proj); err != nil {
+		logAlways("npte container create: %s\n", err)
+		env.Exit(2)
+	}
+	if err := validateEndpointName(proj, nameFlag); err != nil {
 		logAlways("npte container create: %s\n", err)
 		env.Exit(2)
 	}
 
-	tree := filepath.Join(".npte", "trees", nameFlag)
+	tree := treePath(proj, nameFlag)
 	if _, err := env.Stat(tree); err == nil {
 		logAlways("npte container create: tree already exists: %s\n", tree)
 		env.Exit(1)

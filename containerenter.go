@@ -7,7 +7,6 @@ import (
 	"math"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/bassosimone/runtimex"
@@ -20,44 +19,45 @@ func containerEnterMain(ctx context.Context, args []string) error {
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Enter a lightweight container using systemd-nspawn. Binds the container's "+
-			"filesystem tree to the corresponding network namespace. Any extra arguments "+
-			"after <name> are passed to systemd-nspawn.",
-		"The <name> argument is the name of the network namespace whose container to enter.",
+			"filesystem tree to the corresponding network namespace. "+
+			"Any trailing arguments are passed to systemd-nspawn.",
+		"The <project> argument selects the project. "+
+			"The <name> argument is the name of the network namespace whose container to enter.",
 		"This command must be run as root (e.g., via sudo).",
 	)
-	usage.PositionalArgumentsUsage = "<name> [nspawn-args...]"
+	usage.PositionalArgumentsUsage = "<project> <name> [nspawn-args...]"
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
-	fset.MinPositionalArgs = 1
+	fset.MinPositionalArgs = 2
 	fset.MaxPositionalArgs = math.MaxInt
 	fset.DisablePermute = true
 	runtimex.PanicOnError0(fset.Parse(args))
 
-	nameFlag := fset.Args()[0]
+	proj := fset.Args()[0]
+	nameFlag := fset.Args()[1]
 
 	// Load network state and resolve namespace path
-	logDetails("npte: load network state from %s\n", netStatePath)
-	state := mustLoadNetState()
-	if err := validateEndpointName(state.Prefix, nameFlag); err != nil {
+	logDetails("npte: load network state from %s\n", statePath(proj))
+	state := mustLoadNetState(proj)
+	if err := validateEndpointName(state.Project, nameFlag); err != nil {
 		logAlways("npte container enter: %s\n", err)
 		env.Exit(2)
 	}
-	pfx := state.Prefix
-	ns := nsName(pfx, nameFlag)
-	nsp := nsPath(pfx, nameFlag)
+	ns := nsName(proj, nameFlag)
+	nsp := nsPath(proj, nameFlag)
 
 	// Verify the filesystem tree exists
-	tree := filepath.Join(".npte", "trees", nameFlag)
+	tree := treePath(proj, nameFlag)
 	if _, err := env.Stat(tree); os.IsNotExist(err) {
 		logAlways("npte container enter: tree not found: %s\n", tree)
-		logAlways("npte container enter: create it with `npte container create %s'\n", nameFlag)
+		logAlways("npte container enter: create it with `npte container create %s %s'\n", proj, nameFlag)
 		env.Exit(1)
 	}
 
 	// Enter the container with systemd-nspawn
 	logDetails("npte: enter container '%s' in namespace '%s'\n", nameFlag, ns)
 	nspawnArgs := []string{"-D", tree, "--network-namespace-path=" + nsp}
-	nspawnArgs = append(nspawnArgs, fset.Args()[1:]...)
+	nspawnArgs = append(nspawnArgs, fset.Args()[2:]...)
 
 	logDetails("npte: systemd-nspawn %s\n", strings.Join(nspawnArgs, " "))
 

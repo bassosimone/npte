@@ -19,31 +19,43 @@ func netInitMain(ctx context.Context, args []string) error {
 		"Create the central router namespace with a host-facing veth pair for internet access. "+
 			"Configures NAT masquerade and iptables FORWARD rules on the host so that "+
 			"endpoints created later can reach the internet through the router.",
+		"The <project> argument is the project name. It is used as a prefix for kernel "+
+			"resource names and as a directory name under "+baseDir+"/.",
+		"This is the first command to run when setting up a new project. "+
+			"After initialization, create endpoints with 'npte net create'.",
 		"This command must be run as root (e.g., via sudo).",
 	)
+	usage.PositionalArgumentsUsage = "<project>"
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
+	fset.MinPositionalArgs = 1
+	fset.MaxPositionalArgs = 1
 	runtimex.PanicOnError0(fset.Parse(args))
 
-	unlock := mustLockNetState()
+	proj := fset.Args()[0]
+	if err := validateProject(proj); err != nil {
+		logAlways("npte net init: %s\n", err)
+		env.Exit(2)
+	}
+
+	unlock := mustLockNetState(proj)
 	defer unlock()
 
-	pfx := mustLoadPrefix()
-	if _, err := env.Stat(netStatePath); err == nil {
+	if _, err := env.Stat(statePath(proj)); err == nil {
 		logAlways("npte net init: network already initialized\n")
-		logAlways("npte net init: run `npte net destroy' first\n")
+		logAlways("npte net init: run `npte net destroy %s' first\n", proj)
 		env.Exit(1)
 	}
-	logDetails("npte: creating router namespace with prefix: %s\n", pfx)
+	logDetails("npte: creating router namespace for project: %s\n", proj)
 
 	// The router↔host link uses a fixed subnet: 10.0.0.0/24
 	routerSubnet := "10.0.0.0/24"
 	_, ipNet, err := net.ParseCIDR(routerSubnet)
 	env.LogFatalOnError0(err)
 
-	routerNs := nsName(pfx, "router")
-	hostVeth := pfx + "-router-h"
-	insideVeth := pfx + "-router-i"
+	routerNs := nsName(proj, "router")
+	hostVeth := proj + "-router-h"
+	insideVeth := proj + "-router-i"
 	hostAddr := ipWithOffset(ipNet, 1)
 	insideAddr := ipWithOffset(ipNet, 2)
 	ones, _ := ipNet.Mask.Size()
@@ -52,9 +64,9 @@ func netInitMain(ctx context.Context, args []string) error {
 	logDetails("npte: router <-> host subnet is %s\n", routerSubnet)
 
 	// Save state early so that `npte net destroy` can clean up partial initialization
-	logDetails("npte: save initial state to %s\n", netStatePath)
-	env.LogFatalOnError0(saveNetState(&netState{
-		Prefix:          pfx,
+	logDetails("npte: save initial state to %s\n", statePath(proj))
+	env.LogFatalOnError0(saveNetState(proj, &netState{
+		Project:         proj,
 		RouterSubnet:    routerSubnet,
 		NextSubnetIndex: 1,
 		Hosts:           make(map[string]*hostState),
