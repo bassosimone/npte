@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+package main
+
+import (
+	"context"
+	"path/filepath"
+
+	"github.com/bassosimone/runtimex"
+	"github.com/bassosimone/vflag"
+)
+
+func projectCreateMain(ctx context.Context, args []string) error {
+	// Parse command line flags
+	fset := vflag.NewFlagSet("npte project create", vflag.ExitOnError)
+	usage := vflag.NewDefaultUsagePrinter()
+	usage.AddDescription(
+		"Create the directory skeleton for a new project. "+
+			"This creates the config and trees directories under "+baseDir+"/<name>/.",
+		"The <name> argument is the project name. It is used as a prefix for kernel "+
+			"resource names and as a directory name under "+baseDir+"/.",
+		"After creating the project, add hosts with 'npte net create' "+
+			"and bring the network up with 'npte net up'.",
+		"This command must be run as root (e.g., via sudo).",
+	)
+	usage.PositionalArgumentsUsage = "<name>"
+	fset.UsagePrinter = usage
+	fset.AutoHelp('h', "help", "Print this help text and exit.")
+	fset.MinPositionalArgs = 1
+	fset.MaxPositionalArgs = 1
+	runtimex.PanicOnError0(fset.Parse(args))
+
+	// Get the project directory
+	proj := fset.Args()[0]
+	if err := validateProject(proj); err != nil {
+		logAlways("npte project create: %s\n", err)
+		env.Exit(2)
+	}
+
+	pd := projectDir(proj)
+	if _, err := env.Stat(pd); err == nil {
+		logAlways("npte project create: project already exists: %s\n", pd)
+		env.Exit(1)
+	}
+
+	// Populate the project directory
+	logDetails("npte: create project skeleton at %s\n", pd)
+	logDetails("+ mkdir -p %s\n", filepath.Join(pd, "config"))
+	env.LogFatalOnError0(env.MkdirAll(filepath.Join(pd, "config"), 0755))
+	logDetails("+ mkdir -p %s\n", filepath.Join(pd, "trees"))
+	env.LogFatalOnError0(env.MkdirAll(filepath.Join(pd, "trees"), 0755))
+
+	logDetails("npte: project %q created\n", proj)
+	return nil
+}

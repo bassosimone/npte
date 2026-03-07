@@ -36,10 +36,10 @@ func containerEnterMain(ctx context.Context, args []string) error {
 	proj := fset.Args()[0]
 	nameFlag := fset.Args()[1]
 
-	// Load network state and resolve namespace path
-	logDetails("npte: load network state from %s\n", statePath(proj))
-	state := mustLoadNetState(proj)
-	if err := validateEndpointName(state.Project, nameFlag); err != nil {
+	// Load config and resolve namespace path
+	logDetails("npte: load config from %s\n", configPath(proj))
+	cfg := mustLoadConfig(proj)
+	if err := validateEndpointName(cfg.Project, nameFlag); err != nil {
 		logAlways("npte container enter: %s\n", err)
 		env.Exit(2)
 	}

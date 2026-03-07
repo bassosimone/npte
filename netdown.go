@@ -10,16 +10,16 @@ import (
 	"github.com/bassosimone/vflag"
 )
 
-func netDestroyMain(ctx context.Context, args []string) error {
+func netDownMain(ctx context.Context, args []string) error {
 	// Parse command line flags
-	fset := vflag.NewFlagSet("npte net destroy", vflag.ExitOnError)
+	fset := vflag.NewFlagSet("npte net down", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Tear down all network namespaces and iptables rules created by npte. "+
-			"Destroys endpoints first, then the central router, and finally removes the state file. "+
-			"Individual teardown steps tolerate errors to handle partial initialization.",
-		"The <project> argument selects the project to destroy. "+
-			"After destruction, 'npte net init' can be used to recreate the project.",
+		"Tear down all network namespaces and iptables rules for a project. "+
+			"Destroys endpoints first, then the central router. "+
+			"The configuration file is preserved so the network can be brought up again.",
+		"The <project> argument selects the project whose network to tear down.",
+		"Individual teardown steps tolerate errors to handle partial state.",
 		"This command must be run as root (e.g., via sudo).",
 	)
 	usage.PositionalArgumentsUsage = "<project>"
@@ -31,32 +31,27 @@ func netDestroyMain(ctx context.Context, args []string) error {
 
 	proj := fset.Args()[0]
 
-	unlock := mustLockNetState(proj)
+	unlock := mustLockConfig(proj)
 	defer unlock()
 
-	// Load network state
-	sp := statePath(proj)
-	logDetails("npte: load network state from %s\n", sp)
-	state, err := loadNetState(proj)
-	if err != nil {
-		logAlways("npte net destroy: cannot load network state: %s\n", err)
-		env.Exit(1)
-	}
+	// Load config
+	logDetails("npte: load config from %s\n", configPath(proj))
+	cfg := mustLoadConfig(proj)
 
 	// Destroy all endpoints first
-	for _, hs := range state.Hosts {
-		logDetails("npte: destroy endpoint '%s'\n", hs.Name)
+	for _, hs := range cfg.Hosts {
+		logDetails("npte: destroy endpoint %q\n", hs.Name)
 		routerNs := nsName(proj, "router")
 		routerVeth := proj + "-" + hs.Name + "-r"
 		run("ip netns exec %s ip link del %s", routerNs, routerVeth)
 		run("ip netns del %s", nsName(proj, hs.Name))
 	}
 
-	// Destroy the router: remove iptables rules, veth, and namespace
+	// Destroy the router
 	logDetails("npte: destroy router\n")
-	_, ipNet, err := net.ParseCIDR(state.RouterSubnet)
+	_, routerNet, err := net.ParseCIDR(routerSubnet)
 	env.LogFatalOnError0(err)
-	insideAddr := ipWithOffset(ipNet, 2)
+	insideAddr := ipWithOffset(routerNet, 2)
 	hostVeth := proj + "-router-h"
 
 	logDetails("npte: remove host NAT and FORWARD rules\n")
@@ -68,11 +63,6 @@ func netDestroyMain(ctx context.Context, args []string) error {
 	run("ip link del %s", hostVeth)
 	run("ip netns del %s", nsName(proj, "router"))
 
-	// Remove state file
-	logDetails("npte: remove state file %s\n", sp)
-	logDetails("+ rm -f %s\n", sp)
-	env.Remove(sp)
-
-	logDetails("npte: network destroyed\n")
+	logDetails("npte: network is down\n")
 	return nil
 }

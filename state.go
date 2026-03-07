@@ -13,14 +13,22 @@ import (
 // baseDir is the system-level directory for npte projects.
 var baseDir = filepath.Join("/", "var", "local", "npte")
 
-// statePath returns the path to the network state file for a project.
-func statePath(proj string) string {
-	return filepath.Join(baseDir, proj, "state", "net.json")
+// routerSubnet is the fixed CIDR for the router's host-facing veth.
+const routerSubnet = "10.0.0.0/24"
+
+// projectDir returns the root directory for a project.
+func projectDir(proj string) string {
+	return filepath.Join(baseDir, proj)
 }
 
-// lockPath returns the path to the state lock file for a project.
+// configPath returns the path to the network config file for a project.
+func configPath(proj string) string {
+	return filepath.Join(baseDir, proj, "config", "net.json")
+}
+
+// lockPath returns the path to the config lock file for a project.
 func lockPath(proj string) string {
-	return filepath.Join(baseDir, proj, "state", "net.lock")
+	return filepath.Join(baseDir, proj, "config", "net.lock")
 }
 
 // treePath returns the path to a container filesystem tree.
@@ -28,49 +36,46 @@ func treePath(proj, name string) string {
 	return filepath.Join(baseDir, proj, "trees", name)
 }
 
-// netState is the full network state stored in the state file.
-type netState struct {
+// netConfig is the network configuration stored in the config file.
+type netConfig struct {
 	// Project is the project name (matches the directory name under baseDir).
 	// It is also used as a prefix for kernel resource names (namespaces, interfaces).
 	Project string `json:"project"`
-
-	// RouterSubnet is the CIDR for the router's host-facing veth.
-	RouterSubnet string `json:"router_subnet"`
 
 	// NextSubnetIndex is the next index to use when auto-allocating
 	// a subnet for a new endpoint (e.g., 1 → 10.0.1.0/24).
 	NextSubnetIndex int `json:"next_subnet_index"`
 
-	// Hosts maps host name to host state.
-	Hosts map[string]*hostState `json:"hosts"`
+	// Hosts maps host name to host config.
+	Hosts map[string]*hostConfig `json:"hosts"`
 }
 
-// hostState is the per-host state within the network.
-type hostState struct {
+// hostConfig is the per-host configuration within the network.
+type hostConfig struct {
 	Name   string `json:"name"`
 	Subnet string `json:"subnet"`
 }
 
-// mustLockNetState acquires the state lock file. The returned function
+// mustLockConfig acquires the config lock file. The returned function
 // must be called to release the lock.
-func mustLockNetState(proj string) func() {
+func mustLockConfig(proj string) func() {
 	lp := lockPath(proj)
-	logDetails("npte: acquire state lock %s\n", lp)
+	logDetails("npte: acquire config lock %s\n", lp)
 	env.LogFatalOnError0(env.MkdirAll(filepath.Dir(lp), 0755))
 	unlock, err := env.LockFile(lp)
 	if err != nil {
-		logAlways("npte: cannot acquire state lock: %s\n", err)
+		logAlways("npte: cannot acquire config lock: %s\n", err)
 		env.Exit(1)
 	}
 	return func() {
-		logDetails("npte: release state lock %s\n", lp)
+		logDetails("npte: release config lock %s\n", lp)
 		unlock()
 	}
 }
 
 var identRe = regexp.MustCompile(`^[a-z][a-z0-9]*$`)
 
-// validateIdent checks that s is a non-empty string of lowercase letters.
+// validateIdent checks that s is a valid identifier.
 func validateIdent(s string) error {
 	if !identRe.MatchString(s) {
 		return fmt.Errorf("invalid identifier %q: must start with a lowercase letter and contain only lowercase letters and digits", s)
@@ -116,41 +121,41 @@ func nsPath(proj, name string) string {
 	return filepath.Join("/", "var", "run", "netns", nsName(proj, name))
 }
 
-// saveNetState writes the network state to disk.
-func saveNetState(proj string, ns *netState) error {
-	sp := statePath(proj)
-	if err := env.MkdirAll(filepath.Dir(sp), 0755); err != nil {
+// saveConfig writes the network config to disk.
+func saveConfig(proj string, cfg *netConfig) error {
+	cp := configPath(proj)
+	if err := env.MkdirAll(filepath.Dir(cp), 0755); err != nil {
 		return err
 	}
-	data, err := json.MarshalIndent(ns, "", "  ")
+	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err
 	}
-	return env.WriteFile(sp, append(data, '\n'), 0644)
+	return env.WriteFile(cp, append(data, '\n'), 0644)
 }
 
-// loadNetState reads the network state from disk.
-func loadNetState(proj string) (*netState, error) {
-	data, err := env.ReadFile(statePath(proj))
+// loadConfig reads the network config from disk.
+func loadConfig(proj string) (*netConfig, error) {
+	data, err := env.ReadFile(configPath(proj))
 	if err != nil {
 		return nil, err
 	}
-	ns := &netState{}
-	if err := json.Unmarshal(data, ns); err != nil {
+	cfg := &netConfig{}
+	if err := json.Unmarshal(data, cfg); err != nil {
 		return nil, err
 	}
-	return ns, nil
+	return cfg, nil
 }
 
-// mustLoadNetState loads the network state or exits with an error.
-func mustLoadNetState(proj string) *netState {
-	ns, err := loadNetState(proj)
+// mustLoadConfig loads the network config or exits with an error.
+func mustLoadConfig(proj string) *netConfig {
+	cfg, err := loadConfig(proj)
 	if err != nil {
-		logAlways("npte: cannot load network state: %s\n", err)
-		logAlways("npte: run `npte net init <project>' first\n")
+		logAlways("npte: cannot load config: %s\n", err)
+		logAlways("npte: have you run `npte project create' and `npte net create'?\n")
 		env.Exit(1)
 	}
-	return ns
+	return cfg
 }
 
 // ipWithOffset returns the IP at a given offset within a subnet.

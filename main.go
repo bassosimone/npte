@@ -11,6 +11,15 @@ import (
 )
 
 func main() {
+	// Create dispatcher for `npte project`
+	projectDisp := vclip.NewDispatcherCommand("npte project", vflag.ExitOnError)
+	projectDisp.AddDescription(
+		"Manage npte projects. Each project is a directory under "+baseDir+"/ "+
+			"containing network configuration and container filesystem trees.",
+		"All subcommands must be run as root (e.g., via sudo).",
+	)
+	projectDisp.AddCommand("create", vclip.CommandFunc(projectCreateMain), "Create a new project.")
+
 	// Create dispatcher for `npte net`
 	netDisp := vclip.NewDispatcherCommand("npte net", vflag.ExitOnError)
 	netDisp.AddDescription(
@@ -18,10 +27,10 @@ func main() {
 			"The router namespace is the only one with internet access via host NAT.",
 		"All subcommands must be run as root (e.g., via sudo).",
 	)
-	netDisp.AddCommand("init", vclip.CommandFunc(netInitMain), "Create the router and network infrastructure.")
-	netDisp.AddCommand("create", vclip.CommandFunc(netCreateMain), "Create a network namespace.")
+	netDisp.AddCommand("create", vclip.CommandFunc(netCreateMain), "Add a namespace to the configuration.")
+	netDisp.AddCommand("up", vclip.CommandFunc(netUpMain), "Bring up the network from configuration.")
+	netDisp.AddCommand("down", vclip.CommandFunc(netDownMain), "Tear down the network.")
 	netDisp.AddCommand("run", vclip.CommandFunc(netRunMain), "Run a command inside a namespace.")
-	netDisp.AddCommand("destroy", vclip.CommandFunc(netDestroyMain), "Destroy all network namespaces.")
 
 	// Create dispatcher for `npte container`
 	containerDisp := vclip.NewDispatcherCommand("npte container", vflag.ExitOnError)
@@ -39,8 +48,9 @@ func main() {
 		"Network Performance Testing Environment (npte).",
 		"Creates isolated network namespaces connected through a central router, "+
 			"with the ability to bind the namespaces to lightweight containers via systemd-nspawn.",
-		"State is stored under "+baseDir+"/<project>/.",
+		"Configuration is stored under "+baseDir+"/<project>/.",
 	)
+	disp.AddCommand("project", projectDisp, "Manage projects.")
 	disp.AddCommand("net", netDisp, "Manage network namespaces.")
 	disp.AddCommand("container", containerDisp, "Manage lightweight containers (systemd-nspawn).")
 
