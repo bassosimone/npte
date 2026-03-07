@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"os"
 	"os/exec"
@@ -37,10 +36,10 @@ func containerEnterMain(ctx context.Context, args []string) error {
 	nameFlag := fset.Args()[0]
 
 	// Load network state and resolve namespace path
-	fmt.Fprintf(env.Stderr, "npte: load network state from %s\n", netStatePath)
+	logDetails("npte: load network state from %s\n", netStatePath)
 	state := mustLoadNetState()
 	if err := validateEndpointName(state.Prefix, nameFlag); err != nil {
-		fmt.Fprintf(env.Stderr, "npte container enter: %s\n", err)
+		logAlways("npte container enter: %s\n", err)
 		env.Exit(2)
 	}
 	pfx := state.Prefix
@@ -50,17 +49,17 @@ func containerEnterMain(ctx context.Context, args []string) error {
 	// Verify the filesystem tree exists
 	tree := filepath.Join(".npte", "trees", nameFlag)
 	if _, err := env.Stat(tree); os.IsNotExist(err) {
-		fmt.Fprintf(env.Stderr, "npte container enter: tree not found: %s\n", tree)
-		fmt.Fprintf(env.Stderr, "npte container enter: create it with `npte container create %s'\n", nameFlag)
+		logAlways("npte container enter: tree not found: %s\n", tree)
+		logAlways("npte container enter: create it with `npte container create %s'\n", nameFlag)
 		env.Exit(1)
 	}
 
 	// Enter the container with systemd-nspawn
-	fmt.Fprintf(env.Stderr, "npte: enter container '%s' in namespace '%s'\n", nameFlag, ns)
+	logDetails("npte: enter container '%s' in namespace '%s'\n", nameFlag, ns)
 	nspawnArgs := []string{"-D", tree, "--network-namespace-path=" + nsp}
 	nspawnArgs = append(nspawnArgs, fset.Args()[1:]...)
 
-	fmt.Fprintf(env.Stderr, "npte: systemd-nspawn %s\n", strings.Join(nspawnArgs, " "))
+	logDetails("npte: systemd-nspawn %s\n", strings.Join(nspawnArgs, " "))
 
 	cmd := exec.CommandContext(ctx, "systemd-nspawn", nspawnArgs...)
 	cmd.Stdin = os.Stdin

@@ -35,16 +35,16 @@ func netCreateMain(ctx context.Context, args []string) error {
 	defer unlock()
 
 	// Load network state
-	fmt.Fprintf(env.Stderr, "npte: load network state from %s\n", netStatePath)
+	logDetails("npte: load network state from %s\n", netStatePath)
 	state := mustLoadNetState()
 
 	if err := validateEndpointName(state.Prefix, nameFlag); err != nil {
-		fmt.Fprintf(env.Stderr, "npte net create: %s\n", err)
+		logAlways("npte net create: %s\n", err)
 		env.Exit(2)
 	}
 
 	if _, exists := state.Hosts[nameFlag]; exists {
-		fmt.Fprintf(env.Stderr, "npte net create: host '%s' already exists\n", nameFlag)
+		logAlways("npte net create: host '%s' already exists\n", nameFlag)
 		env.Exit(1)
 	}
 
@@ -66,10 +66,10 @@ func netCreateMain(ctx context.Context, args []string) error {
 	ones, _ := ipNet.Mask.Size()
 	cidr := fmt.Sprintf("%d", ones)
 
-	fmt.Fprintf(env.Stderr, "npte: allocate subnet %s for endpoint '%s'\n", subnet, nameFlag)
+	logDetails("npte: allocate subnet %s for endpoint '%s'\n", subnet, nameFlag)
 
 	// Save state early so that `npte net destroy` can clean up partial initialization
-	fmt.Fprintf(env.Stderr, "npte: save updated state to %s\n", netStatePath)
+	logDetails("npte: save updated state to %s\n", netStatePath)
 	state.Hosts[nameFlag] = &hostState{
 		Name:   nameFlag,
 		Subnet: subnet,
@@ -78,32 +78,32 @@ func netCreateMain(ctx context.Context, args []string) error {
 	env.LogFatalOnError0(saveNetState(state))
 
 	// Create the endpoint namespace
-	fmt.Fprintf(env.Stderr, "npte: create network namespace '%s'\n", ns)
+	logDetails("npte: create network namespace '%s'\n", ns)
 	mustRun("ip netns add %s", ns)
 	mustRun("ip netns exec %s ip link set lo up", ns)
 
 	// Create veth pair and move to respective namespaces
-	fmt.Fprintf(env.Stderr, "npte: create veth pair %s <-> %s\n", endpointVeth, routerVeth)
+	logDetails("npte: create veth pair %s <-> %s\n", endpointVeth, routerVeth)
 	mustRun("ip link add %s type veth peer name %s", endpointVeth, routerVeth)
 	mustRun("ip link set %s netns %s", endpointVeth, ns)
 	mustRun("ip link set %s netns %s", routerVeth, routerNs)
 
 	// Configure endpoint side: address and default route via router
-	fmt.Fprintf(env.Stderr, "npte: configure endpoint side (%s/%s on %s)\n", endpointAddr, cidr, endpointVeth)
+	logDetails("npte: configure endpoint side (%s/%s on %s)\n", endpointAddr, cidr, endpointVeth)
 	mustRun("ip netns exec %s ip addr add %s/%s dev %s", ns, endpointAddr, cidr, endpointVeth)
 	mustRun("ip netns exec %s ip link set %s up", ns, endpointVeth)
 	mustRun("ip netns exec %s ip route add default via %s", ns, routerAddr)
 
 	// Configure router side: address on the router's end of the veth
-	fmt.Fprintf(env.Stderr, "npte: configure router side (%s/%s on %s)\n", routerAddr, cidr, routerVeth)
+	logDetails("npte: configure router side (%s/%s on %s)\n", routerAddr, cidr, routerVeth)
 	mustRun("ip netns exec %s ip addr add %s/%s dev %s", routerNs, routerAddr, cidr, routerVeth)
 	mustRun("ip netns exec %s ip link set %s up", routerNs, routerVeth)
 
 	// TCP buffer tuning for high bandwidth-delay product paths
-	fmt.Fprintf(env.Stderr, "npte: tune TCP buffer sizes inside '%s'\n", ns)
+	logDetails("npte: tune TCP buffer sizes inside '%s'\n", ns)
 	mustRun("ip netns exec %s sysctl -w net.ipv4.tcp_rmem='4096 131072 33554432'", ns)
 	mustRun("ip netns exec %s sysctl -w net.ipv4.tcp_wmem='4096 131072 33554432'", ns)
 
-	fmt.Fprintf(env.Stderr, "npte: created '%s' with address %s\n", nameFlag, endpointAddr)
+	logDetails("npte: created '%s' with address %s\n", nameFlag, endpointAddr)
 	return nil
 }

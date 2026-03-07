@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 
 	"github.com/bassosimone/runtimex"
@@ -36,25 +35,25 @@ func containerCreateMain(ctx context.Context, args []string) error {
 
 	pfx := mustLoadPrefix()
 	if err := validateEndpointName(pfx, nameFlag); err != nil {
-		fmt.Fprintf(env.Stderr, "npte container create: %s\n", err)
+		logAlways("npte container create: %s\n", err)
 		env.Exit(2)
 	}
 
 	tree := filepath.Join(".npte", "trees", nameFlag)
 	if _, err := env.Stat(tree); err == nil {
-		fmt.Fprintf(env.Stderr, "npte container create: tree already exists: %s\n", tree)
+		logAlways("npte container create: tree already exists: %s\n", tree)
 		env.Exit(1)
 	}
 
 	// Bootstrap the filesystem tree
-	fmt.Fprintf(env.Stderr, "npte: bootstrap '%s' filesystem tree at %s\n", suiteFlag, tree)
-	fmt.Fprintf(env.Stderr, "npte: ensure parent directory exists\n")
-	fmt.Fprintf(env.Stderr, "+ mkdir -p %s\n", filepath.Dir(tree))
+	logDetails("npte: bootstrap '%s' filesystem tree at %s\n", suiteFlag, tree)
+	logDetails("npte: ensure parent directory exists\n")
+	logDetails("+ mkdir -p %s\n", filepath.Dir(tree))
 	env.LogFatalOnError0(env.MkdirAll(filepath.Dir(tree), 0755))
 
-	fmt.Fprintf(env.Stderr, "npte: run debootstrap (this may take a while)\n")
+	logDetails("npte: run debootstrap (this may take a while)\n")
 	mustRun("debootstrap %s %s", suiteFlag, tree)
 
-	fmt.Fprintf(env.Stderr, "npte: container tree created at %s\n", tree)
+	logDetails("npte: container tree created at %s\n", tree)
 	return nil
 }

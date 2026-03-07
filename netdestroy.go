@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net"
 
 	"github.com/bassosimone/runtimex"
@@ -29,10 +28,10 @@ func netDestroyMain(ctx context.Context, args []string) error {
 	defer unlock()
 
 	// Load network state
-	fmt.Fprintf(env.Stderr, "npte: load network state from %s\n", netStatePath)
+	logDetails("npte: load network state from %s\n", netStatePath)
 	state, err := loadNetState()
 	if err != nil {
-		fmt.Fprintf(env.Stderr, "npte net destroy: cannot load network state: %s\n", err)
+		logAlways("npte net destroy: cannot load network state: %s\n", err)
 		env.Exit(1)
 	}
 
@@ -40,7 +39,7 @@ func netDestroyMain(ctx context.Context, args []string) error {
 
 	// Destroy all endpoints first
 	for _, hs := range state.Hosts {
-		fmt.Fprintf(env.Stderr, "npte: destroy endpoint '%s'\n", hs.Name)
+		logDetails("npte: destroy endpoint '%s'\n", hs.Name)
 		routerNs := nsName(pfx, "router")
 		routerVeth := pfx + "-" + hs.Name + "-r"
 		run("ip netns exec %s ip link del %s", routerNs, routerVeth)
@@ -48,26 +47,26 @@ func netDestroyMain(ctx context.Context, args []string) error {
 	}
 
 	// Destroy the router: remove iptables rules, veth, and namespace
-	fmt.Fprintf(env.Stderr, "npte: destroy router\n")
+	logDetails("npte: destroy router\n")
 	_, ipNet, err := net.ParseCIDR(state.RouterSubnet)
 	env.LogFatalOnError0(err)
 	insideAddr := ipWithOffset(ipNet, 2)
 	hostVeth := pfx + "-router-h"
 
-	fmt.Fprintf(env.Stderr, "npte: remove host NAT and FORWARD rules\n")
+	logDetails("npte: remove host NAT and FORWARD rules\n")
 	run("iptables -D FORWARD -o %s -j ACCEPT", hostVeth)
 	run("iptables -D FORWARD -i %s -j ACCEPT", hostVeth)
 	run("iptables -t nat -D POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
 
-	fmt.Fprintf(env.Stderr, "npte: remove host veth %s and router namespace\n", hostVeth)
+	logDetails("npte: remove host veth %s and router namespace\n", hostVeth)
 	run("ip link del %s", hostVeth)
 	run("ip netns del %s", nsName(pfx, "router"))
 
 	// Remove state file
-	fmt.Fprintf(env.Stderr, "npte: remove state file %s\n", netStatePath)
-	fmt.Fprintf(env.Stderr, "+ rm -f %s\n", netStatePath)
+	logDetails("npte: remove state file %s\n", netStatePath)
+	logDetails("+ rm -f %s\n", netStatePath)
 	env.Remove(netStatePath)
 
-	fmt.Fprintf(env.Stderr, "npte: network destroyed\n")
+	logDetails("npte: network destroyed\n")
 	return nil
 }

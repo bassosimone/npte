@@ -18,7 +18,7 @@ func run(format string, args ...any) error {
 		return err
 	}
 	runtimex.Assert(len(argv) > 0)
-	fmt.Fprintf(env.Stderr, "+ %s\n", cmdline)
+	logDetails("+ %s\n", cmdline)
 
 	cmd := exec.Command(argv[0], argv[1:]...)
 	cmd.Stdin = os.Stdin

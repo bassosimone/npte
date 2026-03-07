@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"os"
 	"os/exec"
@@ -36,10 +35,10 @@ func netRunMain(ctx context.Context, args []string) error {
 	nameFlag := fset.Args()[0]
 
 	// Load network state and resolve namespace path
-	fmt.Fprintf(env.Stderr, "npte: load network state from %s\n", netStatePath)
+	logDetails("npte: load network state from %s\n", netStatePath)
 	state := mustLoadNetState()
 	if err := validateEndpointName(state.Prefix, nameFlag); err != nil {
-		fmt.Fprintf(env.Stderr, "npte net run: %s\n", err)
+		logAlways("npte net run: %s\n", err)
 		env.Exit(2)
 	}
 	pfx := state.Prefix
@@ -48,16 +47,16 @@ func netRunMain(ctx context.Context, args []string) error {
 
 	sudoUser := os.Getenv("SUDO_USER")
 	if sudoUser == "" {
-		fmt.Fprintf(env.Stderr, "npte net run: $SUDO_USER is not set; this command must be run via sudo\n")
+		logAlways("npte net run: $SUDO_USER is not set; this command must be run via sudo\n")
 		env.Exit(1)
 	}
 
 	// Bernstein pipeline: nsenter enters the namespace, runuser drops privileges
-	fmt.Fprintf(env.Stderr, "npte: enter namespace '%s' as user '%s'\n", ns, sudoUser)
+	logDetails("npte: enter namespace '%s' as user '%s'\n", ns, sudoUser)
 	nsenterArgs := []string{"--net=" + nsp, "--", "runuser", "-u", sudoUser, "--"}
 	nsenterArgs = append(nsenterArgs, fset.Args()[1:]...)
 
-	fmt.Fprintf(env.Stderr, "npte: nsenter %s\n", strings.Join(nsenterArgs, " "))
+	logDetails("npte: nsenter %s\n", strings.Join(nsenterArgs, " "))
 
 	cmd := exec.CommandContext(ctx, "nsenter", nsenterArgs...)
 	cmd.Stdin = os.Stdin

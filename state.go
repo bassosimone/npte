@@ -39,14 +39,14 @@ var netStateLockPath = filepath.Join(".npte", "state", "net.lock")
 // mustLockNetState acquires the state lock file. The returned function
 // must be called to release the lock.
 func mustLockNetState() func() {
-	fmt.Fprintf(env.Stderr, "npte: acquire state lock %s\n", netStateLockPath)
+	logDetails("npte: acquire state lock %s\n", netStateLockPath)
 	unlock, err := env.LockFile(netStateLockPath)
 	if err != nil {
-		fmt.Fprintf(env.Stderr, "npte: cannot acquire state lock: %s\n", err)
+		logAlways("npte: cannot acquire state lock: %s\n", err)
 		env.Exit(1)
 	}
 	return func() {
-		fmt.Fprintf(env.Stderr, "npte: release state lock %s\n", netStateLockPath)
+		logDetails("npte: release state lock %s\n", netStateLockPath)
 		unlock()
 	}
 }
@@ -82,18 +82,18 @@ func mustLoadPrefix() string {
 	prefixPath := filepath.Join(".npte", "config", "name")
 	data, err := env.ReadFile(prefixPath)
 	if err != nil {
-		fmt.Fprintf(env.Stderr, "npte: cannot read %s: %s\n", prefixPath, err)
-		fmt.Fprintf(env.Stderr, "npte: run `npte init' first\n")
+		logAlways("npte: cannot read %s: %s\n", prefixPath, err)
+		logAlways("npte: run `npte init' first\n")
 		env.Exit(1)
 	}
 	pfx := strings.TrimSpace(string(data))
 	if err := validateIdent(pfx); err != nil {
-		fmt.Fprintf(env.Stderr, "npte: invalid prefix: %s\n", err)
+		logAlways("npte: invalid prefix: %s\n", err)
 		env.Exit(1)
 	}
 	// longest router interface name: pfx + "-router-h" (9 chars suffix)
 	if len(pfx)+9 > maxIfNameLen {
-		fmt.Fprintf(env.Stderr, "npte: prefix %q is too long (max %d chars)\n", pfx, maxIfNameLen-9)
+		logAlways("npte: prefix %q is too long (max %d chars)\n", pfx, maxIfNameLen-9)
 		env.Exit(1)
 	}
 	return pfx
@@ -138,8 +138,8 @@ func loadNetState() (*netState, error) {
 func mustLoadNetState() *netState {
 	ns, err := loadNetState()
 	if err != nil {
-		fmt.Fprintf(env.Stderr, "npte: cannot load network state: %s\n", err)
-		fmt.Fprintf(env.Stderr, "npte: run `npte net init' first\n")
+		logAlways("npte: cannot load network state: %s\n", err)
+		logAlways("npte: run `npte net init' first\n")
 		env.Exit(1)
 	}
 	return ns
