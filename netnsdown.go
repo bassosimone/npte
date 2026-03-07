@@ -55,8 +55,8 @@ func netnsDownMain(ctx context.Context, args []string) error {
 	hostVeth := proj + "-router-h"
 
 	logDetails("npte: remove host NAT and FORWARD rules\n")
-	run("iptables -D FORWARD -o %s -j ACCEPT", hostVeth)
-	run("iptables -D FORWARD -i %s -j ACCEPT", hostVeth)
+	run("iptables -D FORWARD -s %s/32 -j ACCEPT", insideAddr)
+	run("iptables -D FORWARD -d %s/32 -j ACCEPT", insideAddr)
 	run("iptables -t nat -D POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
 
 	logDetails("npte: remove host veth %s and router namespace\n", hostVeth)

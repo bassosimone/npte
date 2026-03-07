@@ -70,11 +70,15 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	mustRun("ip netns exec %s ip link set %s up", routerNs, insideVeth)
 	mustRun("ip netns exec %s ip route add default via %s", routerNs, hostAddr)
 
+	logDetails("npte: SNAT endpoint traffic to %s inside the router\n", insideAddr)
+	mustRun("ip netns exec %s iptables -t nat -A POSTROUTING -o %s -j SNAT --to-source %s",
+		routerNs, insideVeth, insideAddr)
+
 	logDetails("npte: enable host NAT and FORWARD rules for router traffic\n")
 	mustRun("sysctl -w net.ipv4.ip_forward=1")
 	mustRun("iptables -t nat -A POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
-	mustRun("iptables -I FORWARD -i %s -j ACCEPT", hostVeth)
-	mustRun("iptables -I FORWARD -o %s -j ACCEPT", hostVeth)
+	mustRun("iptables -I FORWARD -s %s/32 -j ACCEPT", insideAddr)
+	mustRun("iptables -I FORWARD -d %s/32 -j ACCEPT", insideAddr)
 
 	// Create all endpoint namespaces
 	for _, hs := range cfg.Hosts {
