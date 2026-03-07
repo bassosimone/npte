@@ -13,26 +13,23 @@ import (
 
 func netCreateMain(ctx context.Context, args []string) error {
 	// Parse command line flags
-	var nameFlag string
-
 	fset := vflag.NewFlagSet("npte net create", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Create a new network endpoint namespace connected to the central router. "+
 			"Automatically allocates a /24 subnet and configures a veth pair between "+
 			"the endpoint and the router namespace.",
+		"The <name> argument is the name of the network namespace to create.",
 		"This command must be run as root (e.g., via sudo).",
 	)
+	usage.PositionalArgumentsUsage = "<name>"
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
-	fset.StringVar(&nameFlag, 'n', "name", "The `NAME` of the endpoint to create.")
+	fset.MinPositionalArgs = 1
+	fset.MaxPositionalArgs = 1
 	runtimex.PanicOnError0(fset.Parse(args))
 
-	if nameFlag == "" {
-		fmt.Fprintf(env.Stderr, "npte net create: --name is required\n")
-		fmt.Fprintf(env.Stderr, "npte net create: try `npte net create --help' for more help.\n")
-		env.Exit(2)
-	}
+	nameFlag := fset.Args()[0]
 
 	unlock := mustLockNetState()
 	defer unlock()

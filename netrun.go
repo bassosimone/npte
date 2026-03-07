@@ -16,28 +16,24 @@ import (
 
 func netRunMain(ctx context.Context, args []string) error {
 	// Parse command line flags
-	var nameFlag string
-
 	fset := vflag.NewFlagSet("npte net run", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Run a command inside a network namespace. Uses nsenter to enter the namespace "+
-			"and runuser to drop back to the calling user's privileges.",
+		"Run a command inside a network namespace. The command runs with the privileges "+
+			"of the calling user (identified by $SUDO_USER), not as root.",
+		"The <name> argument is the name of the network namespace to enter. "+
+			"The <command> and optional [args...] are executed inside it.",
 		"This command must be run via sudo.",
 	)
-	usage.PositionalArgumentsUsage = "command [args...]"
+	usage.PositionalArgumentsUsage = "<name> <command> [args...]"
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
-	fset.StringVar(&nameFlag, 'n', "name", "The `NAME` of the host.")
+	fset.MinPositionalArgs = 2
 	fset.MaxPositionalArgs = math.MaxInt
 	fset.DisablePermute = true
 	runtimex.PanicOnError0(fset.Parse(args))
 
-	if nameFlag == "" || len(fset.Args()) <= 0 {
-		fmt.Fprintf(env.Stderr, "npte net run: --name and a command after '--' are required\n")
-		fmt.Fprintf(env.Stderr, "npte net run: try `npte net run --help' for more help.\n")
-		env.Exit(2)
-	}
+	nameFlag := fset.Args()[0]
 
 	// Load network state and resolve namespace path
 	fmt.Fprintf(env.Stderr, "npte: load network state from %s\n", netStatePath)
@@ -59,7 +55,7 @@ func netRunMain(ctx context.Context, args []string) error {
 	// Bernstein pipeline: nsenter enters the namespace, runuser drops privileges
 	fmt.Fprintf(env.Stderr, "npte: enter namespace '%s' as user '%s'\n", ns, sudoUser)
 	nsenterArgs := []string{"--net=" + nsp, "--", "runuser", "-u", sudoUser, "--"}
-	nsenterArgs = append(nsenterArgs, fset.Args()...)
+	nsenterArgs = append(nsenterArgs, fset.Args()[1:]...)
 
 	fmt.Fprintf(env.Stderr, "npte: nsenter %s\n", strings.Join(nsenterArgs, " "))
 

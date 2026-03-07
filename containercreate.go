@@ -13,10 +13,7 @@ import (
 
 func containerCreateMain(ctx context.Context, args []string) error {
 	// Parse command line flags
-	var (
-		nameFlag  string
-		suiteFlag = "noble"
-	)
+	var suiteFlag = "noble"
 
 	fset := vflag.NewFlagSet("npte container create", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
@@ -24,19 +21,18 @@ func containerCreateMain(ctx context.Context, args []string) error {
 		"Create a lightweight container filesystem tree using debootstrap. "+
 			"The tree is stored under .npte/trees/<name> and can later be entered "+
 			"with 'npte container enter'.",
+		"The <name> argument is the name of the network namespace whose filesystem tree to create.",
 		"This command must be run as root (e.g., via sudo).",
 	)
+	usage.PositionalArgumentsUsage = "<name>"
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
-	fset.StringVar(&nameFlag, 'n', "name", "The `NAME` of the host.")
-	fset.StringVar(&suiteFlag, 's', "suite", "The distribution `SUITE` to bootstrap (default: noble).")
+	fset.StringVar(&suiteFlag, 0, "suite", "The distribution `SUITE` to bootstrap (default: noble).")
+	fset.MinPositionalArgs = 1
+	fset.MaxPositionalArgs = 1
 	runtimex.PanicOnError0(fset.Parse(args))
 
-	if nameFlag == "" {
-		fmt.Fprintf(env.Stderr, "npte container create: --name is required\n")
-		fmt.Fprintf(env.Stderr, "npte container create: try `npte container create --help' for more help.\n")
-		env.Exit(2)
-	}
+	nameFlag := fset.Args()[0]
 
 	pfx := mustLoadPrefix()
 	if err := validateEndpointName(pfx, nameFlag); err != nil {
