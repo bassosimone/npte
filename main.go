@@ -31,6 +31,7 @@ func main() {
 	netnsDisp.AddCommand("up", vclip.CommandFunc(netnsUpMain), "Bring up the network from configuration.")
 	netnsDisp.AddCommand("down", vclip.CommandFunc(netnsDownMain), "Tear down the network.")
 	netnsDisp.AddCommand("run", vclip.CommandFunc(netnsRunMain), "Run a command inside a namespace.")
+	netnsDisp.AddCommand("show", vclip.CommandFunc(netnsShowMain), "Show the network topology.")
 
 	// Create dispatcher for `npte container`
 	containerDisp := vclip.NewDispatcherCommand("npte container", vflag.ExitOnError)

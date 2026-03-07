@@ -15,6 +15,7 @@ import (
 // so that commands can be tested without root, namespaces, or real I/O.
 type environ struct {
 	Exit             func(code int)
+	Stdout           io.Writer
 	Stderr           io.Writer
 	MkdirAll         func(path string, perm os.FileMode) error
 	ReadFile         func(name string) ([]byte, error)
@@ -30,6 +31,7 @@ type environ struct {
 func newEnvironOS() *environ {
 	return &environ{
 		Exit:       os.Exit,
+		Stdout:     os.Stdout,
 		Stderr:     os.Stderr,
 		MkdirAll:   os.MkdirAll,
 		ReadFile:   os.ReadFile,
