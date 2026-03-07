@@ -23,15 +23,17 @@ func main() {
 	// Create dispatcher for `npte netns`
 	netnsDisp := vclip.NewDispatcherCommand("npte netns", vflag.ExitOnError)
 	netnsDisp.AddDescription(
-		"Manage network namespaces arranged in a star topology around a central router. "+
-			"The router namespace is the only one with internet access via host NAT.",
-		"All subcommands must be run as root (e.g., via sudo).",
+		"Manage per-project network namespaces arranged in a star topology around a central router. "+
+			"The router namespace is the only one with internet access via host through NAT.",
+		"The configuration lives at:",
+		"    "+baseDir+"/<project>/config/netns.json",
 	)
 	netnsDisp.AddCommand("create", vclip.CommandFunc(netnsCreateMain), "Add a namespace to the configuration.")
-	netnsDisp.AddCommand("up", vclip.CommandFunc(netnsUpMain), "Bring up the network from configuration.")
-	netnsDisp.AddCommand("down", vclip.CommandFunc(netnsDownMain), "Tear down the network.")
+	netnsDisp.AddCommand("up", vclip.CommandFunc(netnsUpMain), "Bring up the configured namespaces.")
+	netnsDisp.AddCommand("down", vclip.CommandFunc(netnsDownMain), "Tear down the namespaces.")
 	netnsDisp.AddCommand("run", vclip.CommandFunc(netnsRunMain), "Run a command inside a namespace.")
 	netnsDisp.AddCommand("show", vclip.CommandFunc(netnsShowMain), "Show the network topology.")
+	netnsDisp.AddCommand("status", vclip.CommandFunc(netnsStatusMain), "Check whether the namespaces are up.")
 
 	// Create dispatcher for `npte container`
 	containerDisp := vclip.NewDispatcherCommand("npte container", vflag.ExitOnError)

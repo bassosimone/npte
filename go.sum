@@ -10,8 +10,8 @@ github.com/bassosimone/runtimex v0.0.0-20260108162100-336f3823f6b7 h1:9qKFMaKc84
 github.com/bassosimone/runtimex v0.0.0-20260108162100-336f3823f6b7/go.mod h1:GDr46yuJzuDkzOMI1/9Voo3s7VmYBU/6pkuaI5FR7gE=
 github.com/bassosimone/textwrap v0.0.0-20260116080944-4f25bc1114c3 h1:H7KlZ/cZAknT2+oIbsIw8KW6pL8llEeuyKE92lEZ5Oo=
 github.com/bassosimone/textwrap v0.0.0-20260116080944-4f25bc1114c3/go.mod h1:SroxjmxXkIVaeta+FgkXfDe0NJQ8of3HOTevtTvLsKA=
-github.com/bassosimone/vclip v0.0.0-20260213080241-21e4bf81529d h1:a0IYNt0ulXuWlb6vTzCUYJQ5/V/frFcT97FUgOvzgsk=
-github.com/bassosimone/vclip v0.0.0-20260213080241-21e4bf81529d/go.mod h1:LZqyIMDP4xJ+WBvZ4e0Fbh893IAh3rPqau3Bju3lolE=
+github.com/bassosimone/vclip v0.0.0-20260307133721-977dc994815e h1:GUVJPYMz3TKGxJD+EYbuFU1CaMxUNnxQQfjLoOljoQA=
+github.com/bassosimone/vclip v0.0.0-20260307133721-977dc994815e/go.mod h1:LZqyIMDP4xJ+WBvZ4e0Fbh893IAh3rPqau3Bju3lolE=
 github.com/bassosimone/vflag v0.0.0-20260212194245-b765f86a69b9 h1:2RcBOCovI2ko42QAFuJwJ6KWh5dhv14pVTSM1i+4fBI=
 github.com/bassosimone/vflag v0.0.0-20260212194245-b765f86a69b9/go.mod h1:tOFsTP6AexOUiWy7IfD3jwQiZorp6rixE/vIfd8b8wA=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
