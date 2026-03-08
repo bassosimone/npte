@@ -49,6 +49,10 @@ func projectCreateMain(ctx context.Context, args []string) error {
 	logDetails("+ mkdir -p %s\n", filepath.Join(pd, "trees"))
 	env.LogFatalOnError0(env.MkdirAll(filepath.Join(pd, "trees"), 0755))
 
+	rc := resolvConfPath(proj)
+	logDetails("npte: write default resolv.conf at %s\n", rc)
+	env.LogFatalOnError0(env.WriteFile(rc, []byte("nameserver 8.8.8.8\nnameserver 8.8.4.4\n"), 0644))
+
 	logDetails("npte: project %q created\n", proj)
 	return nil
 }

@@ -31,6 +31,11 @@ func lockPath(proj string) string {
 	return filepath.Join(baseDir, proj, "config", "netns.lock")
 }
 
+// resolvConfPath returns the path to the project's resolv.conf.
+func resolvConfPath(proj string) string {
+	return filepath.Join(baseDir, proj, "config", "resolv.conf")
+}
+
 // treePath returns the path to a container filesystem tree.
 func treePath(proj, name string) string {
 	return filepath.Join(baseDir, proj, "trees", name)

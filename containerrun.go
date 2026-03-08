@@ -7,10 +7,9 @@ import (
 	"math"
 	"os"
 	"os/exec"
-	"strings"
-
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
+	"github.com/kballard/go-shellquote"
 )
 
 func containerRunMain(ctx context.Context, args []string) error {
@@ -60,7 +59,7 @@ func containerRunMain(ctx context.Context, args []string) error {
 	nspawnArgs := []string{"-D", tree, "--network-namespace-path=" + nsp}
 	nspawnArgs = append(nspawnArgs, fset.Args()[2:]...)
 
-	logDetails("npte: systemd-nspawn %s\n", strings.Join(nspawnArgs, " "))
+	logDetails("+ systemd-nspawn %s\n", shellquote.Join(nspawnArgs...))
 
 	cmd := exec.CommandContext(ctx, "systemd-nspawn", nspawnArgs...)
 	cmd.Stdin = os.Stdin

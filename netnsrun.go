@@ -11,6 +11,7 @@ import (
 
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
+	"github.com/kballard/go-shellquote"
 )
 
 func netnsRunMain(ctx context.Context, args []string) error {
@@ -68,19 +69,28 @@ func netnsRunMain(ctx context.Context, args []string) error {
 		}
 	}
 
-	// Bernstein pipeline: nsenter enters the namespace, runuser sets the user,
-	// env sets environment variables (if any)
+	// Use systemd-run to:
+	// 1. enter the network namespace (NetworkNamespacePath)
+	// 2. overlay the project's resolv.conf (BindPaths)
+	// 3. drop privileges to the specified user (--uid)
+	// 4. set environment variables (--setenv)
 	logDetails("npte: enter namespace '%s' as user '%s'\n", ns, userFlag)
-	nsenterArgs := []string{"--net=" + nsp, "--", "runuser", "-u", userFlag, "--"}
-	if len(envFlags) > 0 {
-		nsenterArgs = append(nsenterArgs, "env")
-		nsenterArgs = append(nsenterArgs, envFlags...)
+	rc := resolvConfPath(proj)
+	sdArgs := []string{
+		"--pipe", "--quiet", "--collect",
+		"--property=NetworkNamespacePath=" + nsp,
+		"--property=BindPaths=" + rc + ":/etc/resolv.conf",
+		"--uid=" + userFlag,
 	}
-	nsenterArgs = append(nsenterArgs, fset.Args()[2:]...)
+	for _, ev := range envFlags {
+		sdArgs = append(sdArgs, "--setenv="+ev)
+	}
+	sdArgs = append(sdArgs, "--")
+	sdArgs = append(sdArgs, fset.Args()[2:]...)
 
-	logDetails("npte: nsenter %s\n", strings.Join(nsenterArgs, " "))
+	logDetails("+ systemd-run %s\n", shellquote.Join(sdArgs...))
 
-	cmd := exec.CommandContext(ctx, "nsenter", nsenterArgs...)
+	cmd := exec.CommandContext(ctx, "systemd-run", sdArgs...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

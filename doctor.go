@@ -22,8 +22,7 @@ var dependencies = []dependency{
 	{"tc", "iproute2"},
 	{"iptables", "iptables"},
 	{"sysctl", "procps"},
-	{"nsenter", "util-linux"},
-	{"runuser", "util-linux"},
+	{"systemd-run", "systemd"},
 	{"systemd-nspawn", "systemd-container"},
 	{"debootstrap", "debootstrap"},
 }
