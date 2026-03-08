@@ -45,6 +45,10 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	logDetails("npte: load config from %s", configPath(proj))
 	cfg := mustLoadNetnsConfig(proj)
 
+	// Ensure the BBR congestion control module is available
+	logDetails("npte: load tcp_bbr kernel module")
+	mustRunCmd(ctx, "modprobe tcp_bbr")
+
 	// Create the router namespace
 	routerNet := cfg.mustSubnet(0)
 

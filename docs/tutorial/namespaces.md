@@ -126,3 +126,15 @@ default 4–6 MB max would starve the connection. With 32 MB, npte can
 saturate links up to ~5 Gbit/s at 50 ms RTT or 1 Gbit/s at 250 ms RTT.
 
 The router namespace is not tuned — it only forwards packets.
+
+## BBR congestion control
+
+`npte netns up` loads the `tcp_bbr` kernel module via `modprobe tcp_bbr`.
+This makes BBR available as a congestion control algorithm for any socket
+in any namespace. The module stays loaded after `npte netns down` — this
+is harmless and avoids needing to track whether npte loaded it.
+
+BBR is not set as the system-wide default. Individual tools select it
+per-socket: for example, iperf3 uses `-C bbr`, and Go code can set
+`TCP_CONGESTION` via a `net.Dialer` control function. This keeps npte
+from affecting unrelated traffic on the host.
