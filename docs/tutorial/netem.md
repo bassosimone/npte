@@ -217,3 +217,17 @@ The "server" profile adds delay only — data center links run at
 
 Add a child qdisc (e.g., `fq_codel`) to control the buffering
 behavior. Without a child, netem uses its default FIFO.
+
+Packet loss is orthogonal to these profiles — it depends on path
+conditions, not the access link. Typical ranges:
+
+- **Well-provisioned wired paths** (fiber, broadband): effectively 0%.
+- **Cellular (3G/4G/5G)**: 0.1–1%; can spike during handovers or poor coverage.
+- **Congested or degraded paths**: 1–5%.
+- **Severely impaired**: 5%+; useful for stress testing.
+
+Even small loss rates (0.5–1%) devastate TCP throughput on high-BDP
+paths — CUBIC backs off aggressively. BBR is more resilient, which
+makes loss one of the most interesting variables to test with.
+Overlay loss on any profile using a separate `netem` rule on the
+appropriate interface (see the Packet loss section above).
