@@ -3,8 +3,16 @@
 This chapter explains how to simulate network conditions (latency, losses,
 rate limiting, packet batching) using the Linux `tc` and `netem` subsystems.
 
-npte does not have a built-in traffic shaping command. Instead, you run `tc`
-inside the appropriate namespace using `npte netns run --user root`.
+For the common case, use the convenience command:
+
+    sudo npte netem apply lab client --rtt 6ms --download 3mbit --upload 1mbit
+
+    sudo npte netem clear lab client
+
+For advanced usage (loss, packet batching, child qdiscs), run `tc`
+directly inside the appropriate namespace using `npte netns run --user root`.
+
+The rest of this chapter covers both approaches.
 
 ## TL;DR
 

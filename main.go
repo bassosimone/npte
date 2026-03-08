@@ -45,6 +45,17 @@ func main() {
 	containerDisp.AddCommand("create", vclip.CommandFunc(containerCreateMain), "Bootstrap a container filesystem tree.")
 	containerDisp.AddCommand("run", vclip.CommandFunc(containerRunMain), "Run a command inside a container.")
 
+	// Create dispatcher for `npte netem`
+	netemDisp := vclip.NewDispatcherCommand("npte netem", vflag.ExitOnError)
+	netemDisp.AddDescription(
+		"Apply or clear traffic shaping on a client's access link. "+
+			"Shapes both download and upload directions using tc/netem.",
+		"For advanced usage (loss, batching, child qdiscs), use tc directly. "+
+			"See 'npte tutorial netem' for the full reference.",
+	)
+	netemDisp.AddCommand("apply", vclip.CommandFunc(netemApplyMain), "Apply traffic shaping to a client.")
+	netemDisp.AddCommand("clear", vclip.CommandFunc(netemClearMain), "Remove traffic shaping from a client.")
+
 	// Create dispatcher for `npte`
 	disp := vclip.NewDispatcherCommand("npte", vflag.ExitOnError)
 	disp.AddDescription(
@@ -62,6 +73,7 @@ func main() {
 	disp.AddCommand("project", projectDisp, "Manage projects.")
 	disp.AddCommand("netns", netnsDisp, "Manage network namespaces.")
 	disp.AddCommand("container", containerDisp, "Manage lightweight containers.")
+	disp.AddCommand("netem", netemDisp, "Apply or clear traffic shaping.")
 
 	// Run the root dispatcher
 	vclip.Main(context.Background(), disp, os.Args[1:])
