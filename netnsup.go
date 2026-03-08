@@ -37,7 +37,7 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	defer unlock()
 
 	// Load config
-	logDetails("npte: load config from %s\n", configPath(proj))
+	logDetails("npte: load config from %s", configPath(proj))
 	cfg := mustLoadNetnsConfig(proj)
 
 	// Create the router namespace
@@ -52,37 +52,37 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	ones, _ := routerNet.Mask.Size()
 	cidr := fmt.Sprintf("%d", ones)
 
-	logDetails("npte: create router namespace: %s\n", routerNs)
-	mustRunCmd(ctx,"ip netns add %s", routerNs)
-	mustRunCmd(ctx,"ip netns exec %s ip link set lo up", routerNs)
-	mustRunCmd(ctx,"ip netns exec %s sysctl -w net.ipv4.ip_forward=1", routerNs)
+	logDetails("npte: create router namespace: %s", routerNs)
+	mustRunCmd(ctx, "ip netns add %s", routerNs)
+	mustRunCmd(ctx, "ip netns exec %s ip link set lo up", routerNs)
+	mustRunCmd(ctx, "ip netns exec %s sysctl -w net.ipv4.ip_forward=1", routerNs)
 
-	logDetails("npte: create veth pair %s <-> %s\n", hostVeth, insideVeth)
-	mustRunCmd(ctx,"ip link add %s type veth peer name %s", hostVeth, insideVeth)
-	mustRunCmd(ctx,"ip link set %s netns %s", insideVeth, routerNs)
+	logDetails("npte: create veth pair %s <-> %s", hostVeth, insideVeth)
+	mustRunCmd(ctx, "ip link add %s type veth peer name %s", hostVeth, insideVeth)
+	mustRunCmd(ctx, "ip link set %s netns %s", insideVeth, routerNs)
 
-	logDetails("npte: configure host side (%s/%s on %s)\n", hostAddr, cidr, hostVeth)
-	mustRunCmd(ctx,"ip addr add %s/%s dev %s", hostAddr, cidr, hostVeth)
-	mustRunCmd(ctx,"ip link set %s up", hostVeth)
+	logDetails("npte: configure host side (%s/%s on %s)", hostAddr, cidr, hostVeth)
+	mustRunCmd(ctx, "ip addr add %s/%s dev %s", hostAddr, cidr, hostVeth)
+	mustRunCmd(ctx, "ip link set %s up", hostVeth)
 
-	logDetails("npte: configure router side (%s/%s on %s)\n", insideAddr, cidr, insideVeth)
-	mustRunCmd(ctx,"ip netns exec %s ip addr add %s/%s dev %s", routerNs, insideAddr, cidr, insideVeth)
-	mustRunCmd(ctx,"ip netns exec %s ip link set %s up", routerNs, insideVeth)
-	mustRunCmd(ctx,"ip netns exec %s ip route add default via %s", routerNs, hostAddr)
+	logDetails("npte: configure router side (%s/%s on %s)", insideAddr, cidr, insideVeth)
+	mustRunCmd(ctx, "ip netns exec %s ip addr add %s/%s dev %s", routerNs, insideAddr, cidr, insideVeth)
+	mustRunCmd(ctx, "ip netns exec %s ip link set %s up", routerNs, insideVeth)
+	mustRunCmd(ctx, "ip netns exec %s ip route add default via %s", routerNs, hostAddr)
 
-	logDetails("npte: SNAT endpoint traffic to %s inside the router\n", insideAddr)
-	mustRunCmd(ctx,"ip netns exec %s iptables -t nat -A POSTROUTING -o %s -j SNAT --to-source %s",
+	logDetails("npte: SNAT endpoint traffic to %s inside the router", insideAddr)
+	mustRunCmd(ctx, "ip netns exec %s iptables -t nat -A POSTROUTING -o %s -j SNAT --to-source %s",
 		routerNs, insideVeth, insideAddr)
 
-	logDetails("npte: enable host NAT and FORWARD rules for router traffic\n")
-	mustRunCmd(ctx,"sysctl -w net.ipv4.ip_forward=1")
-	mustRunCmd(ctx,"iptables -t nat -A POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
-	mustRunCmd(ctx,"iptables -I FORWARD -s %s/32 -j ACCEPT", insideAddr)
-	mustRunCmd(ctx,"iptables -I FORWARD -d %s/32 -j ACCEPT", insideAddr)
+	logDetails("npte: enable host NAT and FORWARD rules for router traffic")
+	mustRunCmd(ctx, "sysctl -w net.ipv4.ip_forward=1")
+	mustRunCmd(ctx, "iptables -t nat -A POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
+	mustRunCmd(ctx, "iptables -I FORWARD -s %s/32 -j ACCEPT", insideAddr)
+	mustRunCmd(ctx, "iptables -I FORWARD -d %s/32 -j ACCEPT", insideAddr)
 
 	// Create all endpoint namespaces
 	for _, hs := range cfg.Hosts {
-		logDetails("npte: create endpoint %q\n", hs.Name)
+		logDetails("npte: create endpoint %q", hs.Name)
 
 		_, ipNet, err := net.ParseCIDR(hs.Subnet)
 		env.LogFatalOnError0(err)
@@ -95,26 +95,26 @@ func netnsUpMain(ctx context.Context, args []string) error {
 		ones, _ := ipNet.Mask.Size()
 		cidr := fmt.Sprintf("%d", ones)
 
-		mustRunCmd(ctx,"ip netns add %s", ns)
-		mustRunCmd(ctx,"ip netns exec %s ip link set lo up", ns)
+		mustRunCmd(ctx, "ip netns add %s", ns)
+		mustRunCmd(ctx, "ip netns exec %s ip link set lo up", ns)
 
-		mustRunCmd(ctx,"ip link add %s type veth peer name %s", endpointVeth, routerVeth)
-		mustRunCmd(ctx,"ip link set %s netns %s", endpointVeth, ns)
-		mustRunCmd(ctx,"ip link set %s netns %s", routerVeth, routerNs)
+		mustRunCmd(ctx, "ip link add %s type veth peer name %s", endpointVeth, routerVeth)
+		mustRunCmd(ctx, "ip link set %s netns %s", endpointVeth, ns)
+		mustRunCmd(ctx, "ip link set %s netns %s", routerVeth, routerNs)
 
-		mustRunCmd(ctx,"ip netns exec %s ip addr add %s/%s dev %s", ns, endpointAddr, cidr, endpointVeth)
-		mustRunCmd(ctx,"ip netns exec %s ip link set %s up", ns, endpointVeth)
-		mustRunCmd(ctx,"ip netns exec %s ip route add default via %s", ns, routerAddr)
+		mustRunCmd(ctx, "ip netns exec %s ip addr add %s/%s dev %s", ns, endpointAddr, cidr, endpointVeth)
+		mustRunCmd(ctx, "ip netns exec %s ip link set %s up", ns, endpointVeth)
+		mustRunCmd(ctx, "ip netns exec %s ip route add default via %s", ns, routerAddr)
 
-		mustRunCmd(ctx,"ip netns exec %s ip addr add %s/%s dev %s", routerNs, routerAddr, cidr, routerVeth)
-		mustRunCmd(ctx,"ip netns exec %s ip link set %s up", routerNs, routerVeth)
+		mustRunCmd(ctx, "ip netns exec %s ip addr add %s/%s dev %s", routerNs, routerAddr, cidr, routerVeth)
+		mustRunCmd(ctx, "ip netns exec %s ip link set %s up", routerNs, routerVeth)
 
-		mustRunCmd(ctx,"ip netns exec %s sysctl -w net.ipv4.tcp_rmem='4096 131072 33554432'", ns)
-		mustRunCmd(ctx,"ip netns exec %s sysctl -w net.ipv4.tcp_wmem='4096 131072 33554432'", ns)
+		mustRunCmd(ctx, "ip netns exec %s sysctl -w net.ipv4.tcp_rmem='4096 131072 33554432'", ns)
+		mustRunCmd(ctx, "ip netns exec %s sysctl -w net.ipv4.tcp_wmem='4096 131072 33554432'", ns)
 
-		logDetails("npte: created %q with address %s\n", hs.Name, endpointAddr)
+		logDetails("npte: created %q with address %s", hs.Name, endpointAddr)
 	}
 
-	logDetails("npte: network is up\n")
+	logDetails("npte: network is up")
 	return nil
 }

@@ -42,8 +42,8 @@ func tutorialMain(ctx context.Context, args []string) error {
 
 	content, err := tutorialFS.ReadFile(filename)
 	if err != nil {
-		logAlways("npte tutorial: unknown chapter %q\n", fset.Args()[0])
-		logAlways("npte tutorial: available chapters: quickstart, namespaces, containers, netem, browser\n")
+		logError("npte tutorial: unknown chapter %q", fset.Args()[0])
+		logError("npte tutorial: available chapters: quickstart, namespaces, containers, netem, browser")
 		env.Exit(1)
 	}
 

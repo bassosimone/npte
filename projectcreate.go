@@ -32,27 +32,27 @@ func projectCreateMain(ctx context.Context, args []string) error {
 	// Get the project directory
 	proj := fset.Args()[0]
 	if err := validateProject(proj); err != nil {
-		logAlways("npte project create: %s\n", err)
+		logError("npte project create: %s", err)
 		env.Exit(2)
 	}
 
 	pd := projectDir(proj)
 	if _, err := env.Stat(pd); err == nil {
-		logAlways("npte project create: project already exists: %s\n", pd)
+		logError("npte project create: project already exists: %s", pd)
 		env.Exit(1)
 	}
 
 	// Populate the project directory
-	logDetails("npte: create project skeleton at %s\n", pd)
-	logDetails("+ mkdir -p %s\n", filepath.Join(pd, "config"))
+	logDetails("npte: create project skeleton at %s", pd)
+	logCommand("mkdir -p %s", filepath.Join(pd, "config"))
 	env.LogFatalOnError0(env.MkdirAll(filepath.Join(pd, "config"), 0755))
-	logDetails("+ mkdir -p %s\n", filepath.Join(pd, "trees"))
+	logCommand("mkdir -p %s", filepath.Join(pd, "trees"))
 	env.LogFatalOnError0(env.MkdirAll(filepath.Join(pd, "trees"), 0755))
 
 	rc := resolvConfPath(proj)
-	logDetails("npte: write default resolv.conf at %s\n", rc)
+	logDetails("npte: write default resolv.conf at %s", rc)
 	env.LogFatalOnError0(env.WriteFile(rc, []byte("nameserver 8.8.8.8\nnameserver 8.8.4.4\n"), 0644))
 
-	logDetails("npte: project %q created\n", proj)
+	logDetails("npte: project %q created", proj)
 	return nil
 }

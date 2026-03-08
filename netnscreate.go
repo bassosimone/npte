@@ -34,18 +34,18 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	nameFlag := fset.Args()[1]
 
 	if err := validateProject(proj); err != nil {
-		logAlways("npte netns create: %s\n", err)
+		logError("npte netns create: %s", err)
 		env.Exit(2)
 	}
 	if err := validateEndpointName(proj, nameFlag); err != nil {
-		logAlways("npte netns create: %s\n", err)
+		logError("npte netns create: %s", err)
 		env.Exit(2)
 	}
 
 	// Verify the project directory exists
 	if _, err := env.Stat(projectDir(proj)); os.IsNotExist(err) {
-		logAlways("npte netns create: project %q not found\n", proj)
-		logAlways("npte netns create: run `npte project create %s' first\n", proj)
+		logError("npte netns create: project %q not found", proj)
+		logError("npte netns create: run `npte project create %s' first", proj)
 		env.Exit(1)
 	}
 
@@ -56,7 +56,7 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	cfg, err := loadNetnsConfig(proj)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			logAlways("npte netns create: cannot load config: %s\n", err)
+			logError("npte netns create: cannot load config: %s", err)
 			env.Exit(1)
 		}
 		cfg = &netnsConfig{
@@ -67,13 +67,13 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	}
 
 	if _, exists := cfg.Hosts[nameFlag]; exists {
-		logAlways("npte netns create: host %q already exists\n", nameFlag)
+		logError("npte netns create: host %q already exists", nameFlag)
 		env.Exit(1)
 	}
 
 	// Allocate subnet
 	subnet := fmt.Sprintf("10.0.%d.0/24", cfg.NextSubnetIndex)
-	logDetails("npte: allocate subnet %s for host %q\n", subnet, nameFlag)
+	logDetails("npte: allocate subnet %s for host %q", subnet, nameFlag)
 
 	cfg.Hosts[nameFlag] = &hostConfig{
 		Name:   nameFlag,
@@ -81,10 +81,10 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	}
 	cfg.NextSubnetIndex++
 
-	logDetails("npte: save config to %s\n", configPath(proj))
+	logDetails("npte: save config to %s", configPath(proj))
 	env.LogFatalOnError0(saveNetnsConfig(proj, cfg))
 
-	logDetails("npte: added host %q to config (subnet %s)\n", nameFlag, subnet)
-	logDetails("npte: run `npte netns up %s' to create the network namespaces\n", proj)
+	logDetails("npte: added host %q to config (subnet %s)", nameFlag, subnet)
+	logDetails("npte: run `npte netns up %s' to create the network namespaces", proj)
 	return nil
 }

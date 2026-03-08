@@ -45,24 +45,24 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	nameFlag := fset.Args()[1]
 
 	// Load config and resolve namespace path
-	logDetails("npte: load config from %s\n", configPath(proj))
+	logDetails("npte: load config from %s", configPath(proj))
 	cfg := mustLoadNetnsConfig(proj)
 	if err := validateEndpointName(cfg.Project, nameFlag); err != nil {
-		logAlways("npte netns run: %s\n", err)
+		logError("npte netns run: %s", err)
 		env.Exit(2)
 	}
 	ns := nsName(proj, nameFlag)
 	nsp := nsPath(proj, nameFlag)
 
 	if userFlag == "" {
-		logAlways("npte netns run: no user specified; use --user or run via sudo\n")
+		logError("npte netns run: no user specified; use --user or run via sudo")
 		env.Exit(1)
 	}
 
 	// Validate -e flags
 	for _, ev := range envFlags {
 		if !strings.Contains(ev, "=") {
-			logAlways("npte netns run: -e value must be KEY=VALUE, got %q\n", ev)
+			logError("npte netns run: -e value must be KEY=VALUE, got %q", ev)
 			env.Exit(2)
 		}
 	}
@@ -72,7 +72,7 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	// 2. overlay the project's resolv.conf (BindPaths)
 	// 3. drop privileges to the specified user (--uid)
 	// 4. set environment variables (--setenv)
-	logDetails("npte: enter namespace '%s' as user '%s'\n", ns, userFlag)
+	logDetails("npte: enter namespace '%s' as user '%s'", ns, userFlag)
 	rc := resolvConfPath(proj)
 	sdArgs := []string{
 		"--pipe", "--quiet", "--collect",

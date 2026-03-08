@@ -65,15 +65,15 @@ type hostConfig struct {
 // must be called to release the lock.
 func mustLockNetnsConfig(proj string) func() {
 	lp := lockPath(proj)
-	logDetails("npte: acquire config lock %s\n", lp)
+	logDetails("npte: acquire config lock %s", lp)
 	env.LogFatalOnError0(env.MkdirAll(filepath.Dir(lp), 0755))
 	unlock, err := env.LockFile(lp)
 	if err != nil {
-		logAlways("npte: cannot acquire config lock: %s\n", err)
+		logError("npte: cannot acquire config lock: %s", err)
 		env.Exit(1)
 	}
 	return func() {
-		logDetails("npte: release config lock %s\n", lp)
+		logDetails("npte: release config lock %s", lp)
 		unlock()
 	}
 }
@@ -156,8 +156,8 @@ func loadNetnsConfig(proj string) (*netnsConfig, error) {
 func mustLoadNetnsConfig(proj string) *netnsConfig {
 	cfg, err := loadNetnsConfig(proj)
 	if err != nil {
-		logAlways("npte: cannot load netns config: %s\n", err)
-		logAlways("npte: have you run `npte project create' and `npte netns create'?\n")
+		logError("npte: cannot load netns config: %s", err)
+		logError("npte: have you run `npte project create' and `npte netns create'?")
 		env.Exit(1)
 	}
 	return cfg

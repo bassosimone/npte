@@ -35,34 +35,34 @@ func netnsDownMain(ctx context.Context, args []string) error {
 	defer unlock()
 
 	// Load config
-	logDetails("npte: load config from %s\n", configPath(proj))
+	logDetails("npte: load config from %s", configPath(proj))
 	cfg := mustLoadNetnsConfig(proj)
 
 	// Destroy all endpoints first
 	for _, hs := range cfg.Hosts {
-		logDetails("npte: destroy endpoint %q\n", hs.Name)
+		logDetails("npte: destroy endpoint %q", hs.Name)
 		routerNs := nsName(proj, "router")
 		routerVeth := proj + "-" + hs.Name + "-r"
-		runCmd(ctx,"ip netns exec %s ip link del %s", routerNs, routerVeth)
-		runCmd(ctx,"ip netns del %s", nsName(proj, hs.Name))
+		runCmd(ctx, "ip netns exec %s ip link del %s", routerNs, routerVeth)
+		runCmd(ctx, "ip netns del %s", nsName(proj, hs.Name))
 	}
 
 	// Destroy the router
-	logDetails("npte: destroy router\n")
+	logDetails("npte: destroy router")
 	_, routerNet, err := net.ParseCIDR(routerSubnet)
 	env.LogFatalOnError0(err)
 	insideAddr := ipWithOffset(routerNet, 2)
 	hostVeth := proj + "-router-h"
 
-	logDetails("npte: remove host NAT and FORWARD rules\n")
-	runCmd(ctx,"iptables -D FORWARD -s %s/32 -j ACCEPT", insideAddr)
-	runCmd(ctx,"iptables -D FORWARD -d %s/32 -j ACCEPT", insideAddr)
-	runCmd(ctx,"iptables -t nat -D POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
+	logDetails("npte: remove host NAT and FORWARD rules")
+	runCmd(ctx, "iptables -D FORWARD -s %s/32 -j ACCEPT", insideAddr)
+	runCmd(ctx, "iptables -D FORWARD -d %s/32 -j ACCEPT", insideAddr)
+	runCmd(ctx, "iptables -t nat -D POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
 
-	logDetails("npte: remove host veth %s and router namespace\n", hostVeth)
-	runCmd(ctx,"ip link del %s", hostVeth)
-	runCmd(ctx,"ip netns del %s", nsName(proj, "router"))
+	logDetails("npte: remove host veth %s and router namespace", hostVeth)
+	runCmd(ctx, "ip link del %s", hostVeth)
+	runCmd(ctx, "ip netns del %s", nsName(proj, "router"))
 
-	logDetails("npte: network is down\n")
+	logDetails("npte: network is down")
 	return nil
 }

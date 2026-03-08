@@ -8,6 +8,7 @@ import (
 	"os/exec"
 
 	"github.com/bassosimone/runtimex"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/rogpeppe/go-internal/lockedfile"
 )
 
@@ -17,6 +18,7 @@ type environ struct {
 	Exit             func(code int)
 	Stdout           io.Writer
 	Stderr           io.Writer
+	LogRenderer      *lipgloss.Renderer
 	MkdirAll         func(path string, perm os.FileMode) error
 	ReadFile         func(name string) ([]byte, error)
 	WriteFile        func(name string, data []byte, perm os.FileMode) error
@@ -31,16 +33,17 @@ type environ struct {
 // newEnvironOS returns an environ wired to real OS operations.
 func newEnvironOS() *environ {
 	return &environ{
-		Exit:       os.Exit,
-		Stdout:     os.Stdout,
-		Stderr:     os.Stderr,
-		MkdirAll:   os.MkdirAll,
-		ReadFile:   os.ReadFile,
-		WriteFile:  os.WriteFile,
-		Stat:       os.Stat,
-		Remove:     os.Remove,
-		RunCommand: func(cmd *exec.Cmd) error { return cmd.Run() },
-		LookPath:   exec.LookPath,
+		Exit:        os.Exit,
+		Stdout:      os.Stdout,
+		Stderr:      os.Stderr,
+		LogRenderer: lipgloss.NewRenderer(os.Stderr),
+		MkdirAll:    os.MkdirAll,
+		ReadFile:    os.ReadFile,
+		WriteFile:   os.WriteFile,
+		Stat:        os.Stat,
+		Remove:      os.Remove,
+		RunCommand:  func(cmd *exec.Cmd) error { return cmd.Run() },
+		LookPath:    exec.LookPath,
 		LockFile: func(path string) (func(), error) {
 			return lockedfile.MutexAt(path).Lock()
 		},

@@ -14,7 +14,7 @@ import (
 
 func runArgs(ctx context.Context, argv0 string, args ...string) error {
 	argv := append([]string{argv0}, args...)
-	logDetails("+ %s\n", shellquote.Join(argv...))
+	logCommand("%s", shellquote.Join(argv...))
 
 	cmd := exec.CommandContext(ctx, argv0, args...)
 	cmd.Stdin = os.Stdin
@@ -35,7 +35,7 @@ func runCmd(ctx context.Context, format string, args ...any) error {
 		return err
 	}
 	runtimex.Assert(len(argv) > 0)
-	logDetails("+ %s\n", cmdline)
+	logCommand("%s", cmdline)
 
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
 	cmd.Stdin = os.Stdin

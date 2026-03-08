@@ -36,10 +36,10 @@ func containerRunMain(ctx context.Context, args []string) error {
 	nameFlag := fset.Args()[1]
 
 	// Load config and resolve namespace path
-	logDetails("npte: load config from %s\n", configPath(proj))
+	logDetails("npte: load config from %s", configPath(proj))
 	cfg := mustLoadNetnsConfig(proj)
 	if err := validateEndpointName(cfg.Project, nameFlag); err != nil {
-		logAlways("npte container run: %s\n", err)
+		logError("npte container run: %s", err)
 		env.Exit(2)
 	}
 	ns := nsName(proj, nameFlag)
@@ -48,13 +48,13 @@ func containerRunMain(ctx context.Context, args []string) error {
 	// Verify the filesystem tree exists
 	tree := treePath(proj, nameFlag)
 	if _, err := env.Stat(tree); os.IsNotExist(err) {
-		logAlways("npte container run: tree not found: %s\n", tree)
-		logAlways("npte container run: create it with `npte container create %s %s'\n", proj, nameFlag)
+		logError("npte container run: tree not found: %s", tree)
+		logError("npte container run: create it with `npte container create %s %s'", proj, nameFlag)
 		env.Exit(1)
 	}
 
 	// Run inside the container with systemd-nspawn
-	logDetails("npte: run in container '%s' in namespace '%s'\n", nameFlag, ns)
+	logDetails("npte: run in container '%s' in namespace '%s'", nameFlag, ns)
 	nspawnArgs := []string{"-D", tree, "--network-namespace-path=" + nsp}
 	nspawnArgs = append(nspawnArgs, fset.Args()[2:]...)
 
