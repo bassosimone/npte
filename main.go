@@ -48,10 +48,14 @@ func main() {
 	// Create dispatcher for `npte`
 	disp := vclip.NewDispatcherCommand("npte", vflag.ExitOnError)
 	disp.AddDescription(
-		"Network Performance Testing Environment (npte).",
-		"Creates isolated network namespaces connected through a central router, "+
-			"with the ability to bind the namespaces to lightweight containers run using systemd-nspawn(1).",
-		"Namespaces are project-scoped. Per-project configuration is stored under "+baseDir+"/<project>/.",
+		"Network Performance Testing Environment (npte). "+
+			"Test network client performance under realistic conditions using isolated "+
+			"namespaces, traffic shaping, and optional lightweight containers.",
+		"Creates a star topology of network namespaces around a central router. "+
+			"Shape the client's access link with tc/netem to simulate real-world conditions. "+
+			"Run commands directly in namespaces or inside systemd-nspawn containers.",
+		"Run 'npte tutorial' for a complete walkthrough. "+
+			"Namespaces are project-scoped; configuration is stored under "+baseDir+"/<project>/.",
 	)
 	disp.AddCommand("doctor", vclip.CommandFunc(doctorMain), "Check for required external commands.")
 	disp.AddCommand("tutorial", vclip.CommandFunc(tutorialMain), "Show the npte tutorials.")
