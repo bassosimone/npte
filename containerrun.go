@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"os"
 
@@ -49,12 +50,12 @@ func containerRunMain(ctx context.Context, args []string) error {
 	tree := treePath(proj, nameFlag)
 	if _, err := env.Stat(tree); os.IsNotExist(err) {
 		logError("npte container run: tree not found: %s", tree)
-		logError("npte container run: create it with `npte container create %s %s'", proj, nameFlag)
+		logError("npte container run: create it with %q", fmt.Sprintf("npte container create %s %s", proj, nameFlag))
 		env.Exit(1)
 	}
 
 	// Run inside the container with systemd-nspawn
-	logDetails("npte: run in container '%s' in namespace '%s'", nameFlag, ns)
+	logDetails("npte: run in container %q in namespace %q", nameFlag, ns)
 	nspawnArgs := []string{"-D", tree, "--network-namespace-path=" + nsp}
 	nspawnArgs = append(nspawnArgs, fset.Args()[2:]...)
 

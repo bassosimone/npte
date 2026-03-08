@@ -72,7 +72,7 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	// 2. overlay the project's resolv.conf (BindPaths)
 	// 3. drop privileges to the specified user (--uid)
 	// 4. set environment variables (--setenv)
-	logDetails("npte: enter namespace '%s' as user '%s'", ns, userFlag)
+	logDetails("npte: enter namespace %q as user %q", ns, userFlag)
 	rc := resolvConfPath(proj)
 	sdArgs := []string{
 		"--pipe", "--quiet", "--collect",

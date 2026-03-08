@@ -52,7 +52,7 @@ func containerCreateMain(ctx context.Context, args []string) error {
 	}
 
 	// Bootstrap the filesystem tree
-	logDetails("npte: bootstrap '%s' filesystem tree at %s", suiteFlag, tree)
+	logDetails("npte: bootstrap %q filesystem tree at %s", suiteFlag, tree)
 	logDetails("npte: ensure parent directory exists")
 	logCommand("mkdir -p %s", filepath.Dir(tree))
 	env.LogFatalOnError0(env.MkdirAll(filepath.Dir(tree), 0755))

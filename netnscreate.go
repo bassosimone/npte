@@ -45,7 +45,7 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	// Verify the project directory exists
 	if _, err := env.Stat(projectDir(proj)); os.IsNotExist(err) {
 		logError("npte netns create: project %q not found", proj)
-		logError("npte netns create: run `npte project create %s' first", proj)
+		logError("npte netns create: run %q first", fmt.Sprintf("npte project create %s", proj))
 		env.Exit(1)
 	}
 
@@ -85,6 +85,6 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	env.LogFatalOnError0(saveNetnsConfig(proj, cfg))
 
 	logDetails("npte: added host %q to config (subnet %s)", nameFlag, subnet)
-	logDetails("npte: run `npte netns up %s' to create the network namespaces", proj)
+	logDetails("npte: run %q to create the network namespaces", fmt.Sprintf("npte netns up %s", proj))
 	return nil
 }

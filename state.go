@@ -157,7 +157,7 @@ func mustLoadNetnsConfig(proj string) *netnsConfig {
 	cfg, err := loadNetnsConfig(proj)
 	if err != nil {
 		logError("npte: cannot load netns config: %s", err)
-		logError("npte: have you run `npte project create' and `npte netns create'?")
+		logError("npte: have you run %q and %q?", "npte project create", "npte netns create")
 		env.Exit(1)
 	}
 	return cfg
