@@ -202,6 +202,25 @@ func saveNetnsConfig(proj string, cfg *netnsConfig) error {
 	return env.WriteFile(cp, append(data, '\n'), 0644)
 }
 
+// validateNetnsConfig checks that the loaded config has valid fields.
+func validateNetnsConfig(proj string, cfg *netnsConfig) error {
+	if _, err := validatePrefix(cfg.Prefix); err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
+	if cfg.NextSubnetIndex < 1 || cfg.NextSubnetIndex > 256 {
+		return fmt.Errorf("config: next_subnet_index %d out of range (1-256)", cfg.NextSubnetIndex)
+	}
+	for name, hs := range cfg.Hosts {
+		if err := validateEndpointName(proj, name); err != nil {
+			return fmt.Errorf("config: host %q: %w", name, err)
+		}
+		if hs.SubnetIndex < 1 || hs.SubnetIndex > 255 {
+			return fmt.Errorf("config: host %q: subnet_index %d out of range (1-255)", name, hs.SubnetIndex)
+		}
+	}
+	return nil
+}
+
 // loadNetnsConfig reads the network config from disk.
 func loadNetnsConfig(proj string) (*netnsConfig, error) {
 	data, err := env.ReadFile(configPath(proj))
@@ -210,6 +229,9 @@ func loadNetnsConfig(proj string) (*netnsConfig, error) {
 	}
 	cfg := &netnsConfig{}
 	if err := json.Unmarshal(data, cfg); err != nil {
+		return nil, err
+	}
+	if err := validateNetnsConfig(proj, cfg); err != nil {
 		return nil, err
 	}
 	return cfg, nil
