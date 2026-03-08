@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"net"
 
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
@@ -50,8 +49,7 @@ func netnsDownMain(ctx context.Context, args []string) error {
 
 	// Destroy the router
 	logDetails("npte: destroy router")
-	_, routerNet, err := net.ParseCIDR(routerSubnet)
-	env.LogFatalOnError0(err)
+	routerNet := cfg.mustSubnet(0)
 	insideAddr := ipWithOffset(routerNet, 2)
 	hostVeth := proj + "-router-h"
 

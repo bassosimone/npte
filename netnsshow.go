@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net"
 
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
@@ -35,8 +34,7 @@ func netnsShowMain(ctx context.Context, args []string) error {
 
 	// Print endpoint rows
 	for _, hs := range cfg.Hosts {
-		_, ipNet, err := net.ParseCIDR(hs.Subnet)
-		env.LogFatalOnError0(err)
+		ipNet := cfg.mustSubnet(hs.SubnetIndex)
 		ones, _ := ipNet.Mask.Size()
 
 		endpointAddr := ipWithOffset(ipNet, 2)
@@ -52,8 +50,7 @@ func netnsShowMain(ctx context.Context, args []string) error {
 	}
 
 	// Print router host-facing row
-	_, routerNet, err := net.ParseCIDR(routerSubnet)
-	env.LogFatalOnError0(err)
+	routerNet := cfg.mustSubnet(0)
 	ones, _ := routerNet.Mask.Size()
 
 	insideAddr := ipWithOffset(routerNet, 2)

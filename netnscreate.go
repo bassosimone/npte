@@ -17,8 +17,8 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Add a network namespace to the project configuration. "+
-			"Automatically allocates a /24 subnet for the new namespace. "+
-			"This command only modifies the config file; use 'npte netns up' to create the actual namespaces.",
+			"Automatically allocates a /24 subnet within the project's prefix.",
+		"This command only modifies the config file; use 'npte netns up' to create the actual network namespaces.",
 		"The <project> argument selects the project. "+
 			"The <name> argument is the name of the network namespace to add.",
 		"This command requires root privileges (e.g., via sudo). "+
@@ -53,32 +53,22 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	unlock := mustLockNetnsConfig(proj)
 	defer unlock()
 
-	// Load existing config or create a new one
-	cfg, err := loadNetnsConfig(proj)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			logError("npte netns create: cannot load config: %s", err)
-			env.Exit(1)
-		}
-		cfg = &netnsConfig{
-			Project:         proj,
-			NextSubnetIndex: 1,
-			Hosts:           make(map[string]*hostConfig),
-		}
-	}
+	// Load existing config
+	cfg := mustLoadNetnsConfig(proj)
 
 	if _, exists := cfg.Hosts[nameFlag]; exists {
 		logError("npte netns create: host %q already exists", nameFlag)
 		env.Exit(1)
 	}
 
-	// Allocate subnet
-	subnet := fmt.Sprintf("10.0.%d.0/24", cfg.NextSubnetIndex)
+	// Allocate subnet index
+	index := cfg.NextSubnetIndex
+	subnet := cfg.mustSubnet(index)
 	logDetails("npte: allocate subnet %s for host %q", subnet, nameFlag)
 
 	cfg.Hosts[nameFlag] = &hostConfig{
-		Name:   nameFlag,
-		Subnet: subnet,
+		Name:        nameFlag,
+		SubnetIndex: index,
 	}
 	cfg.NextSubnetIndex++
 

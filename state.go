@@ -13,8 +13,8 @@ import (
 // baseDir is the system-level directory for npte projects.
 var baseDir = filepath.Join("/", "var", "local", "npte")
 
-// routerSubnet is the fixed CIDR for the router's host-facing veth.
-const routerSubnet = "10.0.0.0/24"
+// defaultPrefix is the default /16 prefix for new projects.
+const defaultPrefix = "10.0.0.0/16"
 
 // projectDir returns the root directory for a project.
 func projectDir(proj string) string {
@@ -47,18 +47,54 @@ type netnsConfig struct {
 	// It is also used as a prefix for kernel resource names (namespaces, interfaces).
 	Project string `json:"project"`
 
+	// Prefix is the /16 address block for this project (e.g., "10.0.0.0/16").
+	// Within this block, /24 subnets are allocated: index 0 is the router-to-host
+	// link, and indices 1+ are endpoint subnets.
+	Prefix string `json:"prefix"`
+
 	// NextSubnetIndex is the next index to use when auto-allocating
-	// a subnet for a new endpoint (e.g., 1 → 10.0.1.0/24).
+	// a /24 subnet for a new endpoint.
 	NextSubnetIndex int `json:"next_subnet_index"`
 
 	// Hosts maps host name to host config.
 	Hosts map[string]*hostConfig `json:"hosts"`
 }
 
+// validatePrefix checks that s is a valid /16 CIDR prefix.
+func validatePrefix(s string) (*net.IPNet, error) {
+	_, prefix, err := net.ParseCIDR(s)
+	if err != nil {
+		return nil, fmt.Errorf("invalid prefix %q: %s", s, err)
+	}
+	ones, _ := prefix.Mask.Size()
+	if ones != 16 {
+		return nil, fmt.Errorf("prefix must be a /16, got /%d", ones)
+	}
+	return prefix, nil
+}
+
+// mustSubnet returns the /24 subnet at the given index within the project's prefix.
+// Index 0 is the router-to-host link; indices 1+ are endpoint subnets.
+// Exits the process if the prefix is invalid.
+func (cfg *netnsConfig) mustSubnet(index int) *net.IPNet {
+	prefix, err := validatePrefix(cfg.Prefix)
+	if err != nil {
+		logError("npte: %s", err)
+		env.Exit(1)
+	}
+	ip := make(net.IP, 4)
+	copy(ip, prefix.IP.To4())
+	ip[2] = byte(index)
+	return &net.IPNet{
+		IP:   ip,
+		Mask: net.CIDRMask(24, 32),
+	}
+}
+
 // hostConfig is the per-host configuration within the network.
 type hostConfig struct {
-	Name   string `json:"name"`
-	Subnet string `json:"subnet"`
+	Name        string `json:"name"`
+	SubnetIndex int    `json:"subnet_index"`
 }
 
 // mustLockNetnsConfig acquires the config lock file. The returned function

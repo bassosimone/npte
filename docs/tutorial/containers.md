@@ -74,3 +74,6 @@ Terminal 2 — fetch a page from the client namespace:
     sudo npte netns run lab client curl http://10.0.2.2/
 
 Traffic flows: client (`10.0.1.2`) → router → server (`10.0.2.2`).
+
+(These addresses assume the default `10.0.0.0/16` prefix; use
+`npte netns show lab` to find the actual addresses.)

@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net"
 
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
@@ -43,8 +42,7 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	cfg := mustLoadNetnsConfig(proj)
 
 	// Create the router namespace
-	_, routerNet, err := net.ParseCIDR(routerSubnet)
-	env.LogFatalOnError0(err)
+	routerNet := cfg.mustSubnet(0)
 
 	routerNs := nsName(proj, "router")
 	hostVeth := proj + "-router-h"
@@ -86,8 +84,7 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	for _, hs := range cfg.Hosts {
 		logDetails("npte: create endpoint %q", hs.Name)
 
-		_, ipNet, err := net.ParseCIDR(hs.Subnet)
-		env.LogFatalOnError0(err)
+		ipNet := cfg.mustSubnet(hs.SubnetIndex)
 
 		ns := nsName(proj, hs.Name)
 		endpointVeth := proj + "-" + hs.Name + "-s"

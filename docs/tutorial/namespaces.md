@@ -27,9 +27,13 @@ access.
               └─────────┘  └─────────┘
 ```
 
-Endpoint subnets are /24s auto-allocated starting at `10.0.1.0/24`. Within
-each subnet, `.1` is the router and `.2` is the endpoint. The router's
-host-facing subnet is fixed at `10.0.0.0/24` (host at `.1`, router at `.2`).
+(Addresses shown assume the default `10.0.0.0/16` prefix.)
+
+Each project uses a configurable `/16` prefix (default `10.0.0.0/16`, set via
+`npte project create --prefix`). Within that prefix, `/24` subnets are
+auto-allocated: index 0 (`10.0.0.0/24` with the default prefix) is the
+router-to-host link, and indices 1+ are endpoint subnets. Within each `/24`,
+`.1` is the router and `.2` is the endpoint (or host).
 
 The meaning of each interface naming is the following:
 
@@ -48,7 +52,7 @@ where `descriptor` is one of `h`, `i`, `r`, and `s`.
 
     sudo npte netns show lab
 
-Prints a grep-friendly table:
+Prints a grep-friendly table (addresses depend on the project's prefix):
 
     project lab netns lab-client addr 10.0.1.2 mask 24 veth lab-client-s
     project lab netns lab-router addr 10.0.1.1 mask 24 veth lab-client-r
@@ -89,7 +93,7 @@ Note: `npte netns run` drops root privileges via `systemd-run --uid`. Use
 ## Configuration
 
 The configuration lives at `/var/local/npte/<project>/config/netns.json`.
-It records the project name, allocated subnets, and endpoint names:
+It records the project name, the `/16` prefix, and the endpoint subnet indices:
 
     cat /var/local/npte/lab/config/netns.json
 
