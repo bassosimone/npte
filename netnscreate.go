@@ -62,6 +62,10 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	}
 
 	// Allocate subnet index
+	if cfg.NextSubnetIndex < 1 || cfg.NextSubnetIndex > 255 {
+		logError("npte netns create: next_subnet_index %d out of range (1-255)", cfg.NextSubnetIndex)
+		env.Exit(1)
+	}
 	index := cfg.NextSubnetIndex
 	subnet := cfg.mustSubnet(index)
 	logDetails("npte: allocate subnet %s for host %q", subnet, nameFlag)

@@ -82,6 +82,10 @@ func (cfg *netnsConfig) mustSubnet(index int) *net.IPNet {
 		logError("npte: %s", err)
 		env.Exit(1)
 	}
+	if index < 0 || index > 255 {
+		logError("npte: subnet index %d out of range (0-255)", index)
+		env.Exit(1)
+	}
 	ip := make(net.IP, 4)
 	copy(ip, prefix.IP.To4())
 	ip[2] = byte(index)
