@@ -7,15 +7,41 @@ This chapter explains how to run a web browser through a shaped namespace.
 Snap-packaged browsers will not resolve DNS inside the namespace. This
 happens because `snap-confine` creates its own mount namespace and
 overwrites our `/etc/resolv.conf` with a snap generated version that
-points back `127.0.0.53` (`systemd-resolved`'s stub listener).
+points back to `127.0.0.53` (`systemd-resolved`'s stub listener).
 
-For quick testing, on Ubuntu you can use a non-snap browser. For
-example, you can use the WebKit-based Epiphany browser:
+On Ubuntu, both Firefox and Chromium are snaps by default.
+
+## Using the Firefox tarball
+
+Mozilla distributes Firefox as a self-contained tarball that runs
+without installation. Because it is not a snap, it uses the normal
+system resolver and sees our resolv.conf overlay.
+
+Download the tarball from the Mozilla release archive (in this
+example we are using `v148.0` but YMMV in the future):
+
+    https://releases.mozilla.org/pub/firefox/releases/148.0/linux-x86_64/en-US/
+
+The release contains `firefox-148.0.tar.xz` and `firefox-148.0.tar.xz.asc`.
+
+Verify the PGP signature and unpack the tarball. We recommend unpacking the
+compressed tarball at `/opt/firefox-148.0`:
+
+    mkdir -p /opt/firefox-148.0
+	tar -C /opt/firefox-148.0 -xf firefox-148.0.tar.xz
+
+The tarball Firefox uses a separate profile from the snap Firefox,
+which is actually useful for clean testing.
+
+## Using Epiphany for quick tests
+
+For quick testing without downloading a tarball, on Ubuntu you can
+install the WebKit-based Epiphany browser as a regular .deb:
 
     sudo apt install epiphany-browser
 
-However, since Epiphany is neither Firefox nor Chrome, using it for
-testing does not represent typical user performance.
+Since Epiphany is neither Firefox nor Chrome, it may not represent
+typical user performance and be potentially faster or slower.
 
 ## X11/Wayland environment variables
 
@@ -28,7 +54,7 @@ forward display-related variables explicitly with `-e`:
         -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
         -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
         -e DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
-        lab client epiphany
+        lab client /opt/firefox-148.0/firefox/firefox
 
 Not all variables are needed in every setup — `DISPLAY` alone is often
 enough for X11, while Wayland typically needs all four.
@@ -55,7 +81,7 @@ single network namespace is enough:
         -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
         -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
         -e DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
-        web client epiphany
+        web client /opt/firefox-148.0/firefox/firefox
 
 ## Dropping privileges
 
