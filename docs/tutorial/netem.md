@@ -1,7 +1,7 @@
 # Traffic Shaping with netem
 
 This chapter explains how to simulate network conditions (latency, losses,
-rate limiting) using the Linux `tc` and `netem` subsystems.
+rate limiting, packet batching) using the Linux `tc` and `netem` subsystems.
 
 npte does not have a built-in traffic shaping command. Instead, you run `tc`
 inside the appropriate namespace using `npte netns run --user root`.
@@ -22,29 +22,33 @@ The properties we want to emulate are the following:
 
 6. Last-mile download propagation delay
 
+7. Last-mile upload packet batching (e.g., Wi-Fi aggregation)
+
+8. Last-mile download packet batching (e.g., Wi-Fi aggregation)
+
 The following diagram shows the proper interface to use for
 emulating each of the above properties. Note that (1) is
 applied either on `lab-router-i` or `lab-server-r` depending
 on whether the server is on the internet or in a namespace.
 
 ```
-                            ┌──────────┐
-                            │   host   │
-                            └────*─────┘
-                                 │
-                                 │
-                                 │ <veth:lab-router-i> (1)
-                            ┌────*─────┐
-                            │  router  │
-                            └──*────*──┘
- <veth:lab-client-r> (2, 4, 6) │    │ <veth:lab-server-r> (1)
-                               │    │
-                               │    │
-                               │    │
-    <veth:lab-client-s> (3, 5) │    │
-                      ┌────────*┐  ┌*────────┐
-                      │ client  │  │ server  │
-                      └─────────┘  └─────────┘
+                               ┌──────────┐
+                               │   host   │
+                               └────*─────┘
+                                    │
+                                    │
+                                    │ <veth:lab-router-i> (1)
+                               ┌────*─────┐
+                               │  router  │
+                               └──*────*──┘
+ <veth:lab-client-r> (2, 4, 6, 8) │    │ <veth:lab-server-r> (1)
+                                  │    │
+                                  │    │
+                                  │    │
+    <veth:lab-client-s> (3, 5, 7) │    │
+                         ┌────────*┐  ┌*────────┐
+                         │ client  │  │ server  │
+                         └─────────┘  └─────────┘
 ```
 
 As a reminder, you can find the interface names with:
@@ -146,6 +150,31 @@ on the client's veth pair. Example: 4G-like link (50ms RTT, 30/10 Mbit/s):
     # Upload: 25ms delay + 10 Mbit/s
     sudo npte netns run --user root lab client \
         tc qdisc add dev lab-client-s root netem delay 25ms rate 10mbit
+
+## Packet batching
+
+Wi-Fi and some cellular links use **frame aggregation**: the radio
+holds packets and transmits them in bursts rather than one at a time.
+From TCP's perspective, a batch of packets arrives almost simultaneously,
+then nothing until the next batch. This affects congestion control
+algorithms like BBR that estimate bottleneck bandwidth from packet
+arrival timing — batching inflates the apparent rate during bursts
+and deflates it during gaps.
+
+The `slot` option (Linux 4.12+) models this by accumulating packets
+for a time window, then releasing them all at once:
+
+    slot MIN_DELAY MAX_DELAY [packets MAX_PACKETS] [bytes MAX_BYTES]
+
+Example: Wi-Fi-like batching on the download path (~1ms transmission
+opportunities, up to 10 packets per burst):
+
+    sudo npte netns run --user root lab router \
+        tc qdisc add dev lab-client-r root netem \
+            delay 25ms rate 30mbit slot 800us 1200us packets 10
+
+Batching is an access-link property, applied on the same interfaces
+as delay and rate, and can be combined in the same netem rule.
 
 ## Child qdiscs and bufferbloat
 
