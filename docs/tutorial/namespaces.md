@@ -106,3 +106,23 @@ It records the project name, the `/16` prefix, and the endpoint subnet indices:
 
 Configuration survives reboots. Kernel resources do not — use `npte netns up`
 to recreate the namespaces if you need them again.
+
+## TCP buffer tuning
+
+New network namespaces inherit the kernel's default TCP buffer limits, which
+are too small for high-bandwidth or high-latency paths. `npte netns up`
+enlarges the TCP autotuning range in every endpoint namespace:
+
+    net.ipv4.tcp_rmem = 4096 131072 33554432
+    net.ipv4.tcp_wmem = 4096 131072 33554432
+
+This sets the maximum TCP receive and send buffers to 32 MB (the kernel
+default max is ~4–6 MB). Without this, TCP autotuning would cap throughput
+well below the link rate on fast or high-latency paths.
+
+The bottleneck is the **bandwidth-delay product** (BDP): a 1 Gbit/s link
+with 50 ms RTT needs ~6.25 MB of in-flight data to fill the pipe. The
+default 4–6 MB max would starve the connection. With 32 MB, npte can
+saturate links up to ~5 Gbit/s at 50 ms RTT or 1 Gbit/s at 250 ms RTT.
+
+The router namespace is not tuned — it only forwards packets.
