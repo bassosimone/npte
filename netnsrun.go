@@ -53,9 +53,9 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	ns := nsName(proj, nameFlag)
 	nsp := nsPath(proj, nameFlag)
 
-	if userFlag == "" {
-		logError("npte netns run: no user specified; use --user or run via sudo")
-		env.Exit(1)
+	if err := validateUser(userFlag); err != nil {
+		logError("npte netns run: %s", err)
+		env.Exit(2)
 	}
 
 	// Validate -e flags

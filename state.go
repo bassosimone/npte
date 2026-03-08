@@ -115,6 +115,7 @@ func mustLockNetnsConfig(proj string) func() {
 }
 
 var identRe = regexp.MustCompile(`^[a-z][a-z0-9]*$`)
+var userRe = regexp.MustCompile(`^[a-z_][a-z0-9_-]*$`)
 
 // validateIdent checks that s is a valid identifier.
 func validateIdent(s string) error {
@@ -126,6 +127,21 @@ func validateIdent(s string) error {
 
 // maxIfNameLen is the Linux IFNAMSIZ limit (including the NUL terminator).
 const maxIfNameLen = 15
+
+// validateUser checks that s is a valid Unix username.
+func validateUser(s string) error {
+	if s == "" {
+		return fmt.Errorf("user name must not be empty")
+	}
+	if len(s) > 32 {
+		return fmt.Errorf("user name %q is too long (max 32 chars)", s)
+	}
+	if !userRe.MatchString(s) {
+		return fmt.Errorf("invalid user name %q: must start with a lowercase letter or underscore "+
+			"and contain only lowercase letters, digits, underscores, and hyphens", s)
+	}
+	return nil
+}
 
 // validateEndpointName checks that name is a valid identifier and that
 // the resulting interface names (e.g., proj-name-s) fit in IFNAMSIZ.
