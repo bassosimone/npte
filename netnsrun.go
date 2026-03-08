@@ -6,12 +6,10 @@ import (
 	"context"
 	"math"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
-	"github.com/kballard/go-shellquote"
 )
 
 func netnsRunMain(ctx context.Context, args []string) error {
@@ -88,13 +86,6 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	sdArgs = append(sdArgs, "--")
 	sdArgs = append(sdArgs, fset.Args()[2:]...)
 
-	logDetails("+ systemd-run %s\n", shellquote.Join(sdArgs...))
-
-	cmd := exec.CommandContext(ctx, "systemd-run", sdArgs...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	env.LogFatalOnError0(env.RunCommand(cmd))
+	mustRunArgs(ctx, "systemd-run", sdArgs...)
 	return nil
 }

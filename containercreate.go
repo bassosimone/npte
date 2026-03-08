@@ -58,7 +58,7 @@ func containerCreateMain(ctx context.Context, args []string) error {
 	env.LogFatalOnError0(env.MkdirAll(filepath.Dir(tree), 0755))
 
 	logDetails("npte: run debootstrap (this may take a while)\n")
-	mustRun("debootstrap %s %s", suiteFlag, tree)
+	mustRunCmd(ctx,"debootstrap %s %s", suiteFlag, tree)
 
 	logDetails("npte: container tree created at %s\n", tree)
 	return nil

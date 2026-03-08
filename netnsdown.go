@@ -43,8 +43,8 @@ func netnsDownMain(ctx context.Context, args []string) error {
 		logDetails("npte: destroy endpoint %q\n", hs.Name)
 		routerNs := nsName(proj, "router")
 		routerVeth := proj + "-" + hs.Name + "-r"
-		run("ip netns exec %s ip link del %s", routerNs, routerVeth)
-		run("ip netns del %s", nsName(proj, hs.Name))
+		runCmd(ctx,"ip netns exec %s ip link del %s", routerNs, routerVeth)
+		runCmd(ctx,"ip netns del %s", nsName(proj, hs.Name))
 	}
 
 	// Destroy the router
@@ -55,13 +55,13 @@ func netnsDownMain(ctx context.Context, args []string) error {
 	hostVeth := proj + "-router-h"
 
 	logDetails("npte: remove host NAT and FORWARD rules\n")
-	run("iptables -D FORWARD -s %s/32 -j ACCEPT", insideAddr)
-	run("iptables -D FORWARD -d %s/32 -j ACCEPT", insideAddr)
-	run("iptables -t nat -D POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
+	runCmd(ctx,"iptables -D FORWARD -s %s/32 -j ACCEPT", insideAddr)
+	runCmd(ctx,"iptables -D FORWARD -d %s/32 -j ACCEPT", insideAddr)
+	runCmd(ctx,"iptables -t nat -D POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
 
 	logDetails("npte: remove host veth %s and router namespace\n", hostVeth)
-	run("ip link del %s", hostVeth)
-	run("ip netns del %s", nsName(proj, "router"))
+	runCmd(ctx,"ip link del %s", hostVeth)
+	runCmd(ctx,"ip netns del %s", nsName(proj, "router"))
 
 	logDetails("npte: network is down\n")
 	return nil

@@ -6,10 +6,9 @@ import (
 	"context"
 	"math"
 	"os"
-	"os/exec"
+
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
-	"github.com/kballard/go-shellquote"
 )
 
 func containerRunMain(ctx context.Context, args []string) error {
@@ -59,13 +58,6 @@ func containerRunMain(ctx context.Context, args []string) error {
 	nspawnArgs := []string{"-D", tree, "--network-namespace-path=" + nsp}
 	nspawnArgs = append(nspawnArgs, fset.Args()[2:]...)
 
-	logDetails("+ systemd-nspawn %s\n", shellquote.Join(nspawnArgs...))
-
-	cmd := exec.CommandContext(ctx, "systemd-nspawn", nspawnArgs...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	env.LogFatalOnError0(env.RunCommand(cmd))
+	mustRunArgs(ctx, "systemd-nspawn", nspawnArgs...)
 	return nil
 }
