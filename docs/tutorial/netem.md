@@ -8,20 +8,36 @@ inside the **router** namespace using `npte netns run --user root`.
 
 ## Which interface to shape
 
-The router has one veth per endpoint. Netem shapes **egress** (outgoing
-packets) on the interface it is applied to.
+Traffic control (`tc`) shapes **egress** — packets leaving an interface.
+To understand where to apply rules, recall the topology from the
+namespaces chapter (IP addresses omitted for clarity):
 
-To shape traffic between the `client` namespace and the internet, use:
+```
+                    ┌──────────┐
+                    │   host   │
+                    └────*─────┘
+                         │
+                         │
+                         │ <veth:lab-router-i>
+                    ┌────*─────┐
+                    │  router  │
+                    └──*────*──┘
+   <veth:lab-client-r> │    │ <veth:lab-server-r>
+                       │    │
+                       │    │
+                       │    │
+              ┌────────*┐  ┌*────────┐
+              │ client  │  │ server  │
+              └─────────┘  └─────────┘
+```
 
-- `lab-client-r` to shape the client download path
-- `lab-router-i` to shape the client upload path
+Shaping happens inside the **router** namespace, on egress:
 
-To shape traffic between the `client` and the `server` namespaces, use:
+- **Client download**: shape `lab-client-r` (router → client).
+- **Client upload to internet**: shape `lab-router-i` (router → host).
+- **Client upload to server namespace**: shape `lab-server-r` (router → server).
 
-- `lab-client-r` to shape the client download path
-- `lab-server-r` to shape the client upload path
-
-Find interface names with `npte netns show` and `grep`. For example:
+Find interface names with:
 
     sudo npte netns show lab | grep 'netns lab-router'
 

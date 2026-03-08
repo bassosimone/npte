@@ -13,15 +13,22 @@ access.
                     ┌──────────┐
                     │   host   │
                     │ 10.0.0.1 │
-                    └────┬─────┘ <veth:lab-router-h>
+                    └────*─────┘
+                         │ <veth:lab-router-h>
                          │
-                    ┌────┴─────┐ <veth:lab-router-i>
+                         │
+                         │ <veth:lab-router-i>
+                    ┌────*─────┐
                     │  router  │
                     │ 10.0.0.2 │
-<veth:lab-client-r> └──┬────┬──┘ <veth:lab-server-r>
+                    └──*────*──┘
+   <veth:lab-client-r> │    │ <veth:lab-server-r>
+                       │    │
+                       │    │
+                       │    │
                        │    │
    <veth:lab-client-s> │    │ <veth:lab-server-s>
-              ┌────────┴┐  ┌┴────────┐
+              ┌────────*┐  ┌*────────┐
               │ client  │  │ server  │
               │10.0.1.2 │  │10.0.2.2 │
               └─────────┘  └─────────┘
