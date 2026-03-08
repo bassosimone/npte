@@ -17,8 +17,10 @@ func netnsStatusMain(ctx context.Context, args []string) error {
 	usage.AddDescription(
 		"Check whether the network namespaces for a project are up. "+
 			"Prints 'up' or 'down' to stdout and exits with code 0 (up) or 1 (down). "+
-			"Useful in shell scripts: npte netns status myproj || npte netns up myproj.",
-		"The <project> argument selects the project to check.",
+			"Useful in shell scripts:",
+		"    npte netns status myproj || sudo npte netns up myproj.",
+		"The <project> argument selects the project to check. "+
+			"See 'npte tutorial namespaces' for details.",
 	)
 	usage.PositionalArgumentsUsage = "<project>"
 	fset.UsagePrinter = usage

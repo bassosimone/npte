@@ -17,13 +17,12 @@ func containerRunMain(ctx context.Context, args []string) error {
 	fset := vflag.NewFlagSet("npte container run", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Run a command inside a lightweight container using systemd-nspawn. "+
-			"Binds the container's filesystem tree to the corresponding network namespace. "+
-			"Without arguments, spawns an interactive shell.",
-		"The <project> argument selects the project. "+
-			"The <name> argument is the name of the network namespace whose container to use.",
-		"Example: sudo npte container run myproj server nginx -g 'daemon off;'",
-		"This command must be run as root (e.g., via sudo).",
+		"Run a command inside a lightweight container using systemd-nspawn "+
+			"using the network namespace identified by <name>. "+
+			"If the optional [command] is omitted, we spawn an interactive shell.",
+		"The <project> argument selects the project. ",
+		"This command requires root privileges (e.g., via sudo). "+
+			"See 'npte tutorial containers' for details.",
 	)
 	usage.PositionalArgumentsUsage = "<project> <name> [command] [args...]"
 	fset.UsagePrinter = usage

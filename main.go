@@ -14,9 +14,8 @@ func main() {
 	// Create dispatcher for `npte project`
 	projectDisp := vclip.NewDispatcherCommand("npte project", vflag.ExitOnError)
 	projectDisp.AddDescription(
-		"Manage npte projects. Each project is a directory under "+baseDir+"/ "+
-			"containing network configuration and container filesystem trees.",
-		"All subcommands must be run as root (e.g., via sudo).",
+		"Manage npte projects. Each project is a directory under " + baseDir + "/ " +
+			"containing network-namespace configuration and container filesystem trees.",
 	)
 	projectDisp.AddCommand("create", vclip.CommandFunc(projectCreateMain), "Create a new project.")
 
@@ -39,8 +38,9 @@ func main() {
 	containerDisp := vclip.NewDispatcherCommand("npte container", vflag.ExitOnError)
 	containerDisp.AddDescription(
 		"Manage lightweight containers backed by systemd-nspawn. "+
-			"Each container is a debootstrap filesystem tree bound to a network namespace.",
-		"All subcommands must be run as root (e.g., via sudo).",
+			"Each uses a debootstrap filesystem tree "+
+			"and a network namespace.",
+		"The tree directory is: "+baseDir+"/<project>/trees/<namepace>/.",
 	)
 	containerDisp.AddCommand("create", vclip.CommandFunc(containerCreateMain), "Bootstrap a container filesystem tree.")
 	containerDisp.AddCommand("run", vclip.CommandFunc(containerRunMain), "Run a command inside a container.")
@@ -54,7 +54,7 @@ func main() {
 		"Namespaces are project-scoped. Per-project configuration is stored under "+baseDir+"/<project>/.",
 	)
 	disp.AddCommand("doctor", vclip.CommandFunc(doctorMain), "Check for required external commands.")
-	disp.AddCommand("tutorial", vclip.CommandFunc(tutorialMain), "Display the npte tutorial.")
+	disp.AddCommand("tutorial", vclip.CommandFunc(tutorialMain), "Show the npte tutorials.")
 	disp.AddCommand("project", projectDisp, "Manage projects.")
 	disp.AddCommand("netns", netnsDisp, "Manage network namespaces.")
 	disp.AddCommand("container", containerDisp, "Manage lightweight containers.")

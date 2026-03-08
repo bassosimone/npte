@@ -18,9 +18,10 @@ func netnsDownMain(ctx context.Context, args []string) error {
 		"Tear down all network namespaces and iptables rules for a project. "+
 			"Destroys endpoints first, then the central router. "+
 			"The configuration file is preserved so the network can be brought up again.",
-		"The <project> argument selects the project whose network to tear down.",
-		"Individual teardown steps tolerate errors to handle partial state.",
-		"This command must be run as root (e.g., via sudo).",
+		"The <project> argument selects the project whose network namespaces to tear down. "+
+			"Individual teardown steps tolerate errors to handle partial/inconsistent state gracefully.",
+		"This command requires root privileges (e.g., via sudo). "+
+			"See 'npte tutorial namespaces' for details.",
 	)
 	usage.PositionalArgumentsUsage = "<project>"
 	fset.UsagePrinter = usage

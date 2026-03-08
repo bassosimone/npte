@@ -19,7 +19,8 @@ func netnsShowMain(ctx context.Context, args []string) error {
 		"Show the network topology for a project. "+
 			"Prints one line per interface with its namespace, address, and veth name. "+
 			"The output is grep-friendly and suitable for scripting.",
-		"The <project> argument selects the project whose topology to display.",
+		"The <project> argument selects the project whose topology to display. "+
+			"See 'npte tutorial namespaces' for details.",
 	)
 	usage.PositionalArgumentsUsage = "<project>"
 	fset.UsagePrinter = usage

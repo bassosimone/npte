@@ -16,13 +16,15 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	fset := vflag.NewFlagSet("npte netns up", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Bring up the network namespaces described in the project configuration. "+
-			"Creates the central router namespace with host NAT, then creates "+
+		"Bring up the network namespaces described in the given project configuration. "+
+			"Creates the central router namespace with host NAT and internet access, then creates "+
 			"all endpoint namespaces with their veth pairs and routes.",
-		"The <project> argument selects the project whose network to bring up.",
-		"Run this command after a reboot to recreate the network from the saved configuration. "+
-			"If the network is already up, run 'npte netns down' first.",
-		"This command must be run as root (e.g., via sudo).",
+		"The <project> argument selects the project whose network to bring up. "+
+			"Run this command after a reboot to recreate the network. "+
+			"Use 'npte netns status' to check for status. "+
+			"If the network is already up, run 'npte netns down' to tear it down first.",
+		"This command requires root privileges (e.g., via sudo). "+
+			"See 'npte tutorial namespaces' for details.",
 	)
 	usage.PositionalArgumentsUsage = "<project>"
 	fset.UsagePrinter = usage

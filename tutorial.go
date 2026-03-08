@@ -20,8 +20,8 @@ func tutorialMain(ctx context.Context, args []string) error {
 	fset := vflag.NewFlagSet("npte tutorial", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Display the npte tutorial. Without arguments, shows the overview "+
-			"and list of available chapters.",
+		"Display the npte tutorial. Without arguments, shows the tutorial overview "+
+			"and lists all the available tutorial chapters.",
 		"Available chapters:",
 		"- quickstart",
 		"- namespaces",

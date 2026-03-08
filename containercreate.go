@@ -19,11 +19,12 @@ func containerCreateMain(ctx context.Context, args []string) error {
 	usage.AddDescription(
 		"Create a lightweight container filesystem tree using debootstrap. "+
 			"The tree is stored under "+baseDir+"/<project>/trees/<name> and can later be entered "+
-			"with 'npte container enter'.",
+			"with 'npte container run'.",
 		"The <project> argument selects the project. "+
-			"The <name> argument is the name of the network namespace whose filesystem tree to create. "+
-			"The namespace must already exist (created via 'npte netns create').",
-		"This command must be run as root (e.g., via sudo).",
+			"The <name> argument is the name of the network namespace whose filesystem tree to create "+
+			"and must already exist (created via 'npte netns create').",
+		"This command requires root privileges (e.g., via sudo). "+
+			"See 'npte tutorial containers' for details.",
 	)
 	usage.PositionalArgumentsUsage = "<project> <name>"
 	fset.UsagePrinter = usage

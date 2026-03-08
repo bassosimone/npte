@@ -21,7 +21,8 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 			"This command only modifies the config file; use 'npte netns up' to create the actual namespaces.",
 		"The <project> argument selects the project. "+
 			"The <name> argument is the name of the network namespace to add.",
-		"This command must be run as root (e.g., via sudo).",
+		"This command requires root privileges (e.g., via sudo). "+
+			"See 'npte tutorial quickstart' for a complete walkthrough.",
 	)
 	usage.PositionalArgumentsUsage = "<project> <name>"
 	fset.UsagePrinter = usage

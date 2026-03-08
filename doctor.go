@@ -33,9 +33,9 @@ func doctorMain(ctx context.Context, args []string) error {
 	fset := vflag.NewFlagSet("npte doctor", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Check that all required external commands are installed. " +
-			"Reports the path of each found command or MISSING with the " +
-			"Debian package name. Suggests an apt install command for any missing packages.",
+		"Checks that all required external commands are installed, " +
+			"prints the path of the found commands or MISSING with the " +
+			"Debian package name, suggests how to install missing packages.",
 	)
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")

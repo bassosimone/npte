@@ -21,15 +21,14 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Run a command inside a network namespace. By default, the command runs "+
-			"as $SUDO_USER. Use --user to override (e.g., --user root for admin tasks like tc). "+
-			"Use -e to set environment variables (repeatable).",
+			"as $SUDO_USER. Use -u/--user to override (e.g., --user root for admin tasks like tc). "+
+			"Use -e/--env to set environment variables.",
 		"The <project> argument selects the project. "+
-			"The <name> argument is the name of the network namespace to enter. "+
+			"The <name> argument is the name of the network namespace to use. "+
 			"The <command> and optional [args...] are executed inside it.",
-		"Example: sudo npte netns run myproj server curl https://example.com/",
-		"Example: sudo npte netns run --user root myproj router tc qdisc show",
-		"Example: sudo npte netns run -e WAYLAND_DISPLAY=wayland-0 myproj client firefox",
-		"This command must be run via sudo.",
+		"This command requires root privileges (e.g., via sudo) and uses $SUDO_USER "+
+			"to determine which user to run as, unless you use -u/--user. "+
+			"See 'npte tutorial namespaces' for details.",
 	)
 	usage.PositionalArgumentsUsage = "<project> <name> <command> [args...]"
 	fset.UsagePrinter = usage
