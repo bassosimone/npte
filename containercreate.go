@@ -46,6 +46,11 @@ func containerCreateMain(ctx context.Context, args []string) error {
 		env.Exit(2)
 	}
 
+	if err := validateSuite(suiteFlag); err != nil {
+		logError("npte container create: %s", err)
+		env.Exit(2)
+	}
+
 	tree := treePath(proj, nameFlag)
 	if _, err := env.Stat(tree); err == nil {
 		logError("npte container create: tree already exists: %s", tree)

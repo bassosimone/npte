@@ -143,6 +143,17 @@ func validateUser(s string) error {
 	return nil
 }
 
+var suiteRe = regexp.MustCompile(`^[a-z][a-z0-9]*$`)
+
+// validateSuite checks that s is a valid debootstrap suite name.
+func validateSuite(s string) error {
+	if !suiteRe.MatchString(s) {
+		return fmt.Errorf("invalid suite name %q: must start with a lowercase letter "+
+			"and contain only lowercase letters and digits", s)
+	}
+	return nil
+}
+
 // validateEndpointName checks that name is a valid identifier and that
 // the resulting interface names (e.g., proj-name-s) fit in IFNAMSIZ.
 func validateEndpointName(proj, name string) error {
