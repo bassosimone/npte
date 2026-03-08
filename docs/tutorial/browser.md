@@ -67,8 +67,8 @@ The release contains `firefox-148.0.tar.xz` and `firefox-148.0.tar.xz.asc`.
 Verify the PGP signature and unpack the tarball. We recommend unpacking the
 compressed tarball at `/opt/firefox-148.0`:
 
-    mkdir -p /opt/firefox-148.0
-	tar -C /opt/firefox-148.0 -xf firefox-148.0.tar.xz
+    sudo mkdir -p /opt/firefox-148.0
+    sudo tar -C /opt/firefox-148.0 -xf firefox-148.0.tar.xz
 
 The tarball Firefox uses a separate profile from the snap Firefox,
 which is actually useful for clean testing.
