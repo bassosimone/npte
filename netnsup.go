@@ -33,6 +33,10 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(fset.Parse(args))
 
 	proj := fset.Args()[0]
+	if err := validateProject(proj); err != nil {
+		logError("npte netns up: %s", err)
+		env.Exit(2)
+	}
 
 	unlock := mustLockNetnsConfig(proj)
 	defer unlock()

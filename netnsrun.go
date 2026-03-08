@@ -43,6 +43,11 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	proj := fset.Args()[0]
 	nameFlag := fset.Args()[1]
 
+	if err := validateProject(proj); err != nil {
+		logError("npte netns run: %s", err)
+		env.Exit(2)
+	}
+
 	// Load config and resolve namespace path
 	logDetails("npte: load config from %s", configPath(proj))
 	cfg := mustLoadNetnsConfig(proj)

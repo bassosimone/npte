@@ -29,6 +29,10 @@ func netnsShowMain(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(fset.Parse(args))
 
 	proj := fset.Args()[0]
+	if err := validateProject(proj); err != nil {
+		logError("npte netns show: %s", err)
+		env.Exit(2)
+	}
 
 	cfg := mustLoadNetnsConfig(proj)
 

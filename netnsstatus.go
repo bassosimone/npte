@@ -30,6 +30,10 @@ func netnsStatusMain(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(fset.Parse(args))
 
 	proj := fset.Args()[0]
+	if err := validateProject(proj); err != nil {
+		logError("npte netns status: %s", err)
+		env.Exit(2)
+	}
 
 	if _, err := env.Stat(nsPath(proj, "router")); err != nil {
 		fmt.Fprintln(env.Stdout, "down")
