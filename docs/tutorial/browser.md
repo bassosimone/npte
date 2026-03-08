@@ -2,7 +2,28 @@
 
 This chapter explains how to run a web browser through a shaped namespace.
 
-## Snap browsers do not work
+## X11/Wayland environment variables
+
+`npte netns run` uses `systemd-run` to enter the namespace. Because
+systemd-run starts a transient unit with a clean environment, you must
+forward display-related variables explicitly with `-e`:
+
+    sudo npte netns run \
+        -e DISPLAY=$DISPLAY \
+        -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+        -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+        -e DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
+        lab client ...
+
+Not all variables are needed in every setup — `DISPLAY` alone is often
+enough for X11, while Wayland typically needs all four.
+
+## Dropping privileges
+
+The `sudo npte netns run ...` command drops privileges and runs as the
+user invoking `sudo` as documented in [namespaces](namespaces.md).
+
+## Caveat: snap browsers do not work
 
 Snap-packaged browsers will not resolve DNS inside the namespace. This
 happens because `snap-confine` creates its own mount namespace and
@@ -10,6 +31,25 @@ overwrites our `/etc/resolv.conf` with a snap generated version that
 points back to `127.0.0.53` (`systemd-resolved`'s stub listener).
 
 On Ubuntu, both Firefox and Chromium are snaps by default.
+
+## Using Epiphany for quick tests
+
+For quick testing without downloading a tarball, on Ubuntu you can
+install the WebKit-based Epiphany browser as a regular .deb:
+
+    sudo apt install epiphany-browser
+
+Since Epiphany is neither Firefox nor Chrome, it may not represent
+typical user performance and be potentially faster or slower.
+
+You can run Epiphany using:
+
+    sudo npte netns run \
+        -e DISPLAY=$DISPLAY \
+        -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+        -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+        -e DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
+        lab client epiphany
 
 ## Using the Firefox tarball
 
@@ -33,21 +73,7 @@ compressed tarball at `/opt/firefox-148.0`:
 The tarball Firefox uses a separate profile from the snap Firefox,
 which is actually useful for clean testing.
 
-## Using Epiphany for quick tests
-
-For quick testing without downloading a tarball, on Ubuntu you can
-install the WebKit-based Epiphany browser as a regular .deb:
-
-    sudo apt install epiphany-browser
-
-Since Epiphany is neither Firefox nor Chrome, it may not represent
-typical user performance and be potentially faster or slower.
-
-## X11/Wayland environment variables
-
-`npte netns run` uses `systemd-run` to enter the namespace. Because
-systemd-run starts a transient unit with a clean environment, you must
-forward display-related variables explicitly with `-e`:
+Once you are done, you can run Firefox using:
 
     sudo npte netns run \
         -e DISPLAY=$DISPLAY \
@@ -56,8 +82,26 @@ forward display-related variables explicitly with `-e`:
         -e DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
         lab client /opt/firefox-148.0/firefox/firefox
 
-Not all variables are needed in every setup — `DISPLAY` alone is often
-enough for X11, while Wayland typically needs all four.
+## Using Google Chrome
+
+Google distributes Chrome as a regular `.deb` package (not a snap), so
+it works inside namespaces. Install it from Google's APT repository
+following their instructions.
+
+Chrome needs `XAUTHORITY` forwarded for X11 authentication:
+
+    sudo npte netns run \
+        -e DISPLAY=$DISPLAY \
+        -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+        -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+        -e DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
+        -e XAUTHORITY=$XAUTHORITY \
+        lab client google-chrome
+
+Unlike Firefox, Chrome defaults to X11 (via XWayland) rather than
+native Wayland. You can force native Wayland with
+`--ozone-platform=wayland`, but this disables Vulkan GPU acceleration.
+The XWayland path with `XAUTHORITY` is recommended.
 
 ## Minimal setup for browser testing
 
@@ -82,8 +126,3 @@ single network namespace is enough:
         -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
         -e DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
         web client /opt/firefox-148.0/firefox/firefox
-
-## Dropping privileges
-
-The `sudo npte netns run ...` command drops privileges and runs as the
-user invoking `sudo` as documented in [namespaces](namespaces.md).
