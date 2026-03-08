@@ -43,10 +43,6 @@ func treePath(proj, name string) string {
 
 // netnsConfig is the network configuration stored in the config file.
 type netnsConfig struct {
-	// Project is the project name (matches the directory name under baseDir).
-	// It is also used as a prefix for kernel resource names (namespaces, interfaces).
-	Project string `json:"project"`
-
 	// Prefix is the /16 address block for this project (e.g., "10.0.0.0/16").
 	// Within this block, /24 subnets are allocated: index 0 is the router-to-host
 	// link, and indices 1+ are endpoint subnets.

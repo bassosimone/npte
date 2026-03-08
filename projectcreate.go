@@ -67,7 +67,6 @@ func projectCreateMain(ctx context.Context, args []string) error {
 
 	// Write initial config with prefix
 	cfg := &netnsConfig{
-		Project:         proj,
 		Prefix:          prefixFlag,
 		NextSubnetIndex: 1,
 		Hosts:           make(map[string]*hostConfig),
