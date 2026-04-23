@@ -17,16 +17,19 @@ import (
 
 func TestMain_Dependencies(t *testing.T) {
 	allPresent := map[string]string{
-		"ip":             "/usr/sbin/ip",
-		"tc":             "/usr/sbin/tc",
-		"iptables":       "/usr/sbin/iptables",
-		"sysctl":         "/usr/sbin/sysctl",
-		"modprobe":       "/usr/sbin/modprobe",
-		"install":        "/usr/bin/install",
-		"rm":             "/usr/bin/rm",
-		"systemd-run":    "/usr/bin/systemd-run",
-		"systemd-nspawn": "/usr/bin/systemd-nspawn",
-		"debootstrap":    "/usr/sbin/debootstrap",
+		"ip":               "/usr/sbin/ip",
+		"tc":               "/usr/sbin/tc",
+		"iptables":         "/usr/sbin/iptables",
+		"iptables-save":    "/usr/sbin/iptables-save",
+		"iptables-restore": "/usr/sbin/iptables-restore",
+		"grep":             "/usr/bin/grep",
+		"sysctl":           "/usr/sbin/sysctl",
+		"modprobe":         "/usr/sbin/modprobe",
+		"install":          "/usr/bin/install",
+		"rm":               "/usr/bin/rm",
+		"systemd-run":      "/usr/bin/systemd-run",
+		"systemd-nspawn":   "/usr/bin/systemd-nspawn",
+		"debootstrap":      "/usr/sbin/debootstrap",
 	}
 
 	tests := []struct {
@@ -45,14 +48,17 @@ func TestMain_Dependencies(t *testing.T) {
 		// both are absent the apt-install hint must list iproute2 only once.
 		name: "ip and tc missing: iproute2 listed only once",
 		found: map[string]string{
-			"iptables":       "/usr/sbin/iptables",
-			"sysctl":         "/usr/sbin/sysctl",
-			"modprobe":       "/usr/sbin/modprobe",
-			"install":        "/usr/bin/install",
-			"rm":             "/usr/bin/rm",
-			"systemd-run":    "/usr/bin/systemd-run",
-			"systemd-nspawn": "/usr/bin/systemd-nspawn",
-			"debootstrap":    "/usr/sbin/debootstrap",
+			"iptables":         "/usr/sbin/iptables",
+			"iptables-save":    "/usr/sbin/iptables-save",
+			"iptables-restore": "/usr/sbin/iptables-restore",
+			"grep":             "/usr/bin/grep",
+			"sysctl":           "/usr/sbin/sysctl",
+			"modprobe":         "/usr/sbin/modprobe",
+			"install":          "/usr/bin/install",
+			"rm":               "/usr/bin/rm",
+			"systemd-run":      "/usr/bin/systemd-run",
+			"systemd-nspawn":   "/usr/bin/systemd-nspawn",
+			"debootstrap":      "/usr/sbin/debootstrap",
 		},
 		wantExit:     1,
 		wantContains: []string{"MISSING (iproute2)", "apt install iproute2\n"},
@@ -62,7 +68,7 @@ func TestMain_Dependencies(t *testing.T) {
 		wantExit: 1,
 		wantContains: []string{
 			"MISSING",
-			"apt install iproute2 iptables procps kmod coreutils systemd systemd-container debootstrap",
+			"apt install iproute2 iptables grep procps kmod coreutils systemd systemd-container debootstrap",
 		},
 	}}
 

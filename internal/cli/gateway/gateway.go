@@ -30,6 +30,7 @@ func Main(ctx context.Context, args []string) error {
 			"arguments.",
 	)
 	disp.AddCommand("create", vclip.CommandFunc(createMain), "Turn an existing namespace into a gateway.")
+	disp.AddCommand("destroy", vclip.CommandFunc(destroyMain), "Remove gateway state from a namespace.")
 
 	return disp.Main(ctx, args)
 }

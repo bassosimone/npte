@@ -3,6 +3,7 @@ module github.com/bassosimone/npte
 go 1.25.7
 
 require (
+	github.com/bassosimone/closepool v0.0.0-20260213174302-379ccac917c0
 	github.com/bassosimone/runtimex v0.0.0-20260108162100-336f3823f6b7
 	github.com/bassosimone/vclip v0.0.0-20260307133721-977dc994815e
 	github.com/bassosimone/vflag v0.0.0-20260212194245-b765f86a69b9

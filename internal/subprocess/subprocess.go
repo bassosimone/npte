@@ -100,6 +100,42 @@ func MustPipeTo(ctx context.Context, dryRun bool, stdin []byte, argv0 string, ar
 	testable.Env.LogFatalOnError0(PipeTo(ctx, dryRun, stdin, argv0, args...))
 }
 
+// RunTolerant is like [Run] but suppresses non-zero exit codes, mirroring
+// the shell idiom "cmd || true". Setup errors (command not in the allowlist,
+// LookPath failure) are still reported.
+//
+// When dryRun is true, the rendered shell line includes a trailing "|| true".
+func RunTolerant(ctx context.Context, dryRun bool, argv0 string, args ...string) error {
+	env := testable.Env
+	argv := append([]string{argv0}, args...)
+	quoted := shellquote.Join(argv...)
+
+	if dryRun {
+		_, err := fmt.Fprintf(env.Stdout, "%s || true\n", quoted)
+		return err
+	}
+
+	path, err := deps.LookPath(argv0)
+	if err != nil {
+		return err
+	}
+
+	logx.Command("%s || true", quoted)
+
+	cmd := exec.CommandContext(ctx, path, args...)
+	cmd.Stdin = env.Stdin
+	cmd.Stdout = env.Stdout
+	cmd.Stderr = env.Stderr
+	_ = env.RunCommand(cmd)
+
+	return nil
+}
+
+// MustRunTolerant is like [RunTolerant] but logs and exits on failure.
+func MustRunTolerant(ctx context.Context, dryRun bool, argv0 string, args ...string) {
+	testable.Env.LogFatalOnError0(RunTolerant(ctx, dryRun, argv0, args...))
+}
+
 // heredocTerminator returns a fresh heredoc terminator with a 64-bit random
 // suffix. A collision with the payload would require the caller to embed a
 // matching NPTE_EOF_<hex> line on purpose, which has probability 2^-64 for

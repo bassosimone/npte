@@ -129,3 +129,54 @@ func TestMustPipeTo_Live(t *testing.T) {
 	assert.NoError(t, captured)
 	assert.Equal(t, "piped body", stdout.String())
 }
+
+func TestRunTolerant_Dry(t *testing.T) {
+	var captured error
+	var stdout bytes.Buffer
+	orig := testable.Env
+	env := testable.NewEnvironOS()
+	env.Stdout = &stdout
+	env.Stderr = io.Discard
+	env.LogFatalOnError0 = func(err error) { captured = err }
+	testable.Env = env
+	t.Cleanup(func() { testable.Env = orig })
+
+	MustRunTolerant(context.Background(), true, "ip", "link", "del", "if-router")
+	assert.NoError(t, captured)
+	assert.Equal(t, "ip link del if-router || true\n", stdout.String())
+}
+
+func TestRunTolerant_Live_Success(t *testing.T) {
+	var captured error
+	orig := testable.Env
+	env := testable.NewEnvironOS()
+	env.Stdout = io.Discard
+	env.Stderr = io.Discard
+	env.LookPath = func(string) (string, error) { return os.Args[0], nil }
+	env.LogFatalOnError0 = func(err error) { captured = err }
+	testable.Env = env
+	t.Cleanup(func() { testable.Env = orig })
+
+	MustRunTolerant(context.Background(), false, "ip", "-test.run=^$")
+	assert.NoError(t, captured)
+}
+
+func TestRunTolerant_Live_Failure(t *testing.T) {
+	var captured error
+	orig := testable.Env
+	env := testable.NewEnvironOS()
+	env.Stdout = io.Discard
+	env.Stderr = io.Discard
+	env.LookPath = func(string) (string, error) { return os.Args[0], nil }
+	env.LogFatalOnError0 = func(err error) { captured = err }
+	testable.Env = env
+	t.Cleanup(func() { testable.Env = orig })
+
+	// "-test.run=^XXXNOTEXIST$" will cause the test binary to exit 0, but
+	// we can force a non-zero exit with an impossible flag. Use a flag that
+	// Go test ignores gracefully — instead, run "false" via /bin/false.
+	env.LookPath = func(string) (string, error) { return "/bin/false", nil }
+	MustRunTolerant(context.Background(), false, "ip")
+	assert.NoError(t, captured)
+}
+
