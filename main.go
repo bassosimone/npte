@@ -9,6 +9,7 @@ import (
 	"github.com/bassosimone/npte/internal/cli/container"
 	"github.com/bassosimone/npte/internal/cli/doctor"
 	"github.com/bassosimone/npte/internal/cli/gateway"
+	"github.com/bassosimone/npte/internal/cli/netem"
 	"github.com/bassosimone/npte/internal/cli/netns"
 	"github.com/bassosimone/vclip"
 	"github.com/bassosimone/vflag"
@@ -96,6 +97,7 @@ func main() {
 	disp.AddCommand("container", containerDisp, "Manage lightweight containers.")
 	disp.AddCommand("container2", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
 	disp.AddCommand("netem", netemDisp, "Apply or clear traffic shaping.")
+	disp.AddCommand("netem2", vclip.CommandFunc(netem.Main), "Apply or clear traffic shaping.")
 
 	// Run the root dispatcher
 	vclip.Main(context.Background(), disp, os.Args[1:])
