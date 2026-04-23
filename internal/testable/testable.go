@@ -31,7 +31,7 @@ type Environ struct {
 	LogFatalOnError0 func(err error)
 }
 
-// NewEnvironOS returns an environ wired to real OS operations.
+// NewEnvironOS returns an [*Environ] wired to real OS operations.
 func NewEnvironOS() *Environ {
 	return &Environ{
 		Exit:        os.Exit,
