@@ -28,12 +28,12 @@ single interface, `if-router`, facing the middle. No addresses
 yet.
 
 Assign addresses — one per interface, a distinct `/24` per link.
-We draw from `172.16/12`, the RFC1918 block least likely to collide
-with whatever your home router, ISP, VPN, or container daemon has
-already claimed: ISPs and CPE firmware tend to reach for `10/8`
-or `192.168/16` first, and `172.16/12` is usually left alone. The
-second octet tags the link — `.2` for server-router, `.3` for
-client-router:
+We draw specifically from `172.16.0.0/16`, the quietest corner of
+RFC1918 in practice: home routers and ISP CPE almost always hand
+out `192.168.0.0/24` or something inside `10/8`, and Docker's
+default bridge lands in `172.17.0.0/16` — one `/16` over from
+ours. The second octet tags the link — `.2` for server-router,
+`.3` for client-router:
 
     sudo npte netns assign-addr client if-router 172.16.3.2/24
     sudo npte netns assign-addr router if-client 172.16.3.1/24

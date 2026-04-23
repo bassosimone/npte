@@ -24,9 +24,10 @@ func createMain(ctx context.Context, args []string) error {
 			"veth pair with a hub namespace, `router`. Both leaves get a default "+
 			"route via the router. The router gets a host-side uplink and NAT so "+
 			"that traffic from the leaves egresses through <ext-iface>.",
-		"Addresses are fixed, and drawn from 172.16/12 — the RFC1918 block "+
-			"least likely to collide with existing home/ISP/VPN/container "+
-			"networks. The second octet tags the link:",
+		"Addresses are fixed, and drawn from 172.16.0.0/16 — the quietest "+
+			"corner of RFC1918 in practice (home/ISP CPE prefer 192.168/16 or "+
+			"10/8; Docker's default bridge sits in 172.17.0.0/16, one /16 "+
+			"over). The second octet tags the link:",
 		"    router↔host   uses 172.16.1.0/24 (host=.1,   router=.2)",
 		"    server↔router uses 172.16.2.0/24 (server=.2, router=.1)",
 		"    client↔router uses 172.16.3.0/24 (client=.2, router=.1)",
