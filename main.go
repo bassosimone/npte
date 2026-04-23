@@ -11,6 +11,7 @@ import (
 	"github.com/bassosimone/npte/internal/cli/gateway"
 	"github.com/bassosimone/npte/internal/cli/netem"
 	"github.com/bassosimone/npte/internal/cli/netns"
+	"github.com/bassosimone/npte/internal/cli/tutorial"
 	"github.com/bassosimone/vclip"
 	"github.com/bassosimone/vflag"
 )
@@ -90,6 +91,7 @@ func main() {
 	)
 	disp.AddCommand("doctor", vclip.CommandFunc(doctor.Main), "Check for required external commands.")
 	disp.AddCommand("tutorial", vclip.CommandFunc(tutorialMain), "Show the npte tutorials.")
+	disp.AddCommand("tutorial2", vclip.CommandFunc(tutorial.Main), "Show the npte tutorials.")
 	disp.AddCommand("project", projectDisp, "Manage projects.")
 	disp.AddCommand("netns", netnsDisp, "Manage network namespaces.")
 	disp.AddCommand("netns2", vclip.CommandFunc(netns.Main), "Manage network namespaces.")
