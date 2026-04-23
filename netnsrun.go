@@ -32,6 +32,9 @@ func netnsRunMain(ctx context.Context, args []string) error {
 			"See 'npte tutorial namespaces' for details.",
 	)
 	usage.PositionalArgumentsUsage = "<project> <name> <command> [args...]"
+	fset.Exit = env.Exit
+	fset.Stderr = env.Stderr
+	fset.Stdout = env.Stdout
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.StringVar(&userFlag, 'u', "user", "Run as `USER` (default: $SUDO_USER).")
@@ -39,7 +42,7 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	fset.MinPositionalArgs = 3
 	fset.MaxPositionalArgs = math.MaxInt
 	fset.DisablePermute = true
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // we are using vflag.ExitOnError
 
 	proj := fset.Args()[0]
 	nameFlag := fset.Args()[1]

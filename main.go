@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/bassosimone/npte/internal/cli/doctor"
 	"github.com/bassosimone/vclip"
 	"github.com/bassosimone/vflag"
 )
@@ -13,6 +14,9 @@ import (
 func main() {
 	// Create dispatcher for `npte project`
 	projectDisp := vclip.NewDispatcherCommand("npte project", vflag.ExitOnError)
+	projectDisp.Exit = env.Exit
+	projectDisp.Stderr = env.Stderr
+	projectDisp.Stdout = env.Stdout
 	projectDisp.AddDescription(
 		"Manage npte projects. Each project is a directory under " + baseDir + "/ " +
 			"containing network-namespace configuration and container filesystem trees.",
@@ -21,6 +25,9 @@ func main() {
 
 	// Create dispatcher for `npte netns`
 	netnsDisp := vclip.NewDispatcherCommand("npte netns", vflag.ExitOnError)
+	netnsDisp.Exit = env.Exit
+	netnsDisp.Stderr = env.Stderr
+	netnsDisp.Stdout = env.Stdout
 	netnsDisp.AddDescription(
 		"Manage per-project network namespaces arranged in a star topology around a central router. "+
 			"The router namespace is the only one with internet access via host through NAT.",
@@ -36,6 +43,9 @@ func main() {
 
 	// Create dispatcher for `npte container`
 	containerDisp := vclip.NewDispatcherCommand("npte container", vflag.ExitOnError)
+	containerDisp.Exit = env.Exit
+	containerDisp.Stderr = env.Stderr
+	containerDisp.Stdout = env.Stdout
 	containerDisp.AddDescription(
 		"Manage lightweight containers backed by systemd-nspawn. "+
 			"Each uses a debootstrap filesystem tree "+
@@ -47,6 +57,9 @@ func main() {
 
 	// Create dispatcher for `npte netem`
 	netemDisp := vclip.NewDispatcherCommand("npte netem", vflag.ExitOnError)
+	netemDisp.Exit = env.Exit
+	netemDisp.Stderr = env.Stderr
+	netemDisp.Stdout = env.Stdout
 	netemDisp.AddDescription(
 		"Apply or clear traffic shaping on a client's access link. "+
 			"Shapes both download and upload directions using tc/netem.",
@@ -58,6 +71,9 @@ func main() {
 
 	// Create dispatcher for `npte`
 	disp := vclip.NewDispatcherCommand("npte", vflag.ExitOnError)
+	disp.Exit = env.Exit
+	disp.Stderr = env.Stderr
+	disp.Stdout = env.Stdout
 	disp.AddDescription(
 		"Network Performance Testing Environment (npte). "+
 			"Test network client performance under realistic conditions using isolated "+
@@ -68,7 +84,7 @@ func main() {
 		"Run 'npte tutorial' for a complete walkthrough. "+
 			"Namespaces are project-scoped; configuration is stored under "+baseDir+"/<project>/.",
 	)
-	disp.AddCommand("doctor", vclip.CommandFunc(doctorMain), "Check for required external commands.")
+	disp.AddCommand("doctor", vclip.CommandFunc(doctor.Main), "Check for required external commands.")
 	disp.AddCommand("tutorial", vclip.CommandFunc(tutorialMain), "Show the npte tutorials.")
 	disp.AddCommand("project", projectDisp, "Manage projects.")
 	disp.AddCommand("netns", netnsDisp, "Manage network namespaces.")

@@ -29,12 +29,15 @@ func projectCreateMain(ctx context.Context, args []string) error {
 			"See 'npte tutorial quickstart' for a complete walkthrough.",
 	)
 	usage.PositionalArgumentsUsage = "<name>"
+	fset.Exit = env.Exit
+	fset.Stderr = env.Stderr
+	fset.Stdout = env.Stdout
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.StringVar(&prefixFlag, 0, "prefix", "The /16 address `PREFIX` for this project (default: "+defaultPrefix+").")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = 1
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // we are using vflag.ExitOnError
 
 	// Get the project directory
 	proj := fset.Args()[0]

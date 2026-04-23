@@ -31,10 +31,13 @@ func tutorialMain(ctx context.Context, args []string) error {
 		"- browser",
 	)
 	usage.PositionalArgumentsUsage = "[chapter]"
+	fset.Exit = env.Exit
+	fset.Stderr = env.Stderr
+	fset.Stdout = env.Stdout
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.MaxPositionalArgs = 1
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // we are using vflag.ExitOnError
 
 	filename := "docs/tutorial/README.md"
 	if len(fset.Args()) > 0 {

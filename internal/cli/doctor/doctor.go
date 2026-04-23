@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package main
+// Package doctor implements the doctor subcommand.
+package doctor
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
+	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 	"github.com/charmbracelet/lipgloss"
@@ -28,7 +30,11 @@ var dependencies = []dependency{
 	{"debootstrap", "debootstrap"},
 }
 
-func doctorMain(ctx context.Context, args []string) error {
+// Main is the main of the doctor subcommand.
+func Main(ctx context.Context, args []string) error {
+	// Obtain the configured environment
+	env := testable.Env
+
 	// Parse command line flags
 	fset := vflag.NewFlagSet("npte doctor", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
@@ -37,10 +43,13 @@ func doctorMain(ctx context.Context, args []string) error {
 			"prints the path of the found commands or MISSING with the " +
 			"Debian package name, suggests how to install missing packages.",
 	)
+	fset.Exit = env.Exit
+	fset.Stderr = env.Stderr
+	fset.Stdout = env.Stdout
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.MaxPositionalArgs = 0
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // we are using vflag.ExitOnError
 
 	red := env.LogRenderer.NewStyle().Foreground(lipgloss.Color("1"))
 	green := env.LogRenderer.NewStyle().Foreground(lipgloss.Color("2"))

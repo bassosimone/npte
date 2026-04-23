@@ -26,11 +26,14 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 			"See 'npte tutorial quickstart' for a complete walkthrough.",
 	)
 	usage.PositionalArgumentsUsage = "<project> <name>"
+	fset.Exit = env.Exit
+	fset.Stderr = env.Stderr
+	fset.Stdout = env.Stdout
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.MinPositionalArgs = 2
 	fset.MaxPositionalArgs = 2
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // we are using vflag.ExitOnError
 
 	proj := fset.Args()[0]
 	nameFlag := fset.Args()[1]
