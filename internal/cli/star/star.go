@@ -35,6 +35,7 @@ func Main(ctx context.Context, args []string) error {
 	)
 	disp.AddCommand("create", vclip.CommandFunc(createMain), "Create the `client`/`router`/`server` star.")
 	disp.AddCommand("destroy", vclip.CommandFunc(destroyMain), "Destroy the `client`/`router`/`server` star.")
+	disp.AddCommand("netem", vclip.CommandFunc(netemMain), "Shape the star's access links with a named profile.")
 
 	return disp.Main(ctx, args)
 }
