@@ -25,6 +25,14 @@ func TestNewEnvironOS_AllFieldsPopulated(t *testing.T) {
 	}
 }
 
+// Make sure that CreateTemp actually creates a temporary file.
+func TestNewEnvironOS_CreateTemp(t *testing.T) {
+	env := NewEnvironOS()
+	f, err := env.CreateTemp(t.TempDir(), "test-*")
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+}
+
 // Make sure that LockFile actually locks a file.
 func TestNewEnvironOS_LockFile(t *testing.T) {
 	env := NewEnvironOS()
