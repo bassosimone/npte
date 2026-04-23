@@ -126,6 +126,17 @@ func buildTOC(chapters []chapter) string {
 	))
 	sb.WriteString("\n\n")
 	sb.WriteString(textwrap.Do(
+		"**Primary goal**: support the development and maintenance of clients "+
+			"with the objective of maximizing single-client throughput and "+
+			"minimize per-client CPU usage. These reinforce each "+
+			"other — a faster client uses less CPU per byte "+
+			"transferred, which means you can either push more "+
+			"bandwidth or serve more concurrent clients on the same "+
+			"hardware.",
+		tocWrapWidth, "",
+	))
+	sb.WriteString("\n\n")
+	sb.WriteString(textwrap.Do(
 		"The central abstraction is a **network namespace**: a "+
 			"private, kernel-level network stack with its own "+
 			"interfaces, addresses, routes, and iptables state. npte's "+

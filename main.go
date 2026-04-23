@@ -91,7 +91,6 @@ func main() {
 			"Namespaces are project-scoped; configuration is stored under "+baseDir+"/<project>/.",
 	)
 	disp.AddCommand("doctor", vclip.CommandFunc(doctor.Main), "Check for required external commands.")
-	disp.AddCommand("tutorial_o", vclip.CommandFunc(tutorialMain), "Show the npte tutorials.")
 	disp.AddCommand("tutorial", vclip.CommandFunc(tutorial.Main), "Show the npte tutorials.")
 	disp.AddCommand("project", projectDisp, "Manage projects.")
 	disp.AddCommand("netns_o", netnsDisp, "Manage network namespaces.")
