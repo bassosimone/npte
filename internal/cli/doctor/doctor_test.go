@@ -29,7 +29,6 @@ func TestMain_Dependencies(t *testing.T) {
 		"env":              "/usr/bin/env",
 		"rm":               "/usr/bin/rm",
 		"runuser":          "/usr/sbin/runuser",
-		"systemd-run":      "/usr/bin/systemd-run",
 		"systemd-nspawn":   "/usr/bin/systemd-nspawn",
 		"debootstrap":      "/usr/sbin/debootstrap",
 	}
@@ -60,7 +59,6 @@ func TestMain_Dependencies(t *testing.T) {
 			"env":              "/usr/bin/env",
 			"rm":               "/usr/bin/rm",
 			"runuser":          "/usr/sbin/runuser",
-			"systemd-run":      "/usr/bin/systemd-run",
 			"systemd-nspawn":   "/usr/bin/systemd-nspawn",
 			"debootstrap":      "/usr/sbin/debootstrap",
 		},
@@ -72,7 +70,7 @@ func TestMain_Dependencies(t *testing.T) {
 		wantExit: 1,
 		wantContains: []string{
 			"MISSING",
-			"apt install iproute2 iptables grep procps kmod coreutils util-linux systemd systemd-container debootstrap",
+			"apt install iproute2 iptables grep procps kmod coreutils util-linux systemd-container debootstrap",
 		},
 	}}
 

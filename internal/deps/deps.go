@@ -37,7 +37,6 @@ var All = []Dependency{
 	{"env", "coreutils"},
 	{"rm", "coreutils"},
 	{"runuser", "util-linux"},
-	{"systemd-run", "systemd"},
 	{"systemd-nspawn", "systemd-container"},
 	{"debootstrap", "debootstrap"},
 }
