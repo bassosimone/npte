@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
@@ -31,7 +32,7 @@ func netnsStatusMain(ctx context.Context, args []string) error {
 
 	proj := fset.Args()[0]
 	if err := validateProject(proj); err != nil {
-		logError("npte netns status: %s", err)
+		logx.Error("npte netns status: %s", err)
 		env.Exit(2)
 	}
 

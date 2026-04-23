@@ -6,6 +6,7 @@ import (
 	"context"
 	"path/filepath"
 
+	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
@@ -38,31 +39,31 @@ func projectCreateMain(ctx context.Context, args []string) error {
 	// Get the project directory
 	proj := fset.Args()[0]
 	if err := validateProject(proj); err != nil {
-		logError("npte project create: %s", err)
+		logx.Error("npte project create: %s", err)
 		env.Exit(2)
 	}
 
 	// Validate prefix
 	if _, err := validatePrefix(prefixFlag); err != nil {
-		logError("npte project create: %s", err)
+		logx.Error("npte project create: %s", err)
 		env.Exit(2)
 	}
 
 	pd := projectDir(proj)
 	if _, err := env.Stat(pd); err == nil {
-		logError("npte project create: project already exists: %s", pd)
+		logx.Error("npte project create: project already exists: %s", pd)
 		env.Exit(1)
 	}
 
 	// Populate the project directory
-	logDetails("npte: create project skeleton at %s", pd)
-	logCommand("mkdir -p %s", filepath.Join(pd, "config"))
+	logx.Details("npte: create project skeleton at %s", pd)
+	logx.Command("mkdir -p %s", filepath.Join(pd, "config"))
 	env.LogFatalOnError0(env.MkdirAll(filepath.Join(pd, "config"), 0755))
-	logCommand("mkdir -p %s", filepath.Join(pd, "trees"))
+	logx.Command("mkdir -p %s", filepath.Join(pd, "trees"))
 	env.LogFatalOnError0(env.MkdirAll(filepath.Join(pd, "trees"), 0755))
 
 	rc := resolvConfPath(proj)
-	logDetails("npte: write default resolv.conf at %s", rc)
+	logx.Details("npte: write default resolv.conf at %s", rc)
 	env.LogFatalOnError0(env.WriteFile(rc, []byte("nameserver 8.8.8.8\nnameserver 8.8.4.4\n"), 0644))
 
 	// Write initial config with prefix
@@ -71,9 +72,9 @@ func projectCreateMain(ctx context.Context, args []string) error {
 		NextSubnetIndex: 1,
 		Hosts:           make(map[string]*hostConfig),
 	}
-	logDetails("npte: write initial config with prefix %s", prefixFlag)
+	logx.Details("npte: write initial config with prefix %s", prefixFlag)
 	env.LogFatalOnError0(saveNetnsConfig(proj, cfg))
 
-	logDetails("npte: project %q created", proj)
+	logx.Details("npte: project %q created", proj)
 	return nil
 }

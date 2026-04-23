@@ -53,3 +53,6 @@ func NewEnvironOS() *Environ {
 		LogFatalOnError0: runtimex.LogFatalOnError0,
 	}
 }
+
+// Env is the global [*Environ].
+var Env = NewEnvironOS()

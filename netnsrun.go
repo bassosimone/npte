@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
@@ -44,28 +45,28 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	nameFlag := fset.Args()[1]
 
 	if err := validateProject(proj); err != nil {
-		logError("npte netns run: %s", err)
+		logx.Error("npte netns run: %s", err)
 		env.Exit(2)
 	}
 
 	// Load config to verify the project is properly set up (result unused)
 	_ = mustLoadNetnsConfig(proj)
 	if err := validateEndpointName(proj, nameFlag); err != nil {
-		logError("npte netns run: %s", err)
+		logx.Error("npte netns run: %s", err)
 		env.Exit(2)
 	}
 	ns := nsName(proj, nameFlag)
 	nsp := nsPath(proj, nameFlag)
 
 	if err := validateUser(userFlag); err != nil {
-		logError("npte netns run: %s", err)
+		logx.Error("npte netns run: %s", err)
 		env.Exit(2)
 	}
 
 	// Validate -e flags
 	for _, ev := range envFlags {
 		if !strings.Contains(ev, "=") {
-			logError("npte netns run: -e value must be KEY=VALUE, got %q", ev)
+			logx.Error("npte netns run: -e value must be KEY=VALUE, got %q", ev)
 			env.Exit(2)
 		}
 	}
@@ -75,7 +76,7 @@ func netnsRunMain(ctx context.Context, args []string) error {
 	// 2. overlay the project's resolv.conf (BindPaths)
 	// 3. drop privileges to the specified user (--uid)
 	// 4. set environment variables (--setenv)
-	logDetails("npte: enter namespace %q as user %q", ns, userFlag)
+	logx.Details("npte: enter namespace %q as user %q", ns, userFlag)
 	rc := resolvConfPath(proj)
 	sdArgs := []string{
 		"--pipe", "--quiet", "--collect",

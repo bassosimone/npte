@@ -8,6 +8,8 @@ import (
 	"net"
 	"path/filepath"
 	"regexp"
+
+	"github.com/bassosimone/npte/internal/logx"
 )
 
 // baseDir is the system-level directory for npte projects.
@@ -75,11 +77,11 @@ func validatePrefix(s string) (*net.IPNet, error) {
 func (cfg *netnsConfig) mustSubnet(index int) *net.IPNet {
 	prefix, err := validatePrefix(cfg.Prefix)
 	if err != nil {
-		logError("npte: %s", err)
+		logx.Error("npte: %s", err)
 		env.Exit(1)
 	}
 	if index < 0 || index > 255 {
-		logError("npte: subnet index %d out of range (0-255)", index)
+		logx.Error("npte: subnet index %d out of range (0-255)", index)
 		env.Exit(1)
 	}
 	ip := make(net.IP, 4)
@@ -101,15 +103,15 @@ type hostConfig struct {
 // must be called to release the lock.
 func mustLockNetnsConfig(proj string) func() {
 	lp := lockPath(proj)
-	logDetails("npte: acquire config lock %s", lp)
+	logx.Details("npte: acquire config lock %s", lp)
 	env.LogFatalOnError0(env.MkdirAll(filepath.Dir(lp), 0755))
 	unlock, err := env.LockFile(lp)
 	if err != nil {
-		logError("npte: cannot acquire config lock: %s", err)
+		logx.Error("npte: cannot acquire config lock: %s", err)
 		env.Exit(1)
 	}
 	return func() {
-		logDetails("npte: release config lock %s", lp)
+		logx.Details("npte: release config lock %s", lp)
 		unlock()
 	}
 }
@@ -241,8 +243,8 @@ func loadNetnsConfig(proj string) (*netnsConfig, error) {
 func mustLoadNetnsConfig(proj string) *netnsConfig {
 	cfg, err := loadNetnsConfig(proj)
 	if err != nil {
-		logError("npte: cannot load netns config: %s", err)
-		logError("npte: have you run %q and %q?", "npte project create", "npte netns create")
+		logx.Error("npte: cannot load netns config: %s", err)
+		logx.Error("npte: have you run %q and %q?", "npte project create", "npte netns create")
 		env.Exit(1)
 	}
 	return cfg

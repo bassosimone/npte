@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 
+	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
@@ -37,21 +38,21 @@ func netemApplyMain(ctx context.Context, args []string) error {
 	client := fset.Args()[1]
 
 	if err := validateProject(proj); err != nil {
-		logError("npte netem apply: %s", err)
+		logx.Error("npte netem apply: %s", err)
 		env.Exit(2)
 	}
 	if err := validateEndpointName(proj, client); err != nil {
-		logError("npte netem apply: %s", err)
+		logx.Error("npte netem apply: %s", err)
 		env.Exit(2)
 	}
 	if rtt == "" {
-		logError("npte netem apply: --rtt is required")
+		logx.Error("npte netem apply: --rtt is required")
 		env.Exit(2)
 	}
 
 	oneWayDelay, err := halfRTT(rtt)
 	if err != nil {
-		logError("npte netem apply: %s", err)
+		logx.Error("npte netem apply: %s", err)
 		env.Exit(2)
 	}
 
@@ -60,7 +61,7 @@ func netemApplyMain(ctx context.Context, args []string) error {
 	defer unlock()
 	cfg := mustLoadNetnsConfig(proj)
 	if _, ok := cfg.Hosts[client]; !ok {
-		logError("npte netem apply: endpoint %q not found in project %q", client, proj)
+		logx.Error("npte netem apply: endpoint %q not found in project %q", client, proj)
 		env.Exit(1)
 	}
 
@@ -70,7 +71,7 @@ func netemApplyMain(ctx context.Context, args []string) error {
 	ulIface := proj + "-" + client + "-s"
 
 	// Clear existing rules (ignore errors — may not have any)
-	logDetails("npte: clear existing netem rules")
+	logx.Details("npte: clear existing netem rules")
 	runCmd(ctx, "ip netns exec %s tc qdisc del dev %s root", routerNs, dlIface)
 	runCmd(ctx, "ip netns exec %s tc qdisc del dev %s root", clientNs, ulIface)
 
@@ -85,12 +86,12 @@ func netemApplyMain(ctx context.Context, args []string) error {
 	}
 
 	// Apply new rules
-	logDetails("npte: apply download shaping on %s (%s)", dlIface, dlNetem)
+	logx.Details("npte: apply download shaping on %s (%s)", dlIface, dlNetem)
 	mustRunCmd(ctx, "ip netns exec %s tc qdisc add dev %s root netem %s", routerNs, dlIface, dlNetem)
 
-	logDetails("npte: apply upload shaping on %s (%s)", ulIface, ulNetem)
+	logx.Details("npte: apply upload shaping on %s (%s)", ulIface, ulNetem)
 	mustRunCmd(ctx, "ip netns exec %s tc qdisc add dev %s root netem %s", clientNs, ulIface, ulNetem)
 
-	logDetails("npte: shaping applied (RTT %s, download %s, upload %s)", rtt, download, upload)
+	logx.Details("npte: shaping applied (RTT %s, download %s, upload %s)", rtt, download, upload)
 	return nil
 }

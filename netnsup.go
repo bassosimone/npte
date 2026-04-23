@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
@@ -34,7 +35,7 @@ func netnsUpMain(ctx context.Context, args []string) error {
 
 	proj := fset.Args()[0]
 	if err := validateProject(proj); err != nil {
-		logError("npte netns up: %s", err)
+		logx.Error("npte netns up: %s", err)
 		env.Exit(2)
 	}
 
@@ -42,11 +43,11 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	defer unlock()
 
 	// Load config
-	logDetails("npte: load config from %s", configPath(proj))
+	logx.Details("npte: load config from %s", configPath(proj))
 	cfg := mustLoadNetnsConfig(proj)
 
 	// Ensure the BBR congestion control module is available
-	logDetails("npte: load tcp_bbr kernel module")
+	logx.Details("npte: load tcp_bbr kernel module")
 	mustRunCmd(ctx, "modprobe tcp_bbr")
 
 	// Create the router namespace
@@ -60,29 +61,29 @@ func netnsUpMain(ctx context.Context, args []string) error {
 	ones, _ := routerNet.Mask.Size()
 	cidr := fmt.Sprintf("%d", ones)
 
-	logDetails("npte: create router namespace: %s", routerNs)
+	logx.Details("npte: create router namespace: %s", routerNs)
 	mustRunCmd(ctx, "ip netns add %s", routerNs)
 	mustRunCmd(ctx, "ip netns exec %s ip link set lo up", routerNs)
 	mustRunCmd(ctx, "ip netns exec %s sysctl -w net.ipv4.ip_forward=1", routerNs)
 
-	logDetails("npte: create veth pair %s <-> %s", hostVeth, insideVeth)
+	logx.Details("npte: create veth pair %s <-> %s", hostVeth, insideVeth)
 	mustRunCmd(ctx, "ip link add %s type veth peer name %s", hostVeth, insideVeth)
 	mustRunCmd(ctx, "ip link set %s netns %s", insideVeth, routerNs)
 
-	logDetails("npte: configure host side (%s/%s on %s)", hostAddr, cidr, hostVeth)
+	logx.Details("npte: configure host side (%s/%s on %s)", hostAddr, cidr, hostVeth)
 	mustRunCmd(ctx, "ip addr add %s/%s dev %s", hostAddr, cidr, hostVeth)
 	mustRunCmd(ctx, "ip link set %s up", hostVeth)
 
-	logDetails("npte: configure router side (%s/%s on %s)", insideAddr, cidr, insideVeth)
+	logx.Details("npte: configure router side (%s/%s on %s)", insideAddr, cidr, insideVeth)
 	mustRunCmd(ctx, "ip netns exec %s ip addr add %s/%s dev %s", routerNs, insideAddr, cidr, insideVeth)
 	mustRunCmd(ctx, "ip netns exec %s ip link set %s up", routerNs, insideVeth)
 	mustRunCmd(ctx, "ip netns exec %s ip route add default via %s", routerNs, hostAddr)
 
-	logDetails("npte: SNAT endpoint traffic to %s inside the router", insideAddr)
+	logx.Details("npte: SNAT endpoint traffic to %s inside the router", insideAddr)
 	mustRunCmd(ctx, "ip netns exec %s iptables -t nat -A POSTROUTING -o %s -j SNAT --to-source %s",
 		routerNs, insideVeth, insideAddr)
 
-	logDetails("npte: enable host NAT and FORWARD rules for router traffic")
+	logx.Details("npte: enable host NAT and FORWARD rules for router traffic")
 	mustRunCmd(ctx, "sysctl -w net.ipv4.ip_forward=1")
 	mustRunCmd(ctx, "iptables -t nat -A POSTROUTING -s %s/32 -j MASQUERADE", insideAddr)
 	mustRunCmd(ctx, "iptables -I FORWARD -s %s/32 -j ACCEPT", insideAddr)
@@ -90,7 +91,7 @@ func netnsUpMain(ctx context.Context, args []string) error {
 
 	// Create all endpoint namespaces
 	for _, hs := range cfg.Hosts {
-		logDetails("npte: create endpoint %q", hs.Name)
+		logx.Details("npte: create endpoint %q", hs.Name)
 
 		ipNet := cfg.mustSubnet(hs.SubnetIndex)
 
@@ -119,9 +120,9 @@ func netnsUpMain(ctx context.Context, args []string) error {
 		mustRunCmd(ctx, "ip netns exec %s sysctl -w net.ipv4.tcp_rmem='4096 131072 33554432'", ns)
 		mustRunCmd(ctx, "ip netns exec %s sysctl -w net.ipv4.tcp_wmem='4096 131072 33554432'", ns)
 
-		logDetails("npte: created %q with address %s", hs.Name, endpointAddr)
+		logx.Details("npte: created %q with address %s", hs.Name, endpointAddr)
 	}
 
-	logDetails("npte: network is up")
+	logx.Details("npte: network is up")
 	return nil
 }

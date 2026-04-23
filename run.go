@@ -8,13 +8,14 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/runtimex"
 	"github.com/kballard/go-shellquote"
 )
 
 func runArgs(ctx context.Context, argv0 string, args ...string) error {
 	argv := append([]string{argv0}, args...)
-	logCommand("%s", shellquote.Join(argv...))
+	logx.Command("%s", shellquote.Join(argv...))
 
 	cmd := exec.CommandContext(ctx, argv0, args...)
 	cmd.Stdin = os.Stdin
@@ -35,7 +36,7 @@ func runCmd(ctx context.Context, format string, args ...any) error {
 		return err
 	}
 	runtimex.Assert(len(argv) > 0)
-	logCommand("%s", cmdline)
+	logx.Command("%s", cmdline)
 
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
 	cmd.Stdin = os.Stdin

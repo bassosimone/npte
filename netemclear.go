@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 
+	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
@@ -30,11 +31,11 @@ func netemClearMain(ctx context.Context, args []string) error {
 	client := fset.Args()[1]
 
 	if err := validateProject(proj); err != nil {
-		logError("npte netem clear: %s", err)
+		logx.Error("npte netem clear: %s", err)
 		env.Exit(2)
 	}
 	if err := validateEndpointName(proj, client); err != nil {
-		logError("npte netem clear: %s", err)
+		logx.Error("npte netem clear: %s", err)
 		env.Exit(2)
 	}
 
@@ -43,7 +44,7 @@ func netemClearMain(ctx context.Context, args []string) error {
 	defer unlock()
 	cfg := mustLoadNetnsConfig(proj)
 	if _, ok := cfg.Hosts[client]; !ok {
-		logError("npte netem clear: endpoint %q not found in project %q", client, proj)
+		logx.Error("npte netem clear: endpoint %q not found in project %q", client, proj)
 		env.Exit(1)
 	}
 
@@ -52,10 +53,10 @@ func netemClearMain(ctx context.Context, args []string) error {
 	dlIface := proj + "-" + client + "-r"
 	ulIface := proj + "-" + client + "-s"
 
-	logDetails("npte: clear netem rules on %s and %s", dlIface, ulIface)
+	logx.Details("npte: clear netem rules on %s and %s", dlIface, ulIface)
 	runCmd(ctx, "ip netns exec %s tc qdisc del dev %s root", routerNs, dlIface)
 	runCmd(ctx, "ip netns exec %s tc qdisc del dev %s root", clientNs, ulIface)
 
-	logDetails("npte: shaping cleared")
+	logx.Details("npte: shaping cleared")
 	return nil
 }

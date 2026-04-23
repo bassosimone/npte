@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 
+	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
@@ -36,14 +37,14 @@ func containerRunMain(ctx context.Context, args []string) error {
 	nameFlag := fset.Args()[1]
 
 	if err := validateProject(proj); err != nil {
-		logError("npte container run: %s", err)
+		logx.Error("npte container run: %s", err)
 		env.Exit(2)
 	}
 
 	// Load config to verify the project is properly set up (result unused)
 	_ = mustLoadNetnsConfig(proj)
 	if err := validateEndpointName(proj, nameFlag); err != nil {
-		logError("npte container run: %s", err)
+		logx.Error("npte container run: %s", err)
 		env.Exit(2)
 	}
 	ns := nsName(proj, nameFlag)
@@ -52,13 +53,13 @@ func containerRunMain(ctx context.Context, args []string) error {
 	// Verify the filesystem tree exists
 	tree := treePath(proj, nameFlag)
 	if _, err := env.Stat(tree); os.IsNotExist(err) {
-		logError("npte container run: tree not found: %s", tree)
-		logError("npte container run: create it with %q", fmt.Sprintf("npte container create %s %s", proj, nameFlag))
+		logx.Error("npte container run: tree not found: %s", tree)
+		logx.Error("npte container run: create it with %q", fmt.Sprintf("npte container create %s %s", proj, nameFlag))
 		env.Exit(1)
 	}
 
 	// Run inside the container with systemd-nspawn
-	logDetails("npte: run in container %q in namespace %q", nameFlag, ns)
+	logx.Details("npte: run in container %q in namespace %q", nameFlag, ns)
 	nspawnArgs := []string{"-D", tree, "--network-namespace-path=" + nsp}
 	nspawnArgs = append(nspawnArgs, fset.Args()[2:]...)
 

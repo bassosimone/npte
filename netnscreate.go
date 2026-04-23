@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
@@ -35,18 +36,18 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	nameFlag := fset.Args()[1]
 
 	if err := validateProject(proj); err != nil {
-		logError("npte netns create: %s", err)
+		logx.Error("npte netns create: %s", err)
 		env.Exit(2)
 	}
 	if err := validateEndpointName(proj, nameFlag); err != nil {
-		logError("npte netns create: %s", err)
+		logx.Error("npte netns create: %s", err)
 		env.Exit(2)
 	}
 
 	// Verify the project directory exists
 	if _, err := env.Stat(projectDir(proj)); os.IsNotExist(err) {
-		logError("npte netns create: project %q not found", proj)
-		logError("npte netns create: run %q first", fmt.Sprintf("npte project create %s", proj))
+		logx.Error("npte netns create: project %q not found", proj)
+		logx.Error("npte netns create: run %q first", fmt.Sprintf("npte project create %s", proj))
 		env.Exit(1)
 	}
 
@@ -57,18 +58,18 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	cfg := mustLoadNetnsConfig(proj)
 
 	if _, exists := cfg.Hosts[nameFlag]; exists {
-		logError("npte netns create: host %q already exists", nameFlag)
+		logx.Error("npte netns create: host %q already exists", nameFlag)
 		env.Exit(1)
 	}
 
 	// Allocate subnet index
 	if cfg.NextSubnetIndex < 1 || cfg.NextSubnetIndex > 255 {
-		logError("npte netns create: next_subnet_index %d out of range (1-255)", cfg.NextSubnetIndex)
+		logx.Error("npte netns create: next_subnet_index %d out of range (1-255)", cfg.NextSubnetIndex)
 		env.Exit(1)
 	}
 	index := cfg.NextSubnetIndex
 	subnet := cfg.mustSubnet(index)
-	logDetails("npte: allocate subnet %s for host %q", subnet, nameFlag)
+	logx.Details("npte: allocate subnet %s for host %q", subnet, nameFlag)
 
 	cfg.Hosts[nameFlag] = &hostConfig{
 		Name:        nameFlag,
@@ -76,10 +77,10 @@ func netnsCreateMain(ctx context.Context, args []string) error {
 	}
 	cfg.NextSubnetIndex++
 
-	logDetails("npte: save config to %s", configPath(proj))
+	logx.Details("npte: save config to %s", configPath(proj))
 	env.LogFatalOnError0(saveNetnsConfig(proj, cfg))
 
-	logDetails("npte: added host %q to config (subnet %s)", nameFlag, subnet)
-	logDetails("npte: run %q to create the network namespaces", fmt.Sprintf("npte netns up %s", proj))
+	logx.Details("npte: added host %q to config (subnet %s)", nameFlag, subnet)
+	logx.Details("npte: run %q to create the network namespaces", fmt.Sprintf("npte netns up %s", proj))
 	return nil
 }
