@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os/exec"
 
+	"github.com/bassosimone/npte/internal/deps"
 	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/kballard/go-shellquote"
@@ -15,8 +16,12 @@ import (
 
 // Run runs the command represented by the given argv.
 //
+// The argv0 must be a bare command name in [deps.All]; Run resolves it to
+// an absolute path via [deps.LookPath] before execution.
+//
 // When the dryRun argument is true the command is not executed but rather
-// the command that would be executed is printed on stdout.
+// the command that would be executed is printed on stdout. Dry-run does
+// not resolve or enforce the allowlist because it has no side effects.
 func Run(ctx context.Context, dryRun bool, argv0 string, args ...string) error {
 	env := testable.Env
 	argv := append([]string{argv0}, args...)
@@ -27,9 +32,14 @@ func Run(ctx context.Context, dryRun bool, argv0 string, args ...string) error {
 		return err
 	}
 
+	path, err := deps.LookPath(argv0)
+	if err != nil {
+		return err
+	}
+
 	logx.Command("%s", quoted)
 
-	cmd := exec.CommandContext(ctx, argv0, args...)
+	cmd := exec.CommandContext(ctx, path, args...)
 	cmd.Stdin = env.Stdin
 	cmd.Stdout = env.Stdout
 	cmd.Stderr = env.Stderr

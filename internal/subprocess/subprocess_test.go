@@ -15,8 +15,26 @@ import (
 
 // Make sure that MustRun actually runs a command. We re-invoke the test
 // binary itself with a regex that matches no test, which exits 0 on every
-// OS and keeps the test portable.
+// OS and keeps the test portable. We pretend that "ip" (an allowlisted
+// name) resolves to os.Args[0] via a fake LookPath.
 func TestMustRun(t *testing.T) {
+	var captured error
+	orig := testable.Env
+	env := testable.NewEnvironOS()
+	env.Stdout = io.Discard
+	env.Stderr = io.Discard
+	env.LookPath = func(string) (string, error) { return os.Args[0], nil }
+	env.LogFatalOnError0 = func(err error) { captured = err }
+	testable.Env = env
+	t.Cleanup(func() { testable.Env = orig })
+
+	MustRun(context.Background(), false, "ip", "-test.run=^$")
+	assert.NoError(t, captured)
+}
+
+// Make sure that MustRun refuses to run commands that are not in the
+// deps allowlist.
+func TestMustRun_Disallowed(t *testing.T) {
 	var captured error
 	orig := testable.Env
 	env := testable.NewEnvironOS()
@@ -26,12 +44,12 @@ func TestMustRun(t *testing.T) {
 	testable.Env = env
 	t.Cleanup(func() { testable.Env = orig })
 
-	MustRun(context.Background(), false, os.Args[0], "-test.run=^$")
-	assert.NoError(t, captured)
+	MustRun(context.Background(), false, "nonexistent-bogus-cmd")
+	assert.ErrorContains(t, captured, `command "nonexistent-bogus-cmd" is not in the allowlist`)
 }
 
 // Make sure that MustRun in dry mode prints the command to stdout
-// rather than executing it.
+// rather than executing it. Dry-run does not enforce the allowlist.
 func TestMustRun_Dry(t *testing.T) {
 	var captured error
 	var stdout bytes.Buffer

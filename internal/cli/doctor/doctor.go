@@ -8,27 +8,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bassosimone/npte/internal/deps"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 	"github.com/charmbracelet/lipgloss"
 )
-
-// dependency describes an external command and its Debian package.
-type dependency struct {
-	binary string
-	pkg    string
-}
-
-var dependencies = []dependency{
-	{"ip", "iproute2"},
-	{"tc", "iproute2"},
-	{"iptables", "iptables"},
-	{"sysctl", "procps"},
-	{"systemd-run", "systemd"},
-	{"systemd-nspawn", "systemd-container"},
-	{"debootstrap", "debootstrap"},
-}
 
 // Main is the main of the doctor subcommand.
 func Main(ctx context.Context, args []string) error {
@@ -55,15 +40,15 @@ func Main(ctx context.Context, args []string) error {
 	green := env.LogRenderer.NewStyle().Foreground(lipgloss.Color("2"))
 
 	var missing []string
-	for _, dep := range dependencies {
-		path, err := env.LookPath(dep.binary)
+	for _, dep := range deps.All {
+		path, err := deps.LookPath(dep.Binary)
 		if err != nil {
-			status := red.Render(fmt.Sprintf("MISSING (%s)", dep.pkg))
-			fmt.Fprintf(env.Stdout, "checking for %s... %s\n", dep.binary, status)
-			missing = append(missing, dep.pkg)
-		} else {
-			fmt.Fprintf(env.Stdout, "checking for %s... %s\n", dep.binary, green.Render(path))
+			status := red.Render(fmt.Sprintf("MISSING (%s)", dep.Pkg))
+			fmt.Fprintf(env.Stdout, "checking for %s... %s\n", dep.Binary, status)
+			missing = append(missing, dep.Pkg)
+			continue
 		}
+		fmt.Fprintf(env.Stdout, "checking for %s... %s\n", dep.Binary, green.Render(path))
 	}
 
 	if len(missing) > 0 {
