@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/bassosimone/npte/internal/cli/doctor"
+	"github.com/bassosimone/npte/internal/cli/netns"
 	"github.com/bassosimone/vclip"
 	"github.com/bassosimone/vflag"
 )
@@ -88,6 +89,7 @@ func main() {
 	disp.AddCommand("tutorial", vclip.CommandFunc(tutorialMain), "Show the npte tutorials.")
 	disp.AddCommand("project", projectDisp, "Manage projects.")
 	disp.AddCommand("netns", netnsDisp, "Manage network namespaces.")
+	disp.AddCommand("netns2", vclip.CommandFunc(netns.Main), "Manage network namespaces.")
 	disp.AddCommand("container", containerDisp, "Manage lightweight containers.")
 	disp.AddCommand("netem", netemDisp, "Apply or clear traffic shaping.")
 
