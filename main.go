@@ -47,20 +47,6 @@ func main() {
 	netnsDisp.AddCommand("show", vclip.CommandFunc(netnsShowMain), "Show the network topology.")
 	netnsDisp.AddCommand("status", vclip.CommandFunc(netnsStatusMain), "Check whether the namespaces are up.")
 
-	// Create dispatcher for `npte netem`
-	netemDisp := vclip.NewDispatcherCommand("npte netem", vflag.ExitOnError)
-	netemDisp.Exit = env.Exit
-	netemDisp.Stderr = env.Stderr
-	netemDisp.Stdout = env.Stdout
-	netemDisp.AddDescription(
-		"Apply or clear traffic shaping on a client's access link. "+
-			"Shapes both download and upload directions using tc/netem.",
-		"For advanced usage (loss, batching, child qdiscs), use tc directly. "+
-			"See 'npte tutorial netem' for the full reference.",
-	)
-	netemDisp.AddCommand("apply", vclip.CommandFunc(netemApplyMain), "Apply traffic shaping to a client.")
-	netemDisp.AddCommand("clear", vclip.CommandFunc(netemClearMain), "Remove traffic shaping from a client.")
-
 	// Create dispatcher for `npte`
 	disp := vclip.NewDispatcherCommand("npte", vflag.ExitOnError)
 	disp.Exit = env.Exit
@@ -84,7 +70,6 @@ func main() {
 	disp.AddCommand("gateway", vclip.CommandFunc(gateway.Main), "Manage namespaces as internet gateways.")
 	disp.AddCommand("star", vclip.CommandFunc(star.Main), "Compose a fixed three-node star topology.")
 	disp.AddCommand("container", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
-	disp.AddCommand("netem_o", netemDisp, "Apply or clear traffic shaping.")
 	disp.AddCommand("netem", vclip.CommandFunc(netem.Main), "Apply or clear traffic shaping.")
 
 	// Run the root dispatcher
