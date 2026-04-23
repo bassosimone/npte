@@ -114,6 +114,24 @@ func EnvVarName(s string) error {
 	return nil
 }
 
+var debootstrapSuiteRe = regexp.MustCompile(`^[a-z][a-z0-9]*$`)
+
+// DebootstrapSuite reports whether s is a plausible debootstrap suite name
+// (e.g. "noble", "bookworm", "trixie"). The check is syntactic: it rejects
+// obviously unsafe inputs before they reach `debootstrap <suite> <target>`
+// but does not verify that a corresponding script exists under
+// /usr/share/debootstrap/scripts — debootstrap itself fails loud when it
+// does not.
+func DebootstrapSuite(s string) error {
+	if len(s) <= 0 {
+		return fmt.Errorf("suite name is empty")
+	}
+	if !debootstrapSuiteRe.MatchString(s) {
+		return fmt.Errorf("suite name %q must match %s", s, debootstrapSuiteRe)
+	}
+	return nil
+}
+
 // CIDR reports whether s is a valid IPv4 or IPv6 prefix in "addr/len" form.
 // A prefix length is required (bare addresses are rejected), and host bits
 // may be set (e.g. "10.0.1.1/24" is accepted) since `ip addr add` accepts

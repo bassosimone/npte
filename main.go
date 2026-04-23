@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/bassosimone/npte/internal/cli/container"
 	"github.com/bassosimone/npte/internal/cli/doctor"
 	"github.com/bassosimone/npte/internal/cli/gateway"
 	"github.com/bassosimone/npte/internal/cli/netns"
@@ -93,6 +94,7 @@ func main() {
 	disp.AddCommand("netns2", vclip.CommandFunc(netns.Main), "Manage network namespaces.")
 	disp.AddCommand("gateway", vclip.CommandFunc(gateway.Main), "Manage namespaces as internet gateways.")
 	disp.AddCommand("container", containerDisp, "Manage lightweight containers.")
+	disp.AddCommand("container2", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
 	disp.AddCommand("netem", netemDisp, "Apply or clear traffic shaping.")
 
 	// Run the root dispatcher
