@@ -21,6 +21,9 @@ func TestMain_Dependencies(t *testing.T) {
 		"tc":             "/usr/sbin/tc",
 		"iptables":       "/usr/sbin/iptables",
 		"sysctl":         "/usr/sbin/sysctl",
+		"modprobe":       "/usr/sbin/modprobe",
+		"mkdir":          "/usr/bin/mkdir",
+		"install":        "/usr/bin/install",
 		"systemd-run":    "/usr/bin/systemd-run",
 		"systemd-nspawn": "/usr/bin/systemd-nspawn",
 		"debootstrap":    "/usr/sbin/debootstrap",
@@ -44,6 +47,9 @@ func TestMain_Dependencies(t *testing.T) {
 		found: map[string]string{
 			"iptables":       "/usr/sbin/iptables",
 			"sysctl":         "/usr/sbin/sysctl",
+			"modprobe":       "/usr/sbin/modprobe",
+			"mkdir":          "/usr/bin/mkdir",
+			"install":        "/usr/bin/install",
 			"systemd-run":    "/usr/bin/systemd-run",
 			"systemd-nspawn": "/usr/bin/systemd-nspawn",
 			"debootstrap":    "/usr/sbin/debootstrap",
@@ -56,7 +62,7 @@ func TestMain_Dependencies(t *testing.T) {
 		wantExit: 1,
 		wantContains: []string{
 			"MISSING",
-			"apt install iproute2 iptables procps systemd systemd-container debootstrap",
+			"apt install iproute2 iptables procps kmod coreutils systemd systemd-container debootstrap",
 		},
 	}}
 
