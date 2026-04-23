@@ -70,6 +70,50 @@ func IPAddr(s string) error {
 	return nil
 }
 
+// usernameMaxLen mirrors the conservative limit used by adduser(8) and
+// useradd(8) on Debian-family systems: 32 bytes including the trailing NUL.
+const usernameMaxLen = 32
+
+var usernameRe = regexp.MustCompile(`^[a-z_][a-z0-9_-]*$`)
+
+// Username reports whether s is a plausible Unix login name.
+//
+// The check is deliberately syntactic: we refuse obviously unsafe inputs
+// (spaces, shell metacharacters, path separators, leading digits) before
+// they reach `runuser -u <s>`. Whether the user actually exists is not
+// checked here; `runuser` will fail loudly if it does not.
+func Username(s string) error {
+	if len(s) <= 0 {
+		return fmt.Errorf("username is empty")
+	}
+	if len(s) > usernameMaxLen {
+		return fmt.Errorf("username %q exceeds %d characters", s, usernameMaxLen)
+	}
+	if !usernameRe.MatchString(s) {
+		return fmt.Errorf("username %q must match %s", s, usernameRe)
+	}
+	return nil
+}
+
+var envVarNameRe = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+
+// EnvVarName reports whether s is a valid POSIX environment-variable name.
+//
+// Constraining the name shape (not the value) defends against `env` argv
+// confusion: any KEY matching this regex cannot start with `-`, so it
+// cannot be parsed by env(1) as an option in `env KEY=VALUE ... cmd`.
+// The value is left unvalidated — env(1) copies it verbatim into envp
+// without shell involvement, so arbitrary bytes are safe.
+func EnvVarName(s string) error {
+	if len(s) <= 0 {
+		return fmt.Errorf("env var name is empty")
+	}
+	if !envVarNameRe.MatchString(s) {
+		return fmt.Errorf("env var name %q must match %s", s, envVarNameRe)
+	}
+	return nil
+}
+
 // CIDR reports whether s is a valid IPv4 or IPv6 prefix in "addr/len" form.
 // A prefix length is required (bare addresses are rejected), and host bits
 // may be set (e.g. "10.0.1.1/24" is accepted) since `ip addr add` accepts
