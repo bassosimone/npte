@@ -17,6 +17,7 @@ import (
 // so that commands can be tested without root, namespaces, or real I/O.
 type Environ struct {
 	Exit             func(code int)
+	Stdin            io.Reader
 	Stdout           io.Writer
 	Stderr           io.Writer
 	LogRenderer      *lipgloss.Renderer
@@ -35,6 +36,7 @@ type Environ struct {
 func NewEnvironOS() *Environ {
 	return &Environ{
 		Exit:        os.Exit,
+		Stdin:       os.Stdin,
 		Stdout:      os.Stdout,
 		Stderr:      os.Stderr,
 		LogRenderer: lipgloss.NewRenderer(os.Stderr),
