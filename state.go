@@ -38,11 +38,6 @@ func resolvConfPath(proj string) string {
 	return filepath.Join(baseDir, proj, "config", "resolv.conf")
 }
 
-// treePath returns the path to a container filesystem tree.
-func treePath(proj, name string) string {
-	return filepath.Join(baseDir, proj, "trees", name)
-}
-
 // netnsConfig is the network configuration stored in the config file.
 type netnsConfig struct {
 	// Prefix is the /16 address block for this project (e.g., "10.0.0.0/16").
@@ -141,17 +136,6 @@ func validateUser(s string) error {
 	if !userRe.MatchString(s) {
 		return fmt.Errorf("invalid user name %q: must start with a lowercase letter or underscore "+
 			"and contain only lowercase letters, digits, underscores, and hyphens", s)
-	}
-	return nil
-}
-
-var suiteRe = regexp.MustCompile(`^[a-z][a-z0-9]*$`)
-
-// validateSuite checks that s is a valid debootstrap suite name.
-func validateSuite(s string) error {
-	if !suiteRe.MatchString(s) {
-		return fmt.Errorf("invalid suite name %q: must start with a lowercase letter "+
-			"and contain only lowercase letters and digits", s)
 	}
 	return nil
 }

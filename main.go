@@ -47,20 +47,6 @@ func main() {
 	netnsDisp.AddCommand("show", vclip.CommandFunc(netnsShowMain), "Show the network topology.")
 	netnsDisp.AddCommand("status", vclip.CommandFunc(netnsStatusMain), "Check whether the namespaces are up.")
 
-	// Create dispatcher for `npte container`
-	containerDisp := vclip.NewDispatcherCommand("npte container", vflag.ExitOnError)
-	containerDisp.Exit = env.Exit
-	containerDisp.Stderr = env.Stderr
-	containerDisp.Stdout = env.Stdout
-	containerDisp.AddDescription(
-		"Manage lightweight containers backed by systemd-nspawn. "+
-			"Each uses a debootstrap filesystem tree "+
-			"and a network namespace.",
-		"The tree directory is: "+baseDir+"/<project>/trees/<namepace>/.",
-	)
-	containerDisp.AddCommand("create", vclip.CommandFunc(containerCreateMain), "Bootstrap a container filesystem tree.")
-	containerDisp.AddCommand("run", vclip.CommandFunc(containerRunMain), "Run a command inside a container.")
-
 	// Create dispatcher for `npte netem`
 	netemDisp := vclip.NewDispatcherCommand("npte netem", vflag.ExitOnError)
 	netemDisp.Exit = env.Exit
@@ -97,7 +83,6 @@ func main() {
 	disp.AddCommand("netns", vclip.CommandFunc(netns.Main), "Manage network namespaces.")
 	disp.AddCommand("gateway", vclip.CommandFunc(gateway.Main), "Manage namespaces as internet gateways.")
 	disp.AddCommand("star", vclip.CommandFunc(star.Main), "Compose a fixed three-node star topology.")
-	disp.AddCommand("container_o", containerDisp, "Manage lightweight containers.")
 	disp.AddCommand("container", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
 	disp.AddCommand("netem_o", netemDisp, "Apply or clear traffic shaping.")
 	disp.AddCommand("netem", vclip.CommandFunc(netem.Main), "Apply or clear traffic shaping.")
