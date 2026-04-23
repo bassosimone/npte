@@ -30,6 +30,7 @@ func Main(ctx context.Context, args []string) error {
 	disp.AddCommand("create", vclip.CommandFunc(createMain), "Create a minimal namespace.")
 	disp.AddCommand("connect", vclip.CommandFunc(connectMain), "Wire two namespaces with a veth pair.")
 	disp.AddCommand("assign-addr", vclip.CommandFunc(assignAddrMain), "Assign an IP address to an interface inside a namespace.")
+	disp.AddCommand("add-route", vclip.CommandFunc(addRouteMain), "Add a route inside a namespace.")
 
 	return disp.Main(ctx, args)
 }

@@ -72,6 +72,35 @@ func TestIfaceName(t *testing.T) {
 	}
 }
 
+func TestIPAddr(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr string
+	}{
+		{"ipv4", "10.0.1.1", ""},
+		{"ipv4 zero", "0.0.0.0", ""},
+		{"ipv6", "2001:db8::1", ""},
+		{"ipv6 zero", "::", ""},
+		{"ipv6 loopback", "::1", ""},
+		{"with prefix", "10.0.1.0/24", "ip address"},
+		{"garbage", "not-an-ip", "ip address"},
+		{"empty", "", "ip address"},
+		{"octet out of range", "10.0.1.256", "ip address"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := IPAddr(tc.input)
+			if tc.wantErr == "" {
+				assert.NoError(t, err)
+				return
+			}
+			assert.ErrorContains(t, err, tc.wantErr)
+		})
+	}
+}
+
 func TestCIDR(t *testing.T) {
 	tests := []struct {
 		name    string

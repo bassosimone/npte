@@ -58,6 +58,18 @@ func IfaceName(name string) error {
 	return nil
 }
 
+// IPAddr reports whether s is a valid IPv4 or IPv6 address (without a prefix).
+func IPAddr(s string) error {
+	addr, err := netip.ParseAddr(s)
+	if err != nil {
+		return fmt.Errorf("ip address %q: %w", s, err)
+	}
+	if !addr.IsValid() {
+		return fmt.Errorf("ip address %q is not valid", s)
+	}
+	return nil
+}
+
 // CIDR reports whether s is a valid IPv4 or IPv6 prefix in "addr/len" form.
 // A prefix length is required (bare addresses are rejected), and host bits
 // may be set (e.g. "10.0.1.1/24" is accepted) since `ip addr add` accepts
