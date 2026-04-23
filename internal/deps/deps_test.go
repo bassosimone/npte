@@ -22,8 +22,8 @@ func TestLookPath(t *testing.T) {
 		wantErr  string // empty means no error, otherwise a substring match
 	}{{
 		name:    "disallowed command",
-		input:   "rm",
-		wantErr: `deps: command "rm" is not in the allowlist`,
+		input:   "curl",
+		wantErr: `deps: command "curl" is not in the allowlist`,
 	}, {
 		name:     "allowed and found",
 		input:    "ip",

@@ -28,6 +28,7 @@ func Main(ctx context.Context, args []string) error {
 			"persisted project state. Requires root.",
 	)
 	disp.AddCommand("create", vclip.CommandFunc(createMain), "Create a minimal namespace.")
+	disp.AddCommand("destroy", vclip.CommandFunc(destroyMain), "Destroy a namespace created by `create`.")
 	disp.AddCommand("connect", vclip.CommandFunc(connectMain), "Wire two namespaces with a veth pair.")
 	disp.AddCommand("assign-addr", vclip.CommandFunc(assignAddrMain), "Assign an IP address to an interface inside a namespace.")
 	disp.AddCommand("add-route", vclip.CommandFunc(addRouteMain), "Add a route inside a namespace.")

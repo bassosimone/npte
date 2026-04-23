@@ -31,6 +31,7 @@ var All = []Dependency{
 	{"sysctl", "procps"},
 	{"modprobe", "kmod"},
 	{"install", "coreutils"},
+	{"rm", "coreutils"},
 	{"systemd-run", "systemd"},
 	{"systemd-nspawn", "systemd-container"},
 	{"debootstrap", "debootstrap"},
