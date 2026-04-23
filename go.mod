@@ -5,6 +5,7 @@ go 1.25.7
 require (
 	github.com/bassosimone/closepool v0.0.0-20260213174302-379ccac917c0
 	github.com/bassosimone/runtimex v0.0.0-20260108162100-336f3823f6b7
+	github.com/bassosimone/textwrap v0.0.0-20260116080944-4f25bc1114c3
 	github.com/bassosimone/vclip v0.0.0-20260307133721-977dc994815e
 	github.com/bassosimone/vflag v0.0.0-20260212194245-b765f86a69b9
 	github.com/charmbracelet/glamour v1.0.0
@@ -21,7 +22,6 @@ require (
 	github.com/bassosimone/flagparser v0.0.0-20260211192648-d91001adc1ba // indirect
 	github.com/bassosimone/flagscanner v0.0.0-20260108162002-6d1877e940ce // indirect
 	github.com/bassosimone/must v0.0.0-20260118074942-4ad662f6c302 // indirect
-	github.com/bassosimone/textwrap v0.0.0-20260116080944-4f25bc1114c3 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/x/ansi v0.11.6 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect

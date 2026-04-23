@@ -15,6 +15,7 @@ import (
 	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/runtimex"
+	"github.com/bassosimone/textwrap"
 	"github.com/bassosimone/vflag"
 	"github.com/charmbracelet/glamour"
 )
@@ -106,20 +107,55 @@ func extractTitle(body, fallback string) string {
 	return fallback
 }
 
+// tocWrapWidth is the source-line width used for prose paragraphs in the TOC.
+// Matches the chapters under chapters/, which wrap at ~68 characters.
+const tocWrapWidth = 68
+
 // buildTOC returns an auto-generated table-of-contents markdown for the given chapters.
 func buildTOC(chapters []chapter) string {
 	var sb strings.Builder
 	sb.WriteString("# npte tutorial\n\n")
+	sb.WriteString(textwrap.Do(
+		"npte (Network Performance Testing Environment) creates "+
+			"isolated Linux network namespaces, wires them together "+
+			"with veth pairs, and shapes the links with `tc`/`netem` — "+
+			"so you can test how a client behaves on a realistic "+
+			"access link without touching real hardware or a second "+
+			"machine.",
+		tocWrapWidth, "",
+	))
+	sb.WriteString("\n\n")
+	sb.WriteString(textwrap.Do(
+		"The central abstraction is a **network namespace**: a "+
+			"private, kernel-level network stack with its own "+
+			"interfaces, addresses, routes, and iptables state. npte's "+
+			"commands are small primitives for creating, connecting, "+
+			"addressing, routing, and shaping these. The chapters "+
+			"below build up from a single empty namespace to a "+
+			"`client — router — server` star with realistic traffic "+
+			"shaping on the access link, and end with the queueing "+
+			"dynamics that make a shaped link feel either tolerable or "+
+			"broken under load.",
+		tocWrapWidth, "",
+	))
+	sb.WriteString("\n\n")
 	if len(chapters) <= 0 {
 		sb.WriteString("No chapters are currently embedded.\n")
 		return sb.String()
 	}
-	sb.WriteString("Available chapters:\n\n")
+	sb.WriteString("## Chapters\n\n")
 	for _, ch := range chapters {
 		fmt.Fprintf(&sb, "- `%s` — %s\n", ch.slug, ch.title)
 	}
-	sb.WriteString("\nRun `npte tutorial <slug>` to read a chapter, ")
-	sb.WriteString("or `npte tutorial all` to read every chapter in order.\n")
+	sb.WriteString("\n")
+	sb.WriteString(textwrap.Do(
+		"Read a chapter with `npte tutorial <slug>`, or read every "+
+			"chapter in order with `npte tutorial all`. The chapters "+
+			"build on each other; read in order if you are starting "+
+			"fresh.",
+		tocWrapWidth, "",
+	))
+	sb.WriteString("\n")
 	return sb.String()
 }
 
