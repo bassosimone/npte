@@ -13,10 +13,6 @@ import (
 	"github.com/bassosimone/vflag"
 )
 
-// ifnamsiz is the kernel limit on interface-name length (15 usable bytes
-// plus the NUL terminator, per IFNAMSIZ in <linux/if.h>).
-const ifnamsiz = 15
-
 // connectMain is the main of the `netns connect` subcommand.
 func connectMain(ctx context.Context, args []string) error {
 	env := testable.Env
@@ -68,8 +64,8 @@ func connectMain(ctx context.Context, args []string) error {
 
 	leftIf := "if-" + right
 	rightIf := "if-" + left
-	runtimex.Assert(len(leftIf) <= ifnamsiz)
-	runtimex.Assert(len(rightIf) <= ifnamsiz)
+	runtimex.PanicOnError0(validate.IfaceName(leftIf))
+	runtimex.PanicOnError0(validate.IfaceName(rightIf))
 
 	logx.Details("npte: create veth pair %q <-> %q", leftIf, rightIf)
 	subprocess.MustRun(ctx, dryRun, "ip", "link", "add", leftIf, "type", "veth", "peer", "name", rightIf)
