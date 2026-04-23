@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package main
+// Package testable contains code to make npte testable.
+package testable
 
 import (
 	"io"
@@ -12,9 +13,9 @@ import (
 	"github.com/rogpeppe/go-internal/lockedfile"
 )
 
-// environ abstracts away side effects (filesystem, execution, locking, exit)
+// Environ abstracts away side effects (filesystem, execution, locking, exit)
 // so that commands can be tested without root, namespaces, or real I/O.
-type environ struct {
+type Environ struct {
 	Exit             func(code int)
 	Stdout           io.Writer
 	Stderr           io.Writer
@@ -30,9 +31,9 @@ type environ struct {
 	LogFatalOnError0 func(err error)
 }
 
-// newEnvironOS returns an environ wired to real OS operations.
-func newEnvironOS() *environ {
-	return &environ{
+// NewEnvironOS returns an environ wired to real OS operations.
+func NewEnvironOS() *Environ {
+	return &Environ{
 		Exit:        os.Exit,
 		Stdout:      os.Stdout,
 		Stderr:      os.Stderr,
@@ -42,14 +43,13 @@ func newEnvironOS() *environ {
 		WriteFile:   os.WriteFile,
 		Stat:        os.Stat,
 		Remove:      os.Remove,
-		RunCommand:  func(cmd *exec.Cmd) error { return cmd.Run() },
-		LookPath:    exec.LookPath,
+		RunCommand: func(cmd *exec.Cmd) error {
+			return cmd.Run()
+		},
+		LookPath: exec.LookPath,
 		LockFile: func(path string) (func(), error) {
 			return lockedfile.MutexAt(path).Lock()
 		},
 		LogFatalOnError0: runtimex.LogFatalOnError0,
 	}
 }
-
-// env is the global environ used by all commands.
-var env = newEnvironOS()
