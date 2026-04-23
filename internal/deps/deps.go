@@ -30,7 +30,6 @@ var All = []Dependency{
 	{"iptables", "iptables"},
 	{"sysctl", "procps"},
 	{"modprobe", "kmod"},
-	{"mkdir", "coreutils"},
 	{"install", "coreutils"},
 	{"systemd-run", "systemd"},
 	{"systemd-nspawn", "systemd-container"},

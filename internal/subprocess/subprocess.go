@@ -4,9 +4,13 @@
 package subprocess
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/bassosimone/npte/internal/deps"
 	"github.com/bassosimone/npte/internal/logx"
@@ -50,4 +54,58 @@ func Run(ctx context.Context, dryRun bool, argv0 string, args ...string) error {
 // MustRun is like [Run] but logs and exits on failure.
 func MustRun(ctx context.Context, dryRun bool, argv0 string, args ...string) {
 	testable.Env.LogFatalOnError0(Run(ctx, dryRun, argv0, args...))
+}
+
+// PipeTo runs the command represented by argv, piping stdin to its standard
+// input. The argv0 resolves through the [deps.All] allowlist just like [Run].
+//
+// When dryRun is true, PipeTo prints a round-trippable shell snippet to
+// stdout: the command followed by a heredoc containing stdin, using a
+// random heredoc terminator to avoid collisions with the payload. Pasting
+// the output into a shell reproduces the effect of a live run.
+func PipeTo(ctx context.Context, dryRun bool, stdin []byte, argv0 string, args ...string) error {
+	env := testable.Env
+	argv := append([]string{argv0}, args...)
+	quoted := shellquote.Join(argv...)
+
+	if dryRun {
+		term := heredocTerminator()
+		// Ensure the terminator sits at the start of its own line: add a
+		// trailing newline if stdin does not already end with one.
+		sep := ""
+		if !bytes.HasSuffix(stdin, []byte("\n")) {
+			sep = "\n"
+		}
+		_, err := fmt.Fprintf(env.Stdout, "%s <<'%s'\n%s%s%s\n", quoted, term, stdin, sep, term)
+		return err
+	}
+
+	path, err := deps.LookPath(argv0)
+	if err != nil {
+		return err
+	}
+
+	logx.Command("%s", quoted)
+
+	cmd := exec.CommandContext(ctx, path, args...)
+	cmd.Stdin = bytes.NewReader(stdin)
+	cmd.Stdout = env.Stdout
+	cmd.Stderr = env.Stderr
+
+	return env.RunCommand(cmd)
+}
+
+// MustPipeTo is like [PipeTo] but logs and exits on failure.
+func MustPipeTo(ctx context.Context, dryRun bool, stdin []byte, argv0 string, args ...string) {
+	testable.Env.LogFatalOnError0(PipeTo(ctx, dryRun, stdin, argv0, args...))
+}
+
+// heredocTerminator returns a fresh heredoc terminator with a 64-bit random
+// suffix. A collision with the payload would require the caller to embed a
+// matching NPTE_EOF_<hex> line on purpose, which has probability 2^-64 for
+// any given call — low enough to ignore without an explicit check.
+func heredocTerminator() string {
+	var b [8]byte
+	_, _ = rand.Read(b[:])
+	return "NPTE_EOF_" + strings.ToUpper(hex.EncodeToString(b[:]))
 }
