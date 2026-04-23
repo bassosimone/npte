@@ -4,10 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-npte (Network Performance Testing Environment) is a Go CLI tool that creates isolated Linux
-network namespaces with traffic shaping to test client network performance under realistic
-conditions (latency, bandwidth, packet loss). It builds a star topology with a central router
-namespace and shapes traffic on the access link using `tc`/`netem`.
+npte (Network Performance Testing Environment) is a Go CLI tool for testing how a network
+client behaves on a realistic access link. It creates isolated Linux network namespaces,
+wires them together with veth pairs, and shapes the links with `tc`/`netem` — no real
+hardware or second machine required.
+
+**Primary goal**: support the development of clients that maximize single-client throughput
+and minimize per-client CPU usage.
 
 ## Build and Test Commands
 
@@ -15,7 +18,7 @@ namespace and shapes traffic on the access link using `tc`/`netem`.
 # Build
 go build .
 
-# Run tests (none currently exist)
+# Run tests
 go test ./...
 
 # Run with coverage
@@ -26,51 +29,81 @@ There is no Makefile or CI configuration. The project requires Go 1.25+.
 
 ## Architecture
 
-**Single-package design** — all Go files live in the `main` package at the repository root.
+npte is a collection of small, composable primitives rather than a single orchestrator.
+The root `main` package is a single `main.go` that wires a `vclip` dispatcher; each
+subcommand lives in its own package under `internal/cli/`.
 
-### CLI Structure
-
-Hierarchical command dispatcher using `vclip`. Commands are registered in `main.go`:
+### CLI structure
 
 ```
-npte doctor|tutorial
-npte project create
-npte netns create|up|down|run|show|status
-npte container create|run
-npte netem apply|clear
+npte doctor                               — check that required host tools are installed
+npte tutorial [chapter|all]               — render embedded tutorial chapters
+
+npte netns   create|destroy|connect|      — primitive kernel operations on one namespace
+             assign-addr|add-route|run      at a time; no persisted state
+
+npte gateway create|destroy               — turn a namespace into an internet gateway
+                                            (uplink veth + host MASQUERADE/FORWARD)
+
+npte netem   apply|clear                  — thin wrapper around `tc qdisc ... netem`
+                                            on a single <ns> <if>; supports an optional
+                                            child qdisc at parent 1: for AQM experiments
+
+npte container create|run|boot            — debootstrap + systemd-nspawn, with an
+                                            optional --netns binding
+
+npte star    create|destroy|netem         — composes the above into a fixed
+                                            client-router-server topology
 ```
 
-Each command is implemented in its own file named after the command path (e.g., `netnsup.go`,
-`netemapply.go`, `projectcreate.go`).
+Every leaf subcommand that touches the kernel supports `--dry-run`, which prints a
+round-trippable shell script to stdout instead of executing.
 
-### Key Files
+### Key internal packages
 
-- **`state.go`** — Core data structures (`netnsConfig`, `hostConfig`), config file I/O,
-  validation, IP allocation. Config is stored as JSON at `/var/local/npte/<project>/config/netns.json`.
-- **`environ.go`** — Side-effect abstraction layer (`environ` struct) that wraps filesystem,
-  command execution, file locking, and `os.Exit`. Enables testing without root privileges.
-- **`run.go`** — Command execution helpers (`runCmd`/`mustRunCmd` for shell strings,
-  `runArgs`/`mustRunArgs` for arg slices). Uses `shellquote.Split` for safe parsing.
-- **`log.go`** — Colored logging: `logError` (red), `logDetails` (gray), `logCommand` (blue).
-- **`netem.go`** — Parses RTT duration strings and computes one-way delay for `tc netem`.
+- **`internal/cli/<name>/`** — one package per top-level subcommand, each exporting
+  `Main(ctx, args)`. A package with subcommands builds its own nested `vclip` dispatcher
+  (see `container/container.go`, `netem/netem.go`, etc.).
+- **`internal/testable/`** — `Environ` struct abstracts side effects (filesystem, exec,
+  file locking, `os.Exit`, stdio, log renderer). `testable.Env` is the production
+  instance; tests swap in their own `Environ` to run without root or real I/O.
+- **`internal/subprocess/`** — `MustRun` / `MustRunTolerant` execute a command, or print
+  its round-trippable shell form when `dryRun` is true. `pipeline.go` handles piped
+  invocations (e.g. `iptables-save | grep | iptables-restore`).
+- **`internal/validate/`** — syntactic validators for user-supplied identifiers:
+  `NetnsName`, `IfaceName`, `Username`, `DebootstrapSuite`, `CIDR`, etc.
+- **`internal/logx/`** — colored logging: `Error` (red), `Details` (gray), `Command`
+  (blue). Uses lipgloss via `testable.Env.LogRenderer`.
+- **`internal/deps/`** — declares the external binaries npte is allowed to exec;
+  `npte doctor` reads this list.
 
-### Network Topology
+### Shape of a subcommand
 
-Star topology stored in `/var/local/npte/<project>/`:
-- Router gets /24 subnet index 0; endpoints get auto-allocated /24 subnets (indices 1+)
-- All endpoints route through the router; the router NATs to the host via iptables MASQUERADE
-- `netnsup` enlarges TCP buffers and loads `tcp_bbr` kernel module
-- Config persists across reboots; kernel resources (namespaces, veth pairs) are ephemeral
+Each subcommand file follows the same shape:
 
-### Embedded Documentation
+1. Build a `vflag.FlagSet`, wire `Exit`/`Stderr`/`Stdout`/`UsagePrinter` from
+   `testable.Env`, parse `args`.
+2. Validate positional arguments with `internal/validate`.
+3. Log a one-line `logx.Details` explaining what is about to happen.
+4. Call `subprocess.MustRun(ctx, dryRun, "ip", "netns", "exec", ...)` (or similar)
+   to do the kernel work.
 
-Tutorial chapters live in `docs/tutorial/*.md` and are embedded into the binary via `go:embed`.
-The `tutorial` command renders them with `glamour`.
+No command persists state; topologies are built imperatively by composing primitives.
+`star` is the one exception — it hard-codes a specific composition.
+
+### Embedded documentation
+
+Tutorial chapters live in `internal/cli/tutorial/chapters/NNN-*.md` and are embedded
+via `go:embed`. The leading `NNN-` prefix orders them; `tutorial.Main` strips the
+prefix, extracts the `# Title`, and auto-generates the TOC. Chapter slugs are stable
+(`netns-basics`, `routing`, `netem`, `bufferbloat`, `browser`, `containers`, `podman`).
 
 ## Conventions
 
-- Commands receive `context.Context` and args; fatal errors log and call `env.Exit(1)`
-- Identifiers match `^[a-z][a-z0-9]*$`; interface names are capped at 15 chars (IFNAMSIZ)
-- Config access is serialized with file locks (`netns.lock`)
+- Leaf subcommands receive `context.Context` and `args []string`; fatal errors log and
+  call `env.Exit(1)` or `env.Exit(2)` (2 = usage error, 1 = runtime error).
+- User-supplied identifiers are validated with `internal/validate`; interface names
+  are capped at 15 chars (IFNAMSIZ).
+- Per user preference: `len(x) <= 0` rather than `== 0` for emptiness checks.
 - The project requires root and Linux-specific tools (`ip`, `tc`, `iptables`, `sysctl`,
-  `systemd-run`, `systemd-nspawn`, `debootstrap`) — run `npte doctor` to check
+  `systemd-nspawn`, `debootstrap`, `runuser`). Run `npte doctor` to check.
