@@ -11,6 +11,7 @@ import (
 	"github.com/bassosimone/npte/internal/cli/gateway"
 	"github.com/bassosimone/npte/internal/cli/netem"
 	"github.com/bassosimone/npte/internal/cli/netns"
+	"github.com/bassosimone/npte/internal/cli/star"
 	"github.com/bassosimone/npte/internal/cli/tutorial"
 	"github.com/bassosimone/vclip"
 	"github.com/bassosimone/vflag"
@@ -96,6 +97,7 @@ func main() {
 	disp.AddCommand("netns_o", netnsDisp, "Manage network namespaces.")
 	disp.AddCommand("netns", vclip.CommandFunc(netns.Main), "Manage network namespaces.")
 	disp.AddCommand("gateway", vclip.CommandFunc(gateway.Main), "Manage namespaces as internet gateways.")
+	disp.AddCommand("star", vclip.CommandFunc(star.Main), "Compose a fixed three-node star topology.")
 	disp.AddCommand("container_o", containerDisp, "Manage lightweight containers.")
 	disp.AddCommand("container", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
 	disp.AddCommand("netem_o", netemDisp, "Apply or clear traffic shaping.")
