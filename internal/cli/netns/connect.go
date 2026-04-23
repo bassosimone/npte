@@ -1,0 +1,91 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+package netns
+
+import (
+	"context"
+
+	"github.com/bassosimone/npte/internal/logx"
+	"github.com/bassosimone/npte/internal/subprocess"
+	"github.com/bassosimone/npte/internal/testable"
+	"github.com/bassosimone/npte/internal/validate"
+	"github.com/bassosimone/runtimex"
+	"github.com/bassosimone/vflag"
+)
+
+// ifnamsiz is the kernel limit on interface-name length (15 usable bytes
+// plus the NUL terminator, per IFNAMSIZ in <linux/if.h>).
+const ifnamsiz = 15
+
+// connectMain is the main of the `netns connect` subcommand.
+func connectMain(ctx context.Context, args []string) error {
+	env := testable.Env
+
+	fset := vflag.NewFlagSet("npte netns connect", vflag.ExitOnError)
+	usage := vflag.NewDefaultUsagePrinter()
+	usage.AddDescription(
+		"Wires two existing network namespaces with a veth pair. Inside each "+
+			"namespace the interface is named \"if-<peer>\": inside <left> the "+
+			"interface toward <right> is \"if-<right>\", and inside <right> the "+
+			"interface toward <left> is \"if-<left>\". This makes `ip link show` "+
+			"inside each namespace self-describing.",
+		"Both namespaces must already exist (see `npte netns create`). Addressing "+
+			"is a separate concern; this command brings the two ends up with no "+
+			"L3 configuration.",
+		"With --dry-run, prints a round-trippable shell script to stdout instead "+
+			"of executing anything. The output can be pasted into a shell (as root) "+
+			"to reproduce the effect of a live run.",
+	)
+	usage.PositionalArgumentsUsage = "<left> <right>"
+	fset.Exit = env.Exit
+	fset.Stderr = env.Stderr
+	fset.Stdout = env.Stdout
+	fset.UsagePrinter = usage
+	fset.AutoHelp('h', "help", "Print this help text and exit.")
+	var dryRun bool
+	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell script instead of executing it.")
+	fset.MinPositionalArgs = 2
+	fset.MaxPositionalArgs = 2
+	runtimex.PanicOnError0(fset.Parse(args))
+
+	left := fset.Args()[0]
+	right := fset.Args()[1]
+	if err := validate.NetnsName(left); err != nil {
+		logx.Error("npte netns connect: %s", err)
+		env.Exit(2)
+		return nil
+	}
+	if err := validate.NetnsName(right); err != nil {
+		logx.Error("npte netns connect: %s", err)
+		env.Exit(2)
+		return nil
+	}
+	if left == right {
+		logx.Error("npte netns connect: left and right must differ (both are %q)", left)
+		env.Exit(2)
+		return nil
+	}
+
+	leftIf := "if-" + right
+	rightIf := "if-" + left
+	runtimex.Assert(len(leftIf) <= ifnamsiz)
+	runtimex.Assert(len(rightIf) <= ifnamsiz)
+
+	logx.Details("npte: create veth pair %q <-> %q", leftIf, rightIf)
+	subprocess.MustRun(ctx, dryRun, "ip", "link", "add", leftIf, "type", "veth", "peer", "name", rightIf)
+
+	logx.Details("npte: move %q into namespace %q", leftIf, left)
+	subprocess.MustRun(ctx, dryRun, "ip", "link", "set", leftIf, "netns", left)
+
+	logx.Details("npte: move %q into namespace %q", rightIf, right)
+	subprocess.MustRun(ctx, dryRun, "ip", "link", "set", rightIf, "netns", right)
+
+	logx.Details("npte: bring %q up inside %q", leftIf, left)
+	subprocess.MustRun(ctx, dryRun, "ip", "netns", "exec", left, "ip", "link", "set", leftIf, "up")
+
+	logx.Details("npte: bring %q up inside %q", rightIf, right)
+	subprocess.MustRun(ctx, dryRun, "ip", "netns", "exec", right, "ip", "link", "set", rightIf, "up")
+
+	logx.Details("npte: veth pair %q @ %s <-> %q @ %s is ready", leftIf, left, rightIf, right)
+	return nil
+}

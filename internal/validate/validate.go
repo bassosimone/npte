@@ -8,12 +8,13 @@ import (
 	"regexp"
 )
 
-// netnsNameMaxLen caps network-namespace names at 7 characters.
+// netnsNameMaxLen caps network-namespace names at 12 characters.
 //
-// Rationale: veth interfaces are named "<ns1>-<ns2>" and must fit in
-// IFNAMSIZ (15 bytes including the NUL). Two 7-char names plus the
-// separator yield exactly 15.
-const netnsNameMaxLen = 7
+// Rationale: veth interfaces inside a namespace are named "if-<peer>"
+// (see `npte netns connect`) and must fit in IFNAMSIZ (15 bytes
+// including the trailing NUL, so 15 usable bytes). The "if-" prefix
+// consumes 3 bytes, leaving 12 for the peer namespace name.
+const netnsNameMaxLen = 12
 
 var netnsNameRe = regexp.MustCompile(`^[a-z][a-z0-9]*$`)
 

@@ -16,8 +16,8 @@ func TestNetnsName(t *testing.T) {
 	}{
 		{"empty", "", "empty"},
 		{"single letter", "a", ""},
-		{"max length", "abcdefg", ""},
-		{"too long", "abcdefgh", "exceeds 7"},
+		{"max length", "abcdefghijkl", ""},
+		{"too long", "abcdefghijklm", "exceeds 12"},
 		{"leading digit", "1abc", "must match"},
 		{"uppercase", "Abc", "must match"},
 		{"hyphen", "a-b", "must match"},
@@ -36,3 +36,4 @@ func TestNetnsName(t *testing.T) {
 		})
 	}
 }
+

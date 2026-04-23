@@ -28,6 +28,7 @@ func Main(ctx context.Context, args []string) error {
 			"persisted project state. Requires root.",
 	)
 	disp.AddCommand("create", vclip.CommandFunc(createMain), "Create a minimal namespace.")
+	disp.AddCommand("connect", vclip.CommandFunc(connectMain), "Wire two namespaces with a veth pair.")
 
 	return disp.Main(ctx, args)
 }
