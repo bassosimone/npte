@@ -38,8 +38,10 @@ func runMain(ctx context.Context, args []string) error {
 	env := testable.Env
 
 	var (
-		dryRun bool
-		netns  string
+		dryRun       bool
+		netns        string
+		capabilities []string
+		binds        []string
 	)
 
 	fset := vflag.NewFlagSet("npte container run", vflag.ExitOnError)
@@ -52,6 +54,11 @@ func runMain(ctx context.Context, args []string) error {
 		"Processes inside the container run as root in the container's own user "+
 			"database, which is unrelated to the host's. To exit the container "+
 			"cleanly, press Ctrl+] three times.",
+		"Use --capability to add capabilities to nspawn's default bounding set "+
+			"(e.g. --capability CAP_NET_ADMIN for OpenVPN). Use --bind to expose "+
+			"host paths or device nodes inside the container (e.g. --bind "+
+			"/dev/net/tun). Both flags are repeatable and their values are passed "+
+			"verbatim to systemd-nspawn; see `man systemd-nspawn` for grammar.",
 		"<rootfs> must be an absolute path to a populated filesystem tree "+
 			"(e.g. one created with `npte container create`).",
 		"With --dry-run, prints a round-trippable shell line to stdout instead "+
@@ -66,6 +73,8 @@ func runMain(ctx context.Context, args []string) error {
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell line instead of executing it.")
 	fset.StringVar(&netns, 0, "netns", "Enter network namespace `NS` (default: share the host's).")
+	fset.StringSliceVar(&capabilities, 0, "capability", "Pass-through to nspawn `--capability=VALUE` (repeatable).")
+	fset.StringSliceVar(&binds, 0, "bind", "Pass-through to nspawn `--bind=VALUE` (repeatable).")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = math.MaxInt
 	fset.DisablePermute = true
@@ -88,6 +97,12 @@ func runMain(ctx context.Context, args []string) error {
 	argv := []string{"-D", rootfs}
 	if netns != "" {
 		argv = append(argv, "--network-namespace-path=/run/netns/"+netns)
+	}
+	for _, c := range capabilities {
+		argv = append(argv, "--capability="+c)
+	}
+	for _, b := range binds {
+		argv = append(argv, "--bind="+b)
 	}
 	if len(fset.Args()) > 1 {
 		argv = append(argv, "--")

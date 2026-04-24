@@ -30,8 +30,10 @@ func bootMain(ctx context.Context, args []string) error {
 	env := testable.Env
 
 	var (
-		dryRun bool
-		netns  string
+		dryRun       bool
+		netns        string
+		capabilities []string
+		binds        []string
 	)
 
 	fset := vflag.NewFlagSet("npte container boot", vflag.ExitOnError)
@@ -43,6 +45,11 @@ func bootMain(ctx context.Context, args []string) error {
 			"together under an init manager.",
 		"If --netns is given, the container enters that network namespace; "+
 			"otherwise it shares the host network namespace.",
+		"Use --capability to add capabilities to nspawn's default bounding set "+
+			"(e.g. --capability CAP_NET_ADMIN for OpenVPN). Use --bind to expose "+
+			"host paths or device nodes inside the container (e.g. --bind "+
+			"/dev/net/tun). Both flags are repeatable and their values are passed "+
+			"verbatim to systemd-nspawn; see `man systemd-nspawn` for grammar.",
 		"To exit the container cleanly, press Ctrl+] three times.",
 		"<rootfs> must be an absolute path to a populated filesystem tree "+
 			"(e.g. one created with `npte container create`).",
@@ -58,6 +65,8 @@ func bootMain(ctx context.Context, args []string) error {
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell line instead of executing it.")
 	fset.StringVar(&netns, 0, "netns", "Enter network namespace `NS` (default: share the host's).")
+	fset.StringSliceVar(&capabilities, 0, "capability", "Pass-through to nspawn `--capability=VALUE` (repeatable).")
+	fset.StringSliceVar(&binds, 0, "bind", "Pass-through to nspawn `--bind=VALUE` (repeatable).")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = 1
 	runtimex.PanicOnError0(fset.Parse(args))
@@ -79,6 +88,12 @@ func bootMain(ctx context.Context, args []string) error {
 	argv := []string{"--boot", "-D", rootfs}
 	if netns != "" {
 		argv = append(argv, "--network-namespace-path=/run/netns/"+netns)
+	}
+	for _, c := range capabilities {
+		argv = append(argv, "--capability="+c)
+	}
+	for _, b := range binds {
+		argv = append(argv, "--bind="+b)
 	}
 
 	if netns != "" {
