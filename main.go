@@ -14,12 +14,14 @@ import (
 	"github.com/bassosimone/npte/internal/cli/star"
 	"github.com/bassosimone/npte/internal/cli/sudoers"
 	"github.com/bassosimone/npte/internal/cli/tutorial"
+	"github.com/bassosimone/npte/internal/exitx"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/vclip"
 	"github.com/bassosimone/vflag"
 )
 
 func main() {
+	defer exitx.Recover(os.Exit)
 	env := testable.Env
 
 	disp := vclip.NewDispatcherCommand("npte", vflag.ExitOnError)

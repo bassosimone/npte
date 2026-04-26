@@ -5,10 +5,11 @@ package testable
 
 import (
 	"io"
+	"log"
 	"os"
 	"os/exec"
 
-	"github.com/bassosimone/runtimex"
+	"github.com/bassosimone/npte/internal/exitx"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/rogpeppe/go-internal/lockedfile"
 )
@@ -38,7 +39,7 @@ type Environ struct {
 // NewEnvironOS returns an [*Environ] wired to real OS operations.
 func NewEnvironOS() *Environ {
 	return &Environ{
-		Exit:        os.Exit,
+		Exit:        exitx.Do,
 		Stdin:       os.Stdin,
 		Stdout:      os.Stdout,
 		Stderr:      os.Stderr,
@@ -58,7 +59,12 @@ func NewEnvironOS() *Environ {
 		LockFile: func(path string) (func(), error) {
 			return lockedfile.MutexAt(path).Lock()
 		},
-		LogFatalOnError0: runtimex.LogFatalOnError0,
+		LogFatalOnError0: func(err error) {
+			if err != nil {
+				log.Print(err)
+				exitx.Do(1)
+			}
+		},
 	}
 }
 
