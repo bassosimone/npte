@@ -28,6 +28,7 @@ type Environ struct {
 	WriteFile        func(name string, data []byte, perm os.FileMode) error
 	Stat             func(name string) (os.FileInfo, error)
 	Remove           func(name string) error
+	ReadDir          func(name string) ([]os.DirEntry, error)
 	RunCommand       func(cmd *exec.Cmd) error
 	LookPath         func(file string) (string, error)
 	LockFile         func(path string) (func(), error)
@@ -49,6 +50,7 @@ func NewEnvironOS() *Environ {
 		WriteFile:   os.WriteFile,
 		Stat:        os.Stat,
 		Remove:      os.Remove,
+		ReadDir:     os.ReadDir,
 		RunCommand: func(cmd *exec.Cmd) error {
 			return cmd.Run()
 		},
