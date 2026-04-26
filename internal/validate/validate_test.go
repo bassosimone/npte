@@ -88,6 +88,8 @@ func TestIPAddr(t *testing.T) {
 		{"garbage", "not-an-ip", "ip address"},
 		{"empty", "", "ip address"},
 		{"octet out of range", "10.0.1.256", "ip address"},
+		{"leading hyphen ipv4", "-10.0.1.1", "ip address"},
+		{"leading hyphen ipv6", "-2001:db8::1", "ip address"},
 	}
 
 	for _, tc := range tests {
@@ -263,6 +265,8 @@ func TestCIDR(t *testing.T) {
 		{"bad prefix len v4", "10.0.1.0/33", "cidr"},
 		{"bad prefix len v6", "2001:db8::/129", "cidr"},
 		{"negative prefix", "10.0.1.0/-1", "cidr"},
+		{"leading hyphen ipv4", "-10.0.1.0/24", "cidr"},
+		{"leading hyphen ipv6", "-2001:db8::/64", "cidr"},
 	}
 
 	for _, tc := range tests {
