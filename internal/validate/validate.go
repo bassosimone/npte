@@ -52,6 +52,11 @@ func IfaceName(name string) error {
 	if name == "." || name == ".." {
 		return fmt.Errorf("iface name %q is reserved", name)
 	}
+	// Reject leading hyphen so the name cannot be misparsed as an option
+	// flag by tools (`ip`, `tc`, ...) that consume it positionally.
+	if name[0] == '-' {
+		return fmt.Errorf("iface name %q must not start with a hyphen", name)
+	}
 	for _, r := range name {
 		if r == '/' || r == ':' || unicode.IsSpace(r) {
 			return fmt.Errorf("iface name %q contains forbidden character %q", name, r)

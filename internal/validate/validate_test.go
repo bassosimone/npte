@@ -54,6 +54,7 @@ func TestIfaceName(t *testing.T) {
 		{"too long", "abcdefghijklmnop", "exceeds 15"},
 		{"dot reserved", ".", "reserved"},
 		{"dotdot reserved", "..", "reserved"},
+		{"leading hyphen", "-eth0", "must not start with a hyphen"},
 		{"slash", "a/b", "forbidden"},
 		{"colon", "a:b", "forbidden"},
 		{"space", "a b", "forbidden"},
