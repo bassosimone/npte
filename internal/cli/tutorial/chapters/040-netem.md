@@ -25,17 +25,17 @@ shapes the link and runs the `iperf3` client. Open them now.
 Build the topology in either terminal — `npte star create` is the
 short form of the recipe you assembled by hand last chapter. It
 creates the three namespaces, wires `client` and `server` to
-`router`, addresses every link out of `172.16.0.0/16`, installs
-default routes on the leaves, and turns `router` into a NATing
-gateway. Find the host's internet-facing interface with `ip route
-show default`, then:
+`router`, addresses every link out of `172.16.0.0/16`, and installs
+default routes on the leaves:
 
-    sudo npte star create <uplink>
+    sudo npte star create
 
-Replace `<uplink>` with the interface name you found. After this
-runs, `client` lives at `172.16.3.2`, `server` lives at
-`172.16.2.2`, and the leaves can reach each other and the internet
-with no further setup.
+`star create` does **not** include a host uplink: this chapter only
+needs `client` and `server` to talk to each other through `router`,
+and the iperf3 traffic below stays inside the topology. Adding a
+gateway would be wasted host-side state. After the command runs,
+`client` lives at `172.16.3.2`, `server` lives at `172.16.2.2`, and
+the leaves can reach each other with no further setup.
 
 In **terminal A**, start the throughput server inside `server` and
 leave it running:
@@ -331,11 +331,10 @@ topology down from terminal B:
 
     sudo npte star destroy
 
-`star destroy` removes the gateway state on `router` and then
-destroys the three namespaces. The veth pairs and any per-namespace
-iptables state go with them; the host is back to where it started.
-Any netem qdiscs left installed are gone too, since they live
-inside the namespaces.
+`star destroy` removes the three namespaces. The veth pairs and any
+per-namespace iptables state go with them; the host is back to
+where it started. Any netem qdiscs left installed are gone too,
+since they live inside the namespaces.
 
 ## Recap
 

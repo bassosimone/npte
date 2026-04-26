@@ -32,8 +32,10 @@ func TestMain(t *testing.T) {
 			"# This snippet allows running the following commands without a password:",
 			"# - /usr/local/sbin/npte netns *",
 			"# - /usr/local/sbin/npte netem *",
+			"# - /usr/local/sbin/npte star *",
 			"alice ALL=(root) NOPASSWD: /usr/local/sbin/npte netns *",
 			"alice ALL=(root) NOPASSWD: /usr/local/sbin/npte netem *",
+			"alice ALL=(root) NOPASSWD: /usr/local/sbin/npte star *",
 			"visudo",
 		},
 		wantStdoutNotHas: []string{

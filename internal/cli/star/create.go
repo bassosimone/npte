@@ -7,7 +7,6 @@ import (
 
 	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/npte/internal/testable"
-	"github.com/bassosimone/npte/internal/validate"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
@@ -19,27 +18,27 @@ func createMain(ctx context.Context, args []string) error {
 	fset := vflag.NewFlagSet("npte star create", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Creates a three-node star topology and wires the hub as an internet "+
-			"gateway. Two leaf namespaces, `client` and `server`, each share a "+
-			"veth pair with a hub namespace, `router`. Both leaves get a default "+
-			"route via the router. The router gets a host-side uplink and NAT so "+
-			"that traffic from the leaves egresses through <ext-iface>.",
+		"Creates a three-node star topology. Two leaf namespaces, `client` and "+
+			"`server`, each share a veth pair with a hub namespace, `router`. Both "+
+			"leaves get a default route via the router. Off-link traffic is not "+
+			"wired up: the leaves can talk to each other through the router, but "+
+			"there is no host uplink and no NAT. To give the star internet egress, "+
+			"layer `npte gateway create router 172.16.1.0/24 <ext-iface>` on top.",
 		"Addresses are fixed, and drawn from 172.16.0.0/16 — the quietest "+
 			"corner of RFC1918 in practice (home/ISP CPE prefer 192.168/16 or "+
 			"10/8; Docker's default bridge sits in 172.17.0.0/16, one /16 "+
 			"over). The second octet tags the link:",
-		"    router↔host   uses 172.16.1.0/24 (host=.1,   router=.2)",
 		"    server↔router uses 172.16.2.0/24 (server=.2, router=.1)",
 		"    client↔router uses 172.16.3.0/24 (client=.2, router=.1)",
+		"    router↔host   uses 172.16.1.0/24 — reserved for `npte gateway "+
+			"create`, not wired by `star create` itself.",
 		"Implementation is a composition of `npte netns create`, `npte netns "+
-			"connect`, `npte netns assign-addr`, `npte netns add-route`, and "+
-			"`npte gateway create`. For non-default names, subnets, or shapes, "+
-			"call those primitives directly.",
+			"connect`, `npte netns assign-addr`, and `npte netns add-route`. For "+
+			"non-default names, subnets, or shapes, call those primitives directly.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run.",
 	)
-	usage.PositionalArgumentsUsage = "<ext-iface>"
 	fset.Exit = env.Exit
 	fset.Stderr = env.Stderr
 	fset.Stdout = env.Stdout
@@ -47,16 +46,9 @@ func createMain(ctx context.Context, args []string) error {
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	var dryRun bool
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell script instead of executing it.")
-	fset.MinPositionalArgs = 1
-	fset.MaxPositionalArgs = 1
+	fset.MinPositionalArgs = 0
+	fset.MaxPositionalArgs = 0
 	runtimex.PanicOnError0(fset.Parse(args))
-
-	extIface := fset.Args()[0]
-	if err := validate.IfaceName(extIface); err != nil {
-		logx.Error("npte star create: %s", err)
-		env.Exit(2)
-		return nil
-	}
 
 	self := selfPath("npte star create")
 
@@ -71,7 +63,7 @@ func createMain(ctx context.Context, args []string) error {
 		return argv
 	}
 
-	logx.Details("npte: compose star topology (client/router/server) with gateway on %q", extIface)
+	logx.Details("npte: compose star topology (client/router/server), no internet egress")
 
 	runSelf(ctx, self, pass("netns", "create", "client")...)
 	runSelf(ctx, self, pass("netns", "create", "router")...)
@@ -88,8 +80,7 @@ func createMain(ctx context.Context, args []string) error {
 	runSelf(ctx, self, pass("netns", "add-route", "client", "default", "172.16.3.1")...)
 	runSelf(ctx, self, pass("netns", "add-route", "server", "default", "172.16.2.1")...)
 
-	runSelf(ctx, self, pass("gateway", "create", "router", "172.16.1.0/24", extIface)...)
-
-	logx.Details("npte: star topology is up")
+	logx.Details("npte: star topology is up (leaf↔leaf only)")
+	logx.Details("npte: for internet egress, run: npte gateway create router 172.16.1.0/24 <ext-iface>")
 	return nil
 }

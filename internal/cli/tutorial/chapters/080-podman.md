@@ -24,12 +24,19 @@ We still use `sudo` to gain the required `root` privileges.
 
 Build the topology:
 
-    sudo npte star create <uplink>
+    sudo npte star create
 
-Same star as the previous chapter: `client` at `172.16.3.2`, `server`
-at `172.16.2.2`, `router` NATing to the host, no shaping applied.
-Shaping is orthogonal to the container story and belongs in a
-separate pass with `npte star netem`.
+No gateway this time. Image pulls run as `podman` on the host (see
+the explanatory note in §2), and the container we run only **serves**
+HTTP on `:80` — it never dials out. The only namespace-side traffic
+in this chapter is the leaf↔leaf `curl` from `client` to
+`172.16.2.2`, which crosses the topology entirely through `router`.
+Same shape as the previous chapter on the wire — `client` at
+`172.16.3.2`, `server` at `172.16.2.2` — minus the host uplink we
+needed for `apt install` last chapter.
+
+No shaping either. Shaping is orthogonal to the container story and
+belongs in a separate pass with `npte star netem`.
 
 Install podman on the host:
 
@@ -148,11 +155,12 @@ be empty. Then tear down the topology:
 
     sudo npte star destroy
 
-The three namespaces go, the gateway state on `router` goes, the
-veth pairs are pulled. The **image store does not go**: the nginx
-layers still sit under `/var/lib/containers`, ready for the next
-`podman run` to reuse at zero cost. Evict them explicitly with
-`sudo podman rmi docker.io/library/nginx` when you are done.
+The three namespaces go, the veth pairs are pulled. No gateway
+state to clean up — we never installed any. The **image store does
+not go**: the nginx layers still sit under `/var/lib/containers`,
+ready for the next `podman run` to reuse at zero cost. Evict them
+explicitly with `sudo podman rmi docker.io/library/nginx` when you
+are done.
 
 ## Recap
 

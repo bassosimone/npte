@@ -18,13 +18,25 @@ We still use `sudo` to gain the required `root` privileges.
 
 ## 1. A star and a tree
 
-Build the topology:
+Build the topology, plus a gateway on top so the booted container
+in `server` can reach Ubuntu's apt mirrors when we install nginx in
+§5. Find your host's internet-facing interface with `ip route show
+default`, then:
 
-    sudo npte star create <uplink>
+    sudo npte star create
+    sudo npte gateway create router 172.16.1.0/24 <uplink>
 
-Same star as the previous chapters: `client` at `172.16.3.2`,
-`server` at `172.16.2.2`, `router` NATing to the host. No traffic
-shaping — shaping is orthogonal to the container story.
+Same star as chapter 4 plus a `router` uplink: `client` at
+`172.16.3.2`, `server` at `172.16.2.2`, `router` NATing to the
+host. No traffic shaping — shaping is orthogonal to the container
+story.
+
+Splitting `star` and `gateway` keeps the password-prompt cost
+focused: `star` is allowlisted via `npte sudoers`, so only
+`gateway create` and `gateway destroy` actually prompt. The
+`debootstrap` step that follows is a host-side fetch and does not
+need the gateway; only the in-container `apt install nginx` later
+does.
 
 Now build the filesystem tree. The location is up to you; this
 chapter uses `$HOME/containers/noble` so the tree lives alongside
@@ -241,15 +253,16 @@ hook on the way down.
 
 Then, from terminal B:
 
+    sudo npte gateway destroy router
     sudo npte star destroy
 
-The three namespaces go, the gateway state on `router` goes, the
-veth pairs are pulled. The **filesystem tree does not go**: it
-still sits at `$HOME/containers/noble`, nginx still installed,
-the resolved.conf drop-in still in place, root password still
-set. Attach it to a different namespace in the next experiment,
-or remove it by hand with `sudo rm -rf $HOME/containers/noble`
-when you are done.
+`gateway destroy` removes the host-side NAT/FORWARD rules and the
+uplink veth; `star destroy` removes the three namespaces and the
+veth pairs. The **filesystem tree does not go**: it still sits at
+`$HOME/containers/noble`, nginx still installed, the resolved.conf
+drop-in still in place, root password still set. Attach it to a
+different namespace in the next experiment, or remove it by hand
+with `sudo rm -rf $HOME/containers/noble` when you are done.
 
 ## Recap
 

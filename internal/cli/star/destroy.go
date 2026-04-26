@@ -18,15 +18,18 @@ func destroyMain(ctx context.Context, args []string) error {
 	fset := vflag.NewFlagSet("npte star destroy", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Undoes `npte star create`: tears down the gateway state on `router` "+
-			"and then destroys the `client`, `server`, and `router` namespaces. "+
-			"The gateway is destroyed first so that its host-side NAT and FORWARD "+
-			"rules go away cleanly; the three `netns destroy` calls then cascade "+
-			"to the veth pairs and per-namespace iptables state.",
+		"Undoes `npte star create`: destroys the `client`, `server`, and "+
+			"`router` namespaces. The `netns destroy` calls cascade to the veth "+
+			"pairs and per-namespace iptables state.",
+		"Does NOT touch gateway state. If `npte gateway create router ...` "+
+			"was layered on top of the star, run `npte gateway destroy router` "+
+			"separately — order does not matter, since `gateway destroy` is "+
+			"tolerant of an absent namespace and removes host-side state by "+
+			"its `npte:gw:<ns>` tag.",
 		"Takes no arguments: names and layout match `npte star create`. This "+
 			"command is strict — a first-error exit surfaces partial state rather "+
-			"than hiding it. To clean up manually, call `npte gateway destroy` "+
-			"and `npte netns destroy` directly.",
+			"than hiding it. To clean up manually, call `npte netns destroy` "+
+			"directly.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run.",
@@ -53,7 +56,6 @@ func destroyMain(ctx context.Context, args []string) error {
 
 	logx.Details("npte: tear down star topology (client/router/server)")
 
-	runSelf(ctx, self, pass("gateway", "destroy", "router")...)
 	runSelf(ctx, self, pass("netns", "destroy", "client")...)
 	runSelf(ctx, self, pass("netns", "destroy", "server")...)
 	runSelf(ctx, self, pass("netns", "destroy", "router")...)

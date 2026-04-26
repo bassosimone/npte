@@ -19,14 +19,17 @@ Allowlisted (no password):
   namespaces.
 - `npte netem *` — apply or clear traffic shaping on interfaces
   inside namespaces.
+- `npte star *` — composes only the `netns` primitives above to
+  build the canonical `client/router/server` topology. It installs
+  no host-namespace state, so it sits on the same side of the
+  boundary as the primitives it wraps.
 
 Still password-protected:
 
 - `npte gateway *` — installs NAT and forwarding rules in the host
   network namespace, which can give a private namespace egress to
-  the actual internet.
-- `npte star *` — composes namespace primitives but typically also
-  brings up a gateway, so it inherits the same boundary.
+  the actual internet. Layer this on top of `star` when a chapter
+  needs internet access.
 - `npte container *` — runs `systemd-nspawn` with capabilities that
   reach beyond the namespace.
 
@@ -59,7 +62,7 @@ positive — sudoers files are additive, and your existing privileges
 in `/etc/sudoers` continue to apply — but it is scary enough that
 editing `/etc/sudoers` directly is the friendlier path.
 
-After installation, `sudo npte netns …` and `sudo npte netem …`
-invocations run without prompting. `sudo npte gateway …`,
-`sudo npte star …`, and `sudo npte container …` invocations still
-prompt — those commands reach beyond your private namespaces.
+After installation, `sudo npte netns …`, `sudo npte netem …`, and
+`sudo npte star …` invocations run without prompting. `sudo npte
+gateway …` and `sudo npte container …` invocations still prompt —
+those commands reach beyond your private namespaces.

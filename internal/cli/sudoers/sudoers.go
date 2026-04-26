@@ -30,9 +30,9 @@ func Main(ctx context.Context, args []string) error {
 	fset := vflag.NewFlagSet("npte sudoers", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Prints a sudoers snippet that allowlists the npte netns and "+
-			"netem subcommands for the invoking user, with NOPASSWD. "+
-			"Other npte subcommands (gateway, star, container, "+
+		"Prints a sudoers snippet that allowlists the npte netns, "+
+			"netem, and star subcommands for the invoking user, with "+
+			"NOPASSWD. Other npte subcommands (gateway, container, "+
 			"tutorial, ...) are not covered and continue to prompt for "+
 			"the sudo password.",
 		"The snippet binds the allowlist to "+installPath+", which is "+
@@ -94,8 +94,8 @@ func Main(ctx context.Context, args []string) error {
 // The warning is a false positive, but it is scary enough that
 // recommending the drop-in path is bad DX.
 //
-// Cmnd_Alias and Defaults! were considered and dropped: with two
-// rules an alias adds indirection without reuse, and `env_reset`
+// Cmnd_Alias and Defaults! were considered and dropped: with three
+// rules an alias adds indirection without much reuse, and `env_reset`
 // plus a `secure_path` are sudo's defaults on every mainstream
 // distro, so per-rule overrides would be belt-and-suspenders
 // documentation rather than an enforced invariant.
@@ -104,12 +104,14 @@ const snippet = `
 #
 # - ` + installPath + ` netns *
 # - ` + installPath + ` netem *
+# - ` + installPath + ` star *
 #
 # The user who is granted permission is the one who invoked
 # the 'npte sudoers' command.
 
 %[1]s ALL=(root) NOPASSWD: ` + installPath + ` netns *
 %[1]s ALL=(root) NOPASSWD: ` + installPath + ` netem *
+%[1]s ALL=(root) NOPASSWD: ` + installPath + ` star *
 
 # Install this snippet by pasting it into /etc/sudoers via:
 #

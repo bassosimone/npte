@@ -26,12 +26,17 @@ func Main(ctx context.Context, args []string) error {
 	disp.AddDescription(
 		"Compose a fixed three-node star topology built entirely from the other "+
 			"`npte` primitives. The leaves are named `client` and `server`; the hub "+
-			"is named `router`. The router is also an internet gateway, so that both "+
-			"leaves have working off-link connectivity in one step.",
-		"This is batteries-included convenience: the exact sequence of `npte netns`, "+
-			"`npte netns add-route`, and `npte gateway create` invocations it performs "+
-			"is visible with `--dry-run`. For non-default names, addresses, or "+
-			"topologies, call the underlying primitives directly.",
+			"is named `router`. The leaves can talk to each other through the "+
+			"router; the star itself does not include a host uplink, so off-link "+
+			"connectivity requires layering `npte gateway create router "+
+			"172.16.1.0/24 <ext-iface>` on top.",
+		"This is batteries-included convenience: the exact sequence of `npte netns` "+
+			"invocations it performs is visible with `--dry-run`. For non-default "+
+			"names, addresses, or topologies, call the underlying primitives "+
+			"directly.",
+		"Because `star` only composes `netns` primitives — no host-namespace "+
+			"state — it is safe to run under the same NOPASSWD sudoers allowlist "+
+			"as `netns` and `netem`. See `npte sudoers` for the snippet.",
 	)
 	disp.AddCommand("create", vclip.CommandFunc(createMain), "Create the `client`/`router`/`server` star.")
 	disp.AddCommand("destroy", vclip.CommandFunc(destroyMain), "Destroy the `client`/`router`/`server` star.")

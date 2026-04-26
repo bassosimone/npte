@@ -15,17 +15,25 @@ We still use `sudo` to gain the required `root` privileges.
 
 ## 1. A star and a caveat
 
-Build the topology:
+Build the topology, then layer a gateway on top so that `client`
+has internet egress (the browser needs to reach real websites).
+Find your host's internet-facing interface with `ip route show
+default`, then:
 
-    sudo npte star create <uplink>
+    sudo npte star create
+    sudo npte gateway create router 172.16.1.0/24 <uplink>
 
-`star create` turns `router` into a NATing gateway, so `client` has
-internet access out of the box — this is the same shape chapter 4
-used, minus any traffic shaping. We deliberately apply no netem in
-this chapter. The goal is to get a real browser rendering inside the
-namespace; shaping it afterwards with `npte star netem --profile
-<name>` or raw `netem apply` is a separate concern and changes
-nothing about how the browser is launched.
+`star create` wires the three namespaces and the leaf↔leaf routes;
+`gateway create` adds a host uplink to `router` plus host-side NAT
+so traffic from the leaves egresses through `<uplink>`. Together
+they give `client` working internet access, with no traffic
+shaping applied — that is a separate concern, layered afterwards
+with `npte star netem --profile <name>` or raw `netem apply`, and
+changes nothing about how the browser is launched.
+
+Splitting `star` and `gateway` keeps the password-prompt cost
+focused: `star` is allowlisted via `npte sudoers`, so only
+`gateway create` and `gateway destroy` actually prompt.
 
 Before we launch anything, one caveat that rules out the obvious
 candidates. On Ubuntu, the default Firefox and Chromium both ship
@@ -168,10 +176,15 @@ Substitute the version path you actually unpacked.
 
 ## 5. Teardown
 
+    sudo npte gateway destroy router
     sudo npte star destroy
 
-The three namespaces go, the gateway state on `router` goes. The
-three browsers stay on the host — they never lived inside the
+The host-side NAT/FORWARD rules and the uplink veth go with
+`gateway destroy`; the three namespaces go with `star destroy`.
+The order is not load-bearing — `gateway destroy` finds its
+host-side state by tag and tolerates an absent namespace — but
+running the gateway teardown first matches how the bring-up read.
+The three browsers stay on the host: they never lived inside the
 namespaces in the first place. They ran as processes that happened
 to have a different network stack attached; once the namespaces are
 gone, the binaries sit on disk unchanged, ready for the next run.
@@ -198,8 +211,9 @@ gone, the binaries sit on disk unchanged, ready for the next run.
   (`apt install epiphany-browser`), Chrome (Google's direct
   `.deb`), and Firefox (Mozilla's tarball, unpacked under `/opt`).
 
-- This chapter applies no traffic shaping — `star create` alone is
-  enough to run a browser against the real internet. Layer
-  `npte star netem --profile <name>` (chapter 5) or raw
-  `netem apply` (chapter 4) on top when you want the browser to
-  experience a realistic access link.
+- This chapter applies no traffic shaping — `star create` plus
+  `gateway create router 172.16.1.0/24 <uplink>` is enough to run
+  a browser against the real internet. Layer `npte star netem
+  --profile <name>` (chapter 5) or raw `netem apply` (chapter 4)
+  on top when you want the browser to experience a realistic
+  access link.

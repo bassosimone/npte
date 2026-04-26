@@ -52,8 +52,11 @@ npte netem   apply|clear                  — thin wrapper around `tc qdisc ... 
 npte container create|run|boot            — debootstrap + systemd-nspawn, with an
                                             optional --netns binding
 
-npte star    create|destroy|netem         — composes the above into a fixed
-                                            client-router-server topology
+npte star    create|destroy|netem         — composes the `netns` primitives
+                                            into a fixed client-router-server
+                                            topology. Does NOT call `gateway`
+                                            or `container`; layer those on
+                                            top when needed.
 ```
 
 Every leaf subcommand that touches the kernel supports `--dry-run`, which prints a

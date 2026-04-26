@@ -33,7 +33,11 @@ terminals, not two:
 
 Build the topology in any of them:
 
-    sudo npte star create <uplink>
+    sudo npte star create
+
+This chapter, like chapter 4, stays inside the topology — iperf3
+between leaves and ping between leaves. No internet egress needed,
+so no `npte gateway create` step.
 
 In **terminal A**, start the throughput server inside `server` and
 leave it running:
