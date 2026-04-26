@@ -57,9 +57,9 @@ If the ping reports anything larger than a sub-millisecond RTT,
 some shaping is left over from a previous experiment. List the
 qdiscs in each namespace with `tc qdisc show` to find the residue:
 
-    sudo npte netns run --user root router tc qdisc show
-    sudo npte netns run --user root client tc qdisc show
-    sudo npte netns run --user root server tc qdisc show
+    sudo ip netns exec router tc qdisc show
+    sudo ip netns exec client tc qdisc show
+    sudo ip netns exec server tc qdisc show
 
 A clean interface shows `qdisc noqueue` (the kernel default for an
 interface with no shaping). Anything else — typically a stray
@@ -308,8 +308,8 @@ to the state it was in before the chapter started.
 
 - `npte netem apply` commits to `root netem` plus an optional
   one-level child. For richer trees — a separate rate limiter,
-  multiple classes, hierarchies — drop down to raw `tc` inside
-  `npte netns run --user root <ns>`.
+  multiple classes, hierarchies — drop down to raw `tc` via
+  `sudo ip netns exec <ns> tc ...`.
 
 - `npte star netem --profile <name>` is a convenience wrapper
   around the same primitives, scoped to the canonical star: it

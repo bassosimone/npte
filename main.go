@@ -12,6 +12,7 @@ import (
 	"github.com/bassosimone/npte/internal/cli/netem"
 	"github.com/bassosimone/npte/internal/cli/netns"
 	"github.com/bassosimone/npte/internal/cli/star"
+	"github.com/bassosimone/npte/internal/cli/sudoers"
 	"github.com/bassosimone/npte/internal/cli/tutorial"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/vclip"
@@ -45,6 +46,7 @@ func main() {
 	disp.AddCommand("star", vclip.CommandFunc(star.Main), "Compose a fixed three-node star topology.")
 	disp.AddCommand("container", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
 	disp.AddCommand("netem", vclip.CommandFunc(netem.Main), "Apply or clear traffic shaping.")
+	disp.AddCommand("sudoers", vclip.CommandFunc(sudoers.Main), "Print a sudoers snippet for the invoking user.")
 
 	vclip.Main(context.Background(), disp, os.Args[1:])
 }

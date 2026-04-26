@@ -29,8 +29,8 @@ func Main(ctx context.Context, args []string) error {
 			"calls on the two ns+iface endpoints of the veth pair.",
 		"This command commits to `root netem` plus an optional one-level "+
 			"child. Anything else (TBF-as-root, HTB classes, hierarchical "+
-			"trees) is out of scope; use `npte netns run --user root <ns> "+
-			"tc ...` for those cases.",
+			"trees) is out of scope; use `sudo ip netns exec <ns> tc ...` "+
+			"for those cases.",
 	)
 	disp.AddCommand("apply", vclip.CommandFunc(applyMain), "Apply netem shaping to an interface.")
 	disp.AddCommand("clear", vclip.CommandFunc(clearMain), "Remove netem shaping from an interface.")

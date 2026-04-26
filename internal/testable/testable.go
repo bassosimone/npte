@@ -21,6 +21,8 @@ type Environ struct {
 	Stdout           io.Writer
 	Stderr           io.Writer
 	LogRenderer      *lipgloss.Renderer
+	Getenv           func(key string) string
+	Geteuid          func() int
 	MkdirAll         func(path string, perm os.FileMode) error
 	ReadFile         func(name string) ([]byte, error)
 	WriteFile        func(name string, data []byte, perm os.FileMode) error
@@ -40,6 +42,8 @@ func NewEnvironOS() *Environ {
 		Stdout:      os.Stdout,
 		Stderr:      os.Stderr,
 		LogRenderer: lipgloss.NewRenderer(os.Stderr),
+		Getenv:      os.Getenv,
+		Geteuid:     os.Geteuid,
 		MkdirAll:    os.MkdirAll,
 		ReadFile:    os.ReadFile,
 		WriteFile:   os.WriteFile,

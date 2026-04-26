@@ -44,6 +44,13 @@ func destroyMain(ctx context.Context, args []string) error {
 	fset.MaxPositionalArgs = 1
 	runtimex.PanicOnError0(fset.Parse(args))
 
+	// NOPASSWD audit invariant: this command is part of the set that
+	// `npte sudoers` allowlists for sudo execution without a password
+	// (see CLAUDE.md in this package). Every flag value, positional, or
+	// environment value forwarded to a subprocess must be validated
+	// here — fail loud, prefer hardcoded literals, never trust the
+	// caller's bytes. A missing check is a passwordless privesc hole.
+
 	ns := fset.Args()[0]
 	if err := validate.NetnsName(ns); err != nil {
 		logx.Error("npte netns destroy: %s", err)

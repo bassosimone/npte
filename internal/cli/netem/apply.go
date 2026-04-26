@@ -59,6 +59,13 @@ func applyMain(ctx context.Context, args []string) error {
 	fset.MaxPositionalArgs = 2
 	runtimex.PanicOnError0(fset.Parse(args))
 
+	// NOPASSWD audit invariant: this command is part of the set that
+	// `npte sudoers` allowlists for sudo execution without a password
+	// (see CLAUDE.md in this package). Every flag value, positional, or
+	// environment value forwarded to a subprocess must be validated
+	// here — fail loud, prefer hardcoded literals, never trust the
+	// caller's bytes. A missing check is a passwordless privesc hole.
+
 	ns := fset.Args()[0]
 	iface := fset.Args()[1]
 	if err := validate.NetnsName(ns); err != nil {
@@ -92,6 +99,11 @@ func applyMain(ctx context.Context, args []string) error {
 			env.Exit(2)
 			return nil
 		}
+		if err := validate.NetemNoKnobSmuggling(tokens); err != nil {
+			logx.Error("npte netem apply: --%s: %s", kv.key, err)
+			env.Exit(2)
+			return nil
+		}
 		netemArgs = append(netemArgs, kv.key)
 		netemArgs = append(netemArgs, tokens...)
 	}
@@ -117,6 +129,11 @@ func applyMain(ctx context.Context, args []string) error {
 		}
 		if len(childTokens) <= 0 {
 			logx.Error("npte netem apply: --child: empty value")
+			env.Exit(2)
+			return nil
+		}
+		if err := validate.ChildQdiscKind(childTokens[0]); err != nil {
+			logx.Error("npte netem apply: --child: %s", err)
 			env.Exit(2)
 			return nil
 		}

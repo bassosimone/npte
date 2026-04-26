@@ -5,7 +5,6 @@ package netns
 import (
 	"context"
 	"math"
-	"os"
 	"strings"
 
 	"github.com/bassosimone/npte/internal/logx"
@@ -61,7 +60,6 @@ import (
 func runMain(ctx context.Context, args []string) error {
 	env := testable.Env
 
-	userFlag := os.Getenv("SUDO_USER")
 	var envFlags []string
 	var dryRun bool
 
@@ -74,10 +72,12 @@ func runMain(ctx context.Context, args []string) error {
 		"Entry is via `ip netns exec`, which also bind-mounts every file under "+
 			"/etc/netns/<ns>/ over the corresponding /etc/ path, so the namespace-"+
 			"scoped resolv.conf installed by `npte netns create` is in effect.",
-		"By default the command runs as $SUDO_USER; use -u/--user to override "+
-			"(e.g. --user root for privileged operations). Use -e/--env to inject "+
-			"KEY=VALUE pairs; the inner process otherwise starts with runuser(1)'s "+
-			"default environment for the target user.",
+		"The command runs as $SUDO_USER (the user who invoked sudo), which "+
+			"must be set in the environment — running via sudo does this "+
+			"automatically. This scopes any damage the inner command can "+
+			"do to the invoking user's account. Use -e/--env to inject "+
+			"KEY=VALUE pairs; the inner process otherwise starts with "+
+			"runuser(1)'s default environment for the target user.",
 		"With --dry-run, prints a round-trippable shell line to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run.",
@@ -89,12 +89,18 @@ func runMain(ctx context.Context, args []string) error {
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell script instead of executing it.")
-	fset.StringVar(&userFlag, 'u', "user", "Run as `USER` (default: $SUDO_USER).")
 	fset.StringSliceVar(&envFlags, 'e', "env", "Set environment variable `KEY=VALUE` (repeatable).")
 	fset.MinPositionalArgs = 2
 	fset.MaxPositionalArgs = math.MaxInt
 	fset.DisablePermute = true
 	runtimex.PanicOnError0(fset.Parse(args))
+
+	// NOPASSWD audit invariant: this command is part of the set that
+	// `npte sudoers` allowlists for sudo execution without a password
+	// (see CLAUDE.md in this package). Every flag value, positional, or
+	// environment value forwarded to a subprocess must be validated
+	// here — fail loud, prefer hardcoded literals, never trust the
+	// caller's bytes. A missing check is a passwordless privesc hole.
 
 	ns := fset.Args()[0]
 	if err := validate.NetnsName(ns); err != nil {
@@ -102,14 +108,26 @@ func runMain(ctx context.Context, args []string) error {
 		env.Exit(2)
 		return nil
 	}
+
+	// $SUDO_USER identifies who to drop privileges back to. Sudo derives
+	// it from its own getuid()+getpwuid() and writes it unconditionally
+	// (sudo-managed, not env-passthrough), so we trust the value; we
+	// only check that it is present and well-formed so that a missing
+	// or malformed value fails loud here rather than as a confusing
+	// downstream error from runuser(1). The privilege boundary is
+	// enforced by sudo (who is allowed to run npte as root) and by the
+	// kernel (who has the capabilities `ip netns exec` requires); we do
+	// not re-litigate it.
+	userFlag := env.Getenv("SUDO_USER")
 	if userFlag == "" {
-		logx.Error("npte netns run: no user specified; " +
-			"set $SUDO_USER (e.g. run via sudo) or pass -u/--user explicitly")
+		logx.Error("npte netns run: $SUDO_USER is not set; " +
+			"this command must be invoked via sudo so that it can drop " +
+			"privileges back to the invoking user")
 		env.Exit(2)
 		return nil
 	}
 	if err := validate.Username(userFlag); err != nil {
-		logx.Error("npte netns run: %s", err)
+		logx.Error("npte netns run: $SUDO_USER: %s", err)
 		env.Exit(2)
 		return nil
 	}

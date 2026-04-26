@@ -46,6 +46,13 @@ func addRouteMain(ctx context.Context, args []string) error {
 	fset.MaxPositionalArgs = 3
 	runtimex.PanicOnError0(fset.Parse(args))
 
+	// NOPASSWD audit invariant: this command is part of the set that
+	// `npte sudoers` allowlists for sudo execution without a password
+	// (see CLAUDE.md in this package). Every flag value, positional, or
+	// environment value forwarded to a subprocess must be validated
+	// here — fail loud, prefer hardcoded literals, never trust the
+	// caller's bytes. A missing check is a passwordless privesc hole.
+
 	ns := fset.Args()[0]
 	dest := fset.Args()[1]
 	via := fset.Args()[2]

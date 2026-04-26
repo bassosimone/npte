@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/netip"
 	"regexp"
+	"slices"
+	"strings"
 	"unicode"
 )
 
@@ -128,6 +130,80 @@ func DebootstrapSuite(s string) error {
 	}
 	if !debootstrapSuiteRe.MatchString(s) {
 		return fmt.Errorf("suite name %q must match %s", s, debootstrapSuiteRe)
+	}
+	return nil
+}
+
+// allowedChildQdiscs lists the qdisc kinds accepted by `npte netem
+// apply --child`. The list is deliberately narrow because tc(8)
+// autoloads the kernel module `sch_<kind>` via modprobe before
+// attaching an unknown qdisc. Accepting an arbitrary kind would
+// therefore expose a "load any sch_* kernel module on the host"
+// primitive to whoever can invoke this command — a side effect that
+// is not contained by the network namespace the qdisc is installed
+// in. The kinds below are the AQM and FIFO qdiscs that make sense as
+// a one-level child of `root netem` for AQM-vs-FIFO experiments.
+var allowedChildQdiscs = []string{
+	"bfifo",
+	"cake",
+	"codel",
+	"fq_codel",
+	"pfifo",
+	"pie",
+	"red",
+	"sfq",
+}
+
+// ChildQdiscKind reports whether s is an accepted qdisc kind for
+// `npte netem apply --child`. See [allowedChildQdiscs] for rationale.
+func ChildQdiscKind(s string) error {
+	if !slices.Contains(allowedChildQdiscs, s) {
+		return fmt.Errorf("qdisc kind %q is not allowed for --child; permitted: %s",
+			s, strings.Join(allowedChildQdiscs, ", "))
+	}
+	return nil
+}
+
+// netemTopLevelKnobs is a denylist of netem knob keywords currently
+// recognized at the top level of a tc(8) `netem` argument list (see
+// `man tc-netem`). It is consulted by [NetemNoKnobSmuggling].
+//
+// This is a UX / contract check, not a security boundary. The flag
+// values for --delay/--loss/--limit/--rate/--slot are shellquote-split
+// and pasted after the netem keyword, so a value like "10ms loss
+// random 100%" makes tc honor `loss random 100%` even though the user
+// did not pass --loss. We reject such tokens so each --<knob> flag
+// stays honest about which knob it actually configures, and so a
+// sudoers audit log of the invocation reflects what the operation did.
+//
+// Security is held independently by exec-without-shell plus tc being
+// a trusted local parser: the worst an unrecognized token can do is
+// make tc exit non-zero. Consequently, a netem keyword added upstream
+// later and not listed here will silently slip through; the fix when
+// that happens is to extend this list, not to harden the check.
+var netemTopLevelKnobs = []string{
+	"corrupt",
+	"delay",
+	"duplicate",
+	"ecn",
+	"gap",
+	"limit",
+	"loss",
+	"rate",
+	"reorder",
+	"slot",
+}
+
+// NetemNoKnobSmuggling reports whether tokens (the shellquote-split
+// value of one --delay/--loss/--limit/--rate/--slot flag) is free of
+// other netem knob names. See [netemTopLevelKnobs] for the
+// UX/contract rationale and its limits.
+func NetemNoKnobSmuggling(tokens []string) error {
+	for _, t := range tokens {
+		if slices.Contains(netemTopLevelKnobs, t) {
+			return fmt.Errorf("token %q is a netem knob name; "+
+				"values must not smuggle other knobs", t)
+		}
 	}
 	return nil
 }
