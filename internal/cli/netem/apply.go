@@ -12,7 +12,6 @@ import (
 	"github.com/bassosimone/npte/internal/validate"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
-	"github.com/kballard/go-shellquote"
 )
 
 // applyMain is the main of the `netem apply` subcommand.
@@ -31,10 +30,13 @@ func applyMain(ctx context.Context, args []string) error {
 		"Shaping is one-directional: the qdisc affects packets egressing <if> "+
 			"inside <ns>. For an asymmetric link, run this command twice on "+
 			"the two ns+iface endpoints of the veth pair.",
-		"With --child, a child qdisc is attached at parent 1: handle 2: for "+
-			"AQM-vs-FIFO experiments (e.g. --child fq_codel, --child \"cake "+
-			"bandwidth 10mbit\", --child \"bfifo limit 50000\"). The child "+
-			"value is passed verbatim to tc; see `man tc` for grammar.",
+		"With --child <kind>, a child qdisc is attached at parent 1: handle 2: "+
+			"for AQM experiments (FIFO behaviour is modelled via netem's own "+
+			"--limit instead). The kind is one of: "+
+			strings.Join(validate.AllowedChildQdiscs, ", ")+". Per-kind knobs "+
+			"are exposed as separate flags (e.g. --cake-bandwidth) added on "+
+			"demand; reach for `sudo ip netns exec <ns> tc ...` directly if "+
+			"you need a knob this command does not surface.",
 		"The command is not idempotent: re-running it on an already-shaped "+
 			"interface will fail loud. Run `npte netem clear <ns> <if>` first.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
@@ -49,13 +51,16 @@ func applyMain(ctx context.Context, args []string) error {
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	var dryRun bool
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell script instead of executing it.")
-	var delay, loss, limit, rate, slot, child string
+	var delay, loss, limit, rate, slot, child, cakeBandwidth string
 	fset.StringVar(&delay, 0, "delay", "Pass-through to netem `delay` (e.g. \"10ms\", \"10ms 2ms distribution paretonormal\").")
 	fset.StringVar(&loss, 0, "loss", "Pass-through to netem `loss` (e.g. \"1%\", \"gemodel 0.1 0.05 0.9 0.95\").")
 	fset.StringVar(&limit, 0, "limit", "Pass-through to netem `limit` in packets (e.g. \"1000\").")
 	fset.StringVar(&rate, 0, "rate", "Pass-through to netem `rate` (e.g. \"10mbit\", \"10mbit 1000 500\").")
 	fset.StringVar(&slot, 0, "slot", "Pass-through to netem `slot` (e.g. \"5ms 10ms packets 64\").")
-	fset.StringVar(&child, 0, "child", "Child qdisc attached at parent 1: (e.g. \"fq_codel\", \"cake bandwidth 10mbit\", \"bfifo limit 50000\").")
+	fset.StringVar(&child, 0, "child",
+		"Child qdisc kind attached at parent 1: (one of: "+
+			strings.Join(validate.AllowedChildQdiscs, ", ")+").")
+	fset.StringVar(&cakeBandwidth, 0, "cake-bandwidth", "Bandwidth for `cake` (e.g. \"30mbit\"); requires --child cake.")
 	fset.MinPositionalArgs = 2
 	fset.MaxPositionalArgs = 2
 	runtimex.PanicOnError0(fset.Parse(args))
@@ -125,26 +130,31 @@ func applyMain(ctx context.Context, args []string) error {
 	subprocess.MustRun(ctx, dryRun, rootArgs[0], rootArgs[1:]...)
 
 	if child != "" {
-		childTokens, err := shellquote.Split(child)
-		if err != nil {
+		if err := validate.ChildQdiscKind(child); err != nil {
 			logx.Error("npte netem apply: --child: %s", err)
 			env.Exit(2)
 			return nil
 		}
-		if len(childTokens) <= 0 {
-			logx.Error("npte netem apply: --child: empty value")
-			env.Exit(2)
-			return nil
+		childArgs := []string{
+			"ip", "netns", "exec", ns,
+			"tc", "qdisc", "add", "dev", iface,
+			"parent", "1:", "handle", "2:", child,
 		}
-		if err := validate.ChildQdiscKind(childTokens[0]); err != nil {
-			logx.Error("npte netem apply: --child: %s", err)
-			env.Exit(2)
-			return nil
+		// Each case validates and consumes its own knob values, so a
+		// value whose owning --child kind isn't selected stays unused
+		// (no validation, no append). Add new per-kind knobs by
+		// extending the matching case.
+		switch child {
+		case "cake":
+			if cakeBandwidth != "" {
+				if err := validate.NetemRate(cakeBandwidth); err != nil {
+					logx.Error("npte netem apply: --cake-bandwidth: %s", err)
+					env.Exit(2)
+					return nil
+				}
+				childArgs = append(childArgs, "bandwidth", cakeBandwidth)
+			}
 		}
-		childArgs := append(
-			[]string{"ip", "netns", "exec", ns, "tc", "qdisc", "add", "dev", iface, "parent", "1:", "handle", "2:"},
-			childTokens...,
-		)
 		logx.Details("npte: attach child qdisc %q on %q inside %q", child, iface, ns)
 		subprocess.MustRun(ctx, dryRun, childArgs[0], childArgs[1:]...)
 	}

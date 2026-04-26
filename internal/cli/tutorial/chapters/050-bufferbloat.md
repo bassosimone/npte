@@ -9,7 +9,7 @@ up, whether it shares fairly between flows — is what determines
 whether the link feels merely *slow* under load or actively
 *broken*. This chapter turns the queue into the subject. We will
 make a textbook bufferbloat picture appear on a loaded link, then
-fix it with a single `--child` flag.
+fix it with `--child`.
 
 The chapter assumes `iperf3` is installed on the host (the
 previous chapter said the same). `ping` is universal and needs no
@@ -189,7 +189,7 @@ and the queue:
 
     sudo npte netem clear router if-client
     sudo npte netem apply router if-client \
-        --delay 25ms --child "cake bandwidth 30mbit"
+        --delay 25ms --child cake --cake-bandwidth 30mbit
 
 The qdisc tree is now: netem (25ms delay, no rate cap, no
 bottleneck queue) → cake (30 Mbit/s rate cap with managed AQM

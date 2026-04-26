@@ -174,41 +174,6 @@ func TestEnvVarName(t *testing.T) {
 	}
 }
 
-func TestChildQdiscKind(t *testing.T) {
-	tests := []struct {
-		name    string
-		input   string
-		wantErr string
-	}{
-		{"fq_codel", "fq_codel", ""},
-		{"cake", "cake", ""},
-		{"bfifo", "bfifo", ""},
-		{"pfifo", "pfifo", ""},
-		{"sfq", "sfq", ""},
-		{"red", "red", ""},
-		{"codel", "codel", ""},
-		{"pie", "pie", ""},
-		{"empty", "", "not allowed"},
-		{"unknown", "drr", "not allowed"},
-		{"classful htb", "htb", "not allowed"},
-		{"netem self", "netem", "not allowed"},
-		{"uppercase", "FQ_CODEL", "not allowed"},
-		{"with space", "fq_codel ", "not allowed"},
-		{"shell metachar", "fq_codel;rm", "not allowed"},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			err := ChildQdiscKind(tc.input)
-			if tc.wantErr == "" {
-				assert.NoError(t, err)
-				return
-			}
-			assert.ErrorContains(t, err, tc.wantErr)
-		})
-	}
-}
-
 func TestCIDR(t *testing.T) {
 	tests := []struct {
 		name    string

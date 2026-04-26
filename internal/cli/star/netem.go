@@ -19,22 +19,29 @@ import (
 //
 // Exactly one of two combinations is valid per shape (enforced at init):
 //
-//   - rate set, child empty: the rate cap and optional FIFO depth live
-//     inside netem (the "dumb pipe" shape). limit/loss may also be set.
+//   - rate set, childArgs empty: the rate cap and optional FIFO depth
+//     live inside netem (the "dumb pipe" shape). limit/loss may also be set.
 //
-//   - child set, rate and limit empty: netem is demoted to a pure delay
-//     (and optional loss) element; the rate cap and queue discipline live
-//     in the child qdisc (the "managed pipe" shape, typically cake).
+//   - childArgs set, rate and limit empty: netem is demoted to a pure
+//     delay (and optional loss) element; the rate cap and queue
+//     discipline live in the child qdisc (the "managed pipe" shape,
+//     typically cake).
+//
+// childArgs is forwarded verbatim to `npte netem apply` (e.g.
+// `[]string{"--child", "cake", "--cake-bandwidth", "30mbit"}`). The CLI
+// validates every token at the trust boundary, so this struct holds them
+// opaquely — adding a new per-kind knob means appending two more strings
+// here, not growing this type.
 //
 // Mixing rate on netem and a child qdisc is the chapter-050 trap: the
 // bottleneck queue lives inside netem and the child never sees a backlog.
 // The init-time assertion rejects that combination.
 type linkShape struct {
-	delay string // required
-	rate  string // netem rate; mutually exclusive with child
-	limit string // netem FIFO depth in packets; only with rate
-	loss  string // optional, may appear with either shape
-	child string // child qdisc string; mutually exclusive with rate
+	delay     string   // required
+	rate      string   // netem rate; mutually exclusive with childArgs
+	limit     string   // netem FIFO depth in packets; only with rate
+	loss      string   // optional, may appear with either shape
+	childArgs []string // pass-through flags for `npte netem apply --child ...`
 }
 
 // profile is a named pair of link shapes, one per direction of the star's
@@ -65,8 +72,8 @@ var profiles = map[string]profile{
 			"caps as 4g-bloated, but the rate cap lives in a cake child qdisc " +
 			"that also handles per-flow fair queueing and CoDel-style early " +
 			"drops. Loaded RTT stays close to idle.",
-		downlink: linkShape{delay: "25ms", child: "cake bandwidth 30mbit"},
-		uplink:   linkShape{delay: "25ms", child: "cake bandwidth 10mbit"},
+		downlink: linkShape{delay: "25ms", childArgs: []string{"--child", "cake", "--cake-bandwidth", "30mbit"}},
+		uplink:   linkShape{delay: "25ms", childArgs: []string{"--child", "cake", "--cake-bandwidth", "10mbit"}},
 	},
 }
 
@@ -75,7 +82,7 @@ func init() {
 		for _, shape := range []linkShape{p.downlink, p.uplink} {
 			runtimex.Assert(shape.delay != "")
 			hasNetemRate := shape.rate != ""
-			hasChild := shape.child != ""
+			hasChild := len(shape.childArgs) > 0
 			runtimex.Assert(hasNetemRate != hasChild) // exactly one
 			if !hasNetemRate {
 				runtimex.Assert(shape.limit == "") // limit is a netem-FIFO knob
@@ -213,9 +220,7 @@ func applyArgs(ns, iface string, shape linkShape) []string {
 	if shape.rate != "" {
 		argv = append(argv, "--rate", shape.rate)
 	}
-	if shape.child != "" {
-		argv = append(argv, "--child", shape.child)
-	}
+	argv = append(argv, shape.childArgs...)
 	argv = append(argv, ns, iface)
 	return argv
 }

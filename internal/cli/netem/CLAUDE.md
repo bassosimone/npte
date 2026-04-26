@@ -36,10 +36,20 @@ That changes the threat model for code in this directory:
      contains whitespace, so `shellquote` is not needed for these
      flags. tc(8) remains the authoritative parser; if the grammar
      evolves upstream, the fix is to extend the regex.
-   - `validate.ChildQdiscKind` is a narrow allowlist of permitted
-     child qdisc kinds. The list is small because `tc` autoloads
-     `sch_<kind>` kernel modules — a side effect that escapes the
-     network namespace the qdisc lives in.
+   - `--child` is **not** a free-form pass-through. The flag takes
+     a single qdisc *kind* validated by `validate.ChildQdiscKind`
+     against the narrow `validate.AllowedChildQdiscs` allowlist.
+     The list is small because `tc` autoloads `sch_<kind>` kernel
+     modules — a side effect that escapes the network namespace
+     the qdisc lives in. Per-kind knobs are surfaced as separate
+     typed CLI flags (e.g. `--cake-bandwidth`, validated via
+     `NetemRate`) and added on demand. Each per-kind knob is
+     validated and consumed inside the corresponding `case` in
+     `apply.go`'s child-dispatch `switch`, so a value whose owning
+     `--child` kind is not selected is silently ignored — its
+     bytes never reach argv. New kinds/knobs are added by
+     extending the allowlist and the matching `case`; do not
+     reintroduce a free-form pass-through.
 3. When adding a flag, positional, or new subcommand, audit the
    full path from `vflag.Parse` to `subprocess.MustRun`. Each
    intermediate step should be entitled to assume: "if I got here,
@@ -56,8 +66,9 @@ That changes the threat model for code in this directory:
 - `internal/cli/sudoers/sudoers.go` — what is allowlisted, and the
   install-time guidance that surfaces this invariant to operators.
 - `internal/validate/` — the validators this package relies on:
-  `NetnsName`, `IfaceName`, `ChildQdiscKind` (in `validate.go`),
-  and the per-flag netem grammar validators `NetemDelay`,
-  `NetemLoss`, `NetemLimit`, `NetemRate`, `NetemSlot` (in `netem.go`).
+  `NetnsName`, `IfaceName` (in `validate.go`); `ChildQdiscKind`
+  and `AllowedChildQdiscs` (in `tc.go`); and the per-flag netem
+  grammar validators `NetemDelay`, `NetemLoss`, `NetemLimit`,
+  `NetemRate`, `NetemSlot` (in `netem.go`).
 - The comment block before the validation section in each command
   file in this package — local manifestation of the invariant.

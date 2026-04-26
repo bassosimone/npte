@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"net/netip"
 	"regexp"
-	"slices"
-	"strings"
 	"unicode"
 )
 
@@ -135,36 +133,6 @@ func DebootstrapSuite(s string) error {
 	}
 	if !debootstrapSuiteRe.MatchString(s) {
 		return fmt.Errorf("suite name %q must match %s", s, debootstrapSuiteRe)
-	}
-	return nil
-}
-
-// allowedChildQdiscs lists the qdisc kinds accepted by `npte netem
-// apply --child`. The list is deliberately narrow because tc(8)
-// autoloads the kernel module `sch_<kind>` via modprobe before
-// attaching an unknown qdisc. Accepting an arbitrary kind would
-// therefore expose a "load any sch_* kernel module on the host"
-// primitive to whoever can invoke this command — a side effect that
-// is not contained by the network namespace the qdisc is installed
-// in. The kinds below are the AQM and FIFO qdiscs that make sense as
-// a one-level child of `root netem` for AQM-vs-FIFO experiments.
-var allowedChildQdiscs = []string{
-	"bfifo",
-	"cake",
-	"codel",
-	"fq_codel",
-	"pfifo",
-	"pie",
-	"red",
-	"sfq",
-}
-
-// ChildQdiscKind reports whether s is an accepted qdisc kind for
-// `npte netem apply --child`. See [allowedChildQdiscs] for rationale.
-func ChildQdiscKind(s string) error {
-	if !slices.Contains(allowedChildQdiscs, s) {
-		return fmt.Errorf("qdisc kind %q is not allowed for --child; permitted: %s",
-			s, strings.Join(allowedChildQdiscs, ", "))
 	}
 	return nil
 }
