@@ -169,50 +169,6 @@ func ChildQdiscKind(s string) error {
 	return nil
 }
 
-// netemTopLevelKnobs is a denylist of netem knob keywords currently
-// recognized at the top level of a tc(8) `netem` argument list (see
-// `man tc-netem`). It is consulted by [NetemNoKnobSmuggling].
-//
-// This is a UX / contract check, not a security boundary. The flag
-// values for --delay/--loss/--limit/--rate/--slot are shellquote-split
-// and pasted after the netem keyword, so a value like "10ms loss
-// random 100%" makes tc honor `loss random 100%` even though the user
-// did not pass --loss. We reject such tokens so each --<knob> flag
-// stays honest about which knob it actually configures, and so a
-// sudoers audit log of the invocation reflects what the operation did.
-//
-// Security is held independently by exec-without-shell plus tc being
-// a trusted local parser: the worst an unrecognized token can do is
-// make tc exit non-zero. Consequently, a netem keyword added upstream
-// later and not listed here will silently slip through; the fix when
-// that happens is to extend this list, not to harden the check.
-var netemTopLevelKnobs = []string{
-	"corrupt",
-	"delay",
-	"duplicate",
-	"ecn",
-	"gap",
-	"limit",
-	"loss",
-	"rate",
-	"reorder",
-	"slot",
-}
-
-// NetemNoKnobSmuggling reports whether tokens (the shellquote-split
-// value of one --delay/--loss/--limit/--rate/--slot flag) is free of
-// other netem knob names. See [netemTopLevelKnobs] for the
-// UX/contract rationale and its limits.
-func NetemNoKnobSmuggling(tokens []string) error {
-	for _, t := range tokens {
-		if slices.Contains(netemTopLevelKnobs, t) {
-			return fmt.Errorf("token %q is a netem knob name; "+
-				"values must not smuggle other knobs", t)
-		}
-	}
-	return nil
-}
-
 // CIDR reports whether s is a valid IPv4 or IPv6 prefix in "addr/len" form.
 // A prefix length is required (bare addresses are rejected), and host bits
 // may be set (e.g. "10.0.1.1/24" is accepted) since `ip addr add` accepts

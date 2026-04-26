@@ -4,6 +4,7 @@ package netem
 
 import (
 	"context"
+	"strings"
 
 	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/npte/internal/subprocess"
@@ -82,30 +83,33 @@ func applyMain(ctx context.Context, args []string) error {
 	// Build the netem arg list in canonical order (matches `man tc-netem`).
 	// Netem is order-insensitive between knobs, but consistent emission makes
 	// dry-run output easier to diff across scenarios.
+	//
+	// Each flag is validated against a per-flag whole-value regex modeled
+	// on the documented grammar (see internal/validate/netem.go). On
+	// success we mechanically split with strings.Fields — no atom in any
+	// netem grammar contains whitespace, so quoting (shellquote.Split) is
+	// not needed here.
 	netemArgs := []string{}
-	for _, kv := range []struct{ key, value string }{
-		{"delay", delay},
-		{"loss", loss},
-		{"limit", limit},
-		{"rate", rate},
-		{"slot", slot},
+	for _, kv := range []struct {
+		key, value string
+		validate   func(string) error
+	}{
+		{"delay", delay, validate.NetemDelay},
+		{"loss", loss, validate.NetemLoss},
+		{"limit", limit, validate.NetemLimit},
+		{"rate", rate, validate.NetemRate},
+		{"slot", slot, validate.NetemSlot},
 	} {
 		if kv.value == "" {
 			continue
 		}
-		tokens, err := shellquote.Split(kv.value)
-		if err != nil {
-			logx.Error("npte netem apply: --%s: %s", kv.key, err)
-			env.Exit(2)
-			return nil
-		}
-		if err := validate.NetemNoKnobSmuggling(tokens); err != nil {
+		if err := kv.validate(kv.value); err != nil {
 			logx.Error("npte netem apply: --%s: %s", kv.key, err)
 			env.Exit(2)
 			return nil
 		}
 		netemArgs = append(netemArgs, kv.key)
-		netemArgs = append(netemArgs, tokens...)
+		netemArgs = append(netemArgs, strings.Fields(kv.value)...)
 	}
 	if len(netemArgs) <= 0 && child == "" {
 		logx.Error("npte netem apply: at least one of --delay/--loss/--limit/--rate/--slot/--child must be provided")

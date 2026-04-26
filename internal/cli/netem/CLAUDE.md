@@ -21,13 +21,25 @@ That changes the threat model for code in this directory:
 1. Every flag value, positional argument, or environment value
    forwarded to a subprocess must be passed through a validator
    from `internal/validate`, OR be a hardcoded literal.
-2. `tc` accepts pass-through grammars (e.g. netem knob values,
-   child qdisc args) that are tokenized via `shellquote.Split` and
-   pasted into argv. These tokens must still be vetted: see
-   `validate.ChildQdiscKind` (allowlist of qdisc kinds, since `tc`
-   autoloads `sch_<kind>` modules) and `validate.NetemNoKnobSmuggling`
-   (rejects values that name another netem knob, so each `--<flag>`
-   stays scoped to its own knob).
+2. Some `tc` invocations take pass-through grammars (netem knob
+   values, child qdisc args) that ultimately become argv tokens.
+   These must be vetted before reaching the subprocess:
+   - The five netem flag-value validators in
+     `internal/validate/netem.go` (`NetemDelay`, `NetemLoss`,
+     `NetemLimit`, `NetemRate`, `NetemSlot`) anchor a whole-string
+     regex modeled on `man tc-netem` against each `--<flag>` value.
+     Position, arity, and atom shapes (TIME, RATE, PCT, distribution
+     names, ...) all ride in the regex, so a smuggled keyword like
+     `loss` inside a `--delay` value or a stray `ecn` does not match
+     any branch and is rejected. After the validator returns nil
+     the value is split mechanically with `strings.Fields` — no atom
+     contains whitespace, so `shellquote` is not needed for these
+     flags. tc(8) remains the authoritative parser; if the grammar
+     evolves upstream, the fix is to extend the regex.
+   - `validate.ChildQdiscKind` is a narrow allowlist of permitted
+     child qdisc kinds. The list is small because `tc` autoloads
+     `sch_<kind>` kernel modules — a side effect that escapes the
+     network namespace the qdisc lives in.
 3. When adding a flag, positional, or new subcommand, audit the
    full path from `vflag.Parse` to `subprocess.MustRun`. Each
    intermediate step should be entitled to assume: "if I got here,
@@ -43,8 +55,9 @@ That changes the threat model for code in this directory:
 
 - `internal/cli/sudoers/sudoers.go` — what is allowlisted, and the
   install-time guidance that surfaces this invariant to operators.
-- `internal/validate/validate.go` — the validators this package
-  relies on (`NetnsName`, `IfaceName`, `ChildQdiscKind`,
-  `NetemNoKnobSmuggling`).
+- `internal/validate/` — the validators this package relies on:
+  `NetnsName`, `IfaceName`, `ChildQdiscKind` (in `validate.go`),
+  and the per-flag netem grammar validators `NetemDelay`,
+  `NetemLoss`, `NetemLimit`, `NetemRate`, `NetemSlot` (in `netem.go`).
 - The comment block before the validation section in each command
   file in this package — local manifestation of the invariant.

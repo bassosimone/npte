@@ -209,43 +209,6 @@ func TestChildQdiscKind(t *testing.T) {
 	}
 }
 
-func TestNetemNoKnobSmuggling(t *testing.T) {
-	tests := []struct {
-		name    string
-		tokens  []string
-		wantErr string
-	}{
-		{"empty", nil, ""},
-		{"plain delay", []string{"10ms"}, ""},
-		{"delay with jitter", []string{"10ms", "2ms"}, ""},
-		{"delay with distribution", []string{"10ms", "2ms", "distribution", "paretonormal"}, ""},
-		{"loss random", []string{"random", "1%"}, ""},
-		{"loss gemodel", []string{"gemodel", "0.1", "0.05", "0.9", "0.95"}, ""},
-		{"rate with overheads", []string{"10mbit", "1000", "500"}, ""},
-		{"slot with packets", []string{"5ms", "10ms", "packets", "64"}, ""},
-		{"smuggle loss in delay", []string{"10ms", "loss", "random", "100%"}, "knob"},
-		{"smuggle ecn", []string{"1%", "ecn"}, "knob"},
-		{"smuggle rate", []string{"10ms", "rate", "1mbit"}, "knob"},
-		{"smuggle delay", []string{"delay", "10ms"}, "knob"},
-		{"smuggle reorder", []string{"reorder", "25%"}, "knob"},
-		{"smuggle corrupt", []string{"corrupt", "1%"}, "knob"},
-		{"smuggle duplicate", []string{"duplicate", "1%"}, "knob"},
-		{"smuggle gap", []string{"gap", "10"}, "knob"},
-		{"smuggle limit", []string{"limit", "1000"}, "knob"},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			err := NetemNoKnobSmuggling(tc.tokens)
-			if tc.wantErr == "" {
-				assert.NoError(t, err)
-				return
-			}
-			assert.ErrorContains(t, err, tc.wantErr)
-		})
-	}
-}
-
 func TestCIDR(t *testing.T) {
 	tests := []struct {
 		name    string
