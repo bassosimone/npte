@@ -101,6 +101,76 @@ func TestIPAddr(t *testing.T) {
 	}
 }
 
+func TestUsername(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr string
+	}{
+		{"empty", "", "empty"},
+		{"typical", "alice", ""},
+		{"underscore start", "_alice", ""},
+		{"hyphen middle", "al-ice", ""},
+		{"digit middle", "alice1", ""},
+		{"max length", "abcdefghijklmnopqrstuvwxyz012345", ""},
+		{"too long", "abcdefghijklmnopqrstuvwxyz0123456", "exceeds 32"},
+		{"leading digit", "1alice", "must match"},
+		{"leading hyphen", "-alice", "must match"},
+		{"uppercase", "Alice", "must match"},
+		{"shell metachar semicolon", "alice;rm", "must match"},
+		{"shell metachar dollar", "alice$x", "must match"},
+		{"space", "al ice", "must match"},
+		{"slash", "al/ice", "must match"},
+		{"dot", "al.ice", "must match"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := Username(tc.input)
+			if tc.wantErr == "" {
+				assert.NoError(t, err)
+				return
+			}
+			assert.ErrorContains(t, err, tc.wantErr)
+		})
+	}
+}
+
+func TestEnvVarName(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr string
+	}{
+		{"empty", "", "empty"},
+		{"uppercase", "FOO", ""},
+		{"lowercase", "foo", ""},
+		{"mixed case with digits and underscore", "FooBar_42", ""},
+		{"underscore start", "_FOO", ""},
+		{"single underscore", "_", ""},
+		{"leading digit", "1FOO", "must match"},
+		{"leading hyphen", "-FOO", "must match"},
+		{"hyphen middle", "FOO-BAR", "must match"},
+		{"shell metachar semicolon", "FOO;rm", "must match"},
+		{"shell metachar dollar", "FOO$X", "must match"},
+		{"space", "FOO BAR", "must match"},
+		{"slash", "FOO/BAR", "must match"},
+		{"dot", "FOO.BAR", "must match"},
+		{"equals", "FOO=BAR", "must match"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := EnvVarName(tc.input)
+			if tc.wantErr == "" {
+				assert.NoError(t, err)
+				return
+			}
+			assert.ErrorContains(t, err, tc.wantErr)
+		})
+	}
+}
+
 func TestChildQdiscKind(t *testing.T) {
 	tests := []struct {
 		name    string
