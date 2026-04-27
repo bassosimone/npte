@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"os"
+	"runtime/debug"
 
 	"github.com/bassosimone/npte/internal/cli/container"
 	"github.com/bassosimone/npte/internal/cli/doctor"
@@ -19,6 +20,16 @@ import (
 	"github.com/bassosimone/vclip"
 	"github.com/bassosimone/vflag"
 )
+
+// version contains the program version string, set during init from build info.
+var version string
+
+func init() {
+	version = "(devel)"
+	if binfo, ok := debug.ReadBuildInfo(); ok {
+		version = binfo.Main.Version
+	}
+}
 
 func main() {
 	defer exitx.Recover(os.Exit)
@@ -41,6 +52,7 @@ func main() {
 			"client-router-server topology for the common case.",
 		"Run `npte tutorial` for a walkthrough.",
 	)
+	disp.AddVersionHandlers(version)
 	disp.AddCommand("doctor", vclip.CommandFunc(doctor.Main), "Check for required external commands.")
 	disp.AddCommand("tutorial", vclip.CommandFunc(tutorial.Main), "Show the npte tutorials.")
 	disp.AddCommand("netns", vclip.CommandFunc(netns.Main), "Manage network namespaces.")
