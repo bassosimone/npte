@@ -68,8 +68,7 @@ https://github.com/bassosimone/npte/tree/main/internal/cli/tutorial/chapters).
 - `star` — compose a fixed three-node client/router/server topology
   out of the `netns` primitives.
 
-- `sudoers` — print a `sudoers` snippet allowing the invoking user
-  to run selected `npte` subcommands `NOPASSWD`.
+- `sudoers` — print `sudoers` `NOPASSWD` configuration for selected subcommands.
 
 All the subcommands that modify the kernel state also support the `--dry-run`
 flag, which prints a round-trippable shell script to stdout instead of executing.
