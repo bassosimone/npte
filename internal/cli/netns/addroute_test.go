@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/bassosimone/npte/internal/cli/clitest"
+	"github.com/bassosimone/npte/internal/testenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,10 +53,10 @@ func TestAddRoute(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := clitest.Setup(t)
+			s := testenv.Setup(t)
 			require.NoError(t, addRouteMain(context.Background(), tc.args))
 			assert.Equal(t, tc.wantExit, s.ExitCode)
-			clitest.AssertLines(t, s.Stdout.String(), tc.wantOut)
+			testenv.AssertLines(t, s.Stdout.String(), tc.wantOut)
 		})
 	}
 }

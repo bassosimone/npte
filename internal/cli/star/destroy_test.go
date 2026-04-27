@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/bassosimone/npte/internal/cli/clitest"
+	"github.com/bassosimone/npte/internal/testenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,7 +39,7 @@ func TestStarDestroy(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := clitest.Setup(t)
+			s := testenv.Setup(t)
 			require.NoError(t, destroyMain(context.Background(), tc.args))
 			assert.Equal(t, tc.wantExit, s.ExitCode)
 			assert.Equal(t, tc.wantCmds, s.Commands)

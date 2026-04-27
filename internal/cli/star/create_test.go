@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/bassosimone/npte/internal/cli/clitest"
+	"github.com/bassosimone/npte/internal/testenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ import (
 // npte builds the full argv of a child `npte` invocation, prefixed with the
 // stubbed executable path so the assertion matches cmd.Args.
 func npte(args ...string) []string {
-	return append([]string{clitest.SelfPath}, args...)
+	return append([]string{testenv.SelfPath}, args...)
 }
 
 func TestStarCreate(t *testing.T) {
@@ -61,7 +61,7 @@ func TestStarCreate(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := clitest.Setup(t)
+			s := testenv.Setup(t)
 			require.NoError(t, createMain(context.Background(), tc.args))
 			assert.Equal(t, tc.wantExit, s.ExitCode)
 			assert.Equal(t, tc.wantCmds, s.Commands)

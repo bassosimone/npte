@@ -179,4 +179,3 @@ func TestRunTolerant_Live_Failure(t *testing.T) {
 	MustRunTolerant(context.Background(), false, "ip")
 	assert.NoError(t, captured)
 }
-

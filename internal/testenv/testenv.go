@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// Package clitest provides shared test helpers for CLI command packages.
+// Package testenv provides a shared test stub for [testable.Env].
 //
-// Each Setup call swaps testable.Env with stubs that:
+// Each [Setup] call swaps [testable.Env] with stubs that:
 //
-//   - capture stdout, stderr and exit code in a returned [Stubs] value
+//   - capture stdout, stderr and exit code in the returned [Stubs] value
 //   - make registry.RequireManaged pass (Stat returns a fake regular file)
 //   - make registry.Lock return a no-op unlock
-//   - make RunCommand a no-op (no real subprocess is ever exec'd)
+//   - capture every RunCommand argv into Stubs.Commands (no real exec)
 //
-// Tests can therefore drive each leaf command with --dry-run and assert
-// against the rendered shell script on stdout.
-package clitest
+// Tests can drive each leaf CLI command with --dry-run and assert against
+// the rendered shell script on stdout, or exercise lower layers directly
+// while overriding individual stubs.
+package testenv
 
 import (
 	"bytes"
@@ -71,13 +72,13 @@ func Setup(t *testing.T) *Stubs {
 			}
 			return ""
 		},
-		Geteuid:    func() int { return 0 },
-		MkdirAll:   func(string, os.FileMode) error { return nil },
-		ReadFile:   func(string) ([]byte, error) { return nil, nil },
-		WriteFile:  func(string, []byte, os.FileMode) error { return nil },
-		Stat:       func(name string) (os.FileInfo, error) { return regularFileInfo(name), nil },
-		Remove:     func(string) error { return nil },
-		ReadDir:    func(string) ([]os.DirEntry, error) { return nil, nil },
+		Geteuid:   func() int { return 0 },
+		MkdirAll:  func(string, os.FileMode) error { return nil },
+		ReadFile:  func(string) ([]byte, error) { return nil, nil },
+		WriteFile: func(string, []byte, os.FileMode) error { return nil },
+		Stat:      func(name string) (os.FileInfo, error) { return regularFileInfo(name), nil },
+		Remove:    func(string) error { return nil },
+		ReadDir:   func(string) ([]os.DirEntry, error) { return nil, nil },
 		RunCommand: func(cmd *exec.Cmd) error {
 			argv := append([]string{}, cmd.Args...)
 			s.Commands = append(s.Commands, argv)

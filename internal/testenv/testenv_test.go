@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package clitest
+package testenv
 
 import (
 	"regexp"
