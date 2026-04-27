@@ -32,6 +32,7 @@ type Environ struct {
 	ReadDir          func(name string) ([]os.DirEntry, error)
 	RunCommand       func(cmd *exec.Cmd) error
 	LookPath         func(file string) (string, error)
+	Executable       func() (string, error)
 	LockFile         func(path string) (func(), error)
 	LogFatalOnError0 func(err error)
 }
@@ -55,7 +56,8 @@ func NewEnvironOS() *Environ {
 		RunCommand: func(cmd *exec.Cmd) error {
 			return cmd.Run()
 		},
-		LookPath: exec.LookPath,
+		LookPath:   exec.LookPath,
+		Executable: os.Executable,
 		LockFile: func(path string) (func(), error) {
 			return lockedfile.MutexAt(path).Lock()
 		},

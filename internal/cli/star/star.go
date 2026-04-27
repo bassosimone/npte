@@ -5,7 +5,6 @@ package star
 
 import (
 	"context"
-	"os"
 	"os/exec"
 
 	"github.com/bassosimone/npte/internal/logx"
@@ -70,9 +69,10 @@ func runSelf(ctx context.Context, self string, args ...string) {
 
 // selfPath returns the absolute path to the currently running binary,
 // or logs and exits on failure. Split out so that create/destroy share
-// the same error-handling shape.
+// the same error-handling shape. The lookup is routed through
+// [testable.Env.Executable] so tests can stub it.
 func selfPath(who string) string {
-	self, err := os.Executable()
+	self, err := testable.Env.Executable()
 	if err != nil {
 		logx.Error("%s: cannot resolve own executable path: %s", who, err)
 		testable.Env.Exit(1)

@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+package star
+
+import (
+	"context"
+	"testing"
+
+	"github.com/bassosimone/npte/internal/cli/clitest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestStarDestroy(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     []string
+		wantExit int
+		wantCmds [][]string
+	}{{
+		name:     "dry-run",
+		args:     []string{"--dry-run"},
+		wantExit: -1,
+		wantCmds: [][]string{
+			npte("netns", "destroy", "client", "-n"),
+			npte("netns", "destroy", "server", "-n"),
+			npte("netns", "destroy", "router", "-n"),
+		},
+	}, {
+		name:     "live",
+		args:     nil,
+		wantExit: -1,
+		wantCmds: [][]string{
+			npte("netns", "destroy", "client"),
+			npte("netns", "destroy", "server"),
+			npte("netns", "destroy", "router"),
+		},
+	}}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := clitest.Setup(t)
+			require.NoError(t, destroyMain(context.Background(), tc.args))
+			assert.Equal(t, tc.wantExit, s.ExitCode)
+			assert.Equal(t, tc.wantCmds, s.Commands)
+		})
+	}
+}

@@ -29,6 +29,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// SelfPath is the absolute path returned by the stubbed Executable; it is
+// also the cmd.Path / cmd.Args[0] of every captured RunCommand entry that
+// originates from `npte star`'s self-recursion.
+const SelfPath = "/usr/local/sbin/npte"
+
 // Stubs holds the buffers and the captured exit code for a test.
 type Stubs struct {
 	Stdout   *bytes.Buffer
@@ -36,6 +41,11 @@ type Stubs struct {
 	ExitCode int
 	// SudoUser, if non-empty, is returned for $SUDO_USER lookups.
 	SudoUser string
+	// Commands records the full argv (including the binary as Args[0]) of
+	// every command passed to the stubbed RunCommand. Useful for asserting
+	// what `npte star` would dispatch, since runSelf always exec's even in
+	// dry-run mode.
+	Commands [][]string
 }
 
 // Setup swaps testable.Env with a stubbed [*testable.Environ] for the
@@ -68,8 +78,13 @@ func Setup(t *testing.T) *Stubs {
 		Stat:       func(name string) (os.FileInfo, error) { return regularFileInfo(name), nil },
 		Remove:     func(string) error { return nil },
 		ReadDir:    func(string) ([]os.DirEntry, error) { return nil, nil },
-		RunCommand: func(*exec.Cmd) error { return nil },
+		RunCommand: func(cmd *exec.Cmd) error {
+			argv := append([]string{}, cmd.Args...)
+			s.Commands = append(s.Commands, argv)
+			return nil
+		},
 		LookPath:   func(file string) (string, error) { return "/usr/bin/" + file, nil },
+		Executable: func() (string, error) { return SelfPath, nil },
 		LockFile:   func(string) (func(), error) { return func() {}, nil },
 		LogFatalOnError0: func(err error) {
 			if err != nil {
