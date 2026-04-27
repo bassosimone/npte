@@ -33,6 +33,8 @@ func Main(ctx context.Context, args []string) error {
 	disp.AddCommand("assign-addr", vclip.CommandFunc(assignAddrMain), "Assign an IP address to an interface inside a namespace.")
 	disp.AddCommand("add-route", vclip.CommandFunc(addRouteMain), "Add a route inside a namespace.")
 	disp.AddCommand("run", vclip.CommandFunc(runMain), "Run a command inside a namespace.")
+	disp.AddCommand("list", vclip.CommandFunc(listMain), "List namespaces managed by npte.")
+	disp.AddCommand("show", vclip.CommandFunc(showMain), "Show diagnostics for a namespace managed by npte.")
 
 	return disp.Main(ctx, args)
 }
