@@ -71,8 +71,8 @@ https://github.com/bassosimone/npte/tree/main/internal/cli/tutorial/chapters).
 - `sudoers` — print a `sudoers` snippet allowing the invoking user
   to run selected `npte` subcommands `NOPASSWD`.
 
-Most subcommands support `--dry-run`, which prints a round-trippable
-shell script to stdout instead of executing.
+All the subcommands that modify the kernel state also support the `--dry-run`
+flag, which prints a round-trippable shell script to stdout instead of executing.
 
 ## License
 
