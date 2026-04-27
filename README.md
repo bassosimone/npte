@@ -4,14 +4,13 @@
 
 `npte` (Network Performance Testing Environment) tests how a network client
 behaves on a realistic access link, using isolated network namespaces, traffic
-shaping, and optional lightweight containers — no real hardware or second
-machine required.
+shaping, and optional lightweight containers.
 
 It is a collection of small, composable primitives: create and connect
 namespaces (`netns`), attach a host-NATed uplink (`gateway`), shape a link
 with `tc`/`netem` (`netem`), and optionally run commands inside a
 `systemd-nspawn` container (`container`). The `star` command wires a fixed
-client-router-server topology for the common case.
+topology for the common case.
 
 > **Linux-only.** Most subcommands require `root` and use external commands
 > (`ip`, `tc`, `iptables`, `sysctl`, `systemd-nspawn`, `debootstrap`,
@@ -33,7 +32,7 @@ is owned and writable by the invoking user: a tool that `root` runs via
 and the absolute path baked into the `npte sudoers` snippet has to be one
 that only `root` can modify.
 
-For local development on `npte` itself, `go build .` is fine; the resulting
+For local development, `go build .` is fine; the resulting
 binary will report its version as `(devel)`.
 
 ## Quick Start
@@ -72,8 +71,8 @@ https://github.com/bassosimone/npte/tree/main/internal/cli/tutorial/chapters).
 - `sudoers` — print a `sudoers` snippet allowing the invoking user
   to run selected `npte` subcommands `NOPASSWD`.
 
-Every kernel-touching subcommand supports `--dry-run`, which prints a
-round-trippable shell script to stdout instead of executing.
+Most subcommands support `--dry-run`, which prints a round-trippable
+shell script to stdout instead of executing.
 
 ## License
 
