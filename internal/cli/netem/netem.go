@@ -31,6 +31,8 @@ func Main(ctx context.Context, args []string) error {
 			"child. Anything else (TBF-as-root, HTB classes, hierarchical "+
 			"trees) is out of scope; use `sudo ip netns exec <ns> tc ...` "+
 			"for those cases.",
+		"Operates only on namespaces created by `npte netns create` (see "+
+			"`npte netns list`); refuses to shape foreign namespaces.",
 	)
 	disp.AddCommand("apply", vclip.CommandFunc(applyMain), "Apply netem shaping to an interface.")
 	disp.AddCommand("clear", vclip.CommandFunc(clearMain), "Remove netem shaping from an interface.")

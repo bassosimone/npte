@@ -24,8 +24,14 @@ func Main(ctx context.Context, args []string) error {
 			"performs one operation: create or destroy a namespace, wire two namespaces "+
 			"with a veth pair, assign addresses to interfaces, add routes, or bless a "+
 			"namespace as an internet gateway.",
-		"Topologies are built imperatively by composing these primitives; there is no "+
-			"persisted project state. Requires root.",
+		"Every verb except `create` operates only on a namespace previously created "+
+			"by `npte netns create`, tracked via a marker file at "+
+			"`/run/npte/netns/<name>`. `list` enumerates managed namespaces; `show` "+
+			"dumps diagnostics for one. There is no `--foreign` escape hatch — the "+
+			"allowlisted surface is bounded to namespaces npte itself created. For "+
+			"foreign namespaces, use `ip netns ...` directly.",
+		"Topologies are built imperatively by composing these primitives; the only "+
+			"persisted state is the per-namespace ownership marker. Requires root.",
 	)
 	disp.AddCommand("create", vclip.CommandFunc(createMain), "Create a minimal namespace.")
 	disp.AddCommand("destroy", vclip.CommandFunc(destroyMain), "Destroy a namespace created by `create`.")
