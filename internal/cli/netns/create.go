@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/bassosimone/npte/internal/logx"
+	"github.com/bassosimone/npte/internal/registry"
 	"github.com/bassosimone/npte/internal/subprocess"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/validate"
@@ -62,6 +63,9 @@ func createMain(ctx context.Context, args []string) error {
 		return nil
 	}
 
+	unlock := registry.MustLock(ctx, env, dryRun)
+	defer unlock()
+
 	logx.Details("npte: load tcp_bbr kernel module")
 	subprocess.MustRun(ctx, dryRun, "modprobe", "tcp_bbr")
 
@@ -81,6 +85,9 @@ func createMain(ctx context.Context, args []string) error {
 	subprocess.MustPipeTo(ctx, dryRun, []byte(resolvConf),
 		"install", "-D", "-m", "0644", "/dev/stdin",
 		"/etc/netns/"+ns+"/resolv.conf")
+
+	logx.Details("npte: register %q in the npte registry", ns)
+	registry.MustRegister(ctx, dryRun, ns)
 
 	logx.Details("npte: namespace %q is ready", ns)
 	return nil

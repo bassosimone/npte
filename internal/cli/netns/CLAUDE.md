@@ -32,6 +32,60 @@ That changes the threat model for code in this directory:
 4. Prefer hardcoded argv literals to user-controlled bytes wherever
    possible.
 
+# Registry invariant — `internal/cli/netns`
+
+The NOPASSWD grant lets a caller invoke every verb in this package as
+root without authenticating. The validation invariant above bounds the
+*bytes* that reach argv; the **registry invariant** bounds the
+*namespaces* the privileged surface can touch.
+
+A netns is "managed by npte" when an empty marker file exists at
+`/run/npte/netns/<name>`. Markers are written by `netns create` and
+removed by `netns destroy`; every other verb in this package refuses
+to operate on a netns that has no marker. Without this bound the
+privileged surface would include every netns on the host, not just
+the ones npte itself created.
+
+## When editing this package (registry side)
+
+1. Every state-touching verb MUST take the global registry lock at
+   the top of its run, **after shape validators** and **before any
+   kernel or marker operation**:
+
+   ```go
+   unlock := registry.MustLock(ctx, env, dryRun)
+   defer unlock()
+   ```
+
+   The lock serializes all npte invocations so that the
+   "kernel op then marker op" sequence is observable as atomic to
+   other npte processes. `MustLock` also ensures `/run/npte/netns/`
+   exists with the right perms (via `install -d`) and is dry-run-aware.
+
+2. Verbs that touch a *named* netns — i.e. everything except
+   `create` — MUST call `registry.RequireManaged(env, ns)` after the
+   lock and before any kernel op. A missing check means the verb can
+   be exercised against a netns npte does not own — the same
+   passwordless-privesc shape as a missing argv validator.
+
+3. `netns create` MUST end with `registry.MustRegister(ctx, dryRun, ns)`
+   **after** the kernel ops succeed. `netns destroy` MUST end with
+   `registry.MustUnregister(ctx, dryRun, ns)` **after**
+   `ip netns del` succeeds. Kernel op first, marker op second:
+   orphan markers are recoverable (a future `npte netns gc`); orphan
+   namespaces are not.
+
+4. Verbs that take more than one named netns (e.g. `connect`) MUST
+   call `RequireManaged` on **every** one of them. Generalizes to
+   any future verb that takes N named netns.
+
+5. Do **not** add a `--foreign` / `--force` or similar escape hatch that
+   bypasses the ownership check. The two-track design (managed-only by
+   default, foreign-allowed via flag) was rejected: every verb in
+   this package already exposes the full kernel surface to anyone with the
+   NOPASSWD grant once they pass `--foreign`. If foreign access is genuinely
+   needed for debugging, `ip netns ...` directly is right there.
+
 ## References
 
 - `internal/cli/sudoers/sudoers.go` — what is allowlisted, and the
@@ -39,5 +93,8 @@ That changes the threat model for code in this directory:
 - `internal/validate/validate.go` — the validators this package
   relies on (`NetnsName`, `IfaceName`, `IPAddr`, `CIDR`, `Username`,
   `EnvVarName`).
+- `internal/registry/registry.go` — the marker-file scheme, lock
+  primitive, ownership predicate, and the kernel-op-then-marker-op
+  ordering rationale.
 - The comment block before the validation section in each command
   file in this package — local manifestation of the invariant.

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bassosimone/npte/internal/logx"
+	"github.com/bassosimone/npte/internal/registry"
 	"github.com/bassosimone/npte/internal/subprocess"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/validate"
@@ -118,6 +119,15 @@ func applyMain(ctx context.Context, args []string) error {
 	}
 	if len(netemArgs) <= 0 && child == "" {
 		logx.Error("npte netem apply: at least one of --delay/--loss/--limit/--rate/--slot/--child must be provided")
+		env.Exit(2)
+		return nil
+	}
+
+	unlock := registry.MustLock(ctx, env, dryRun)
+	defer unlock()
+
+	if err := registry.RequireManaged(env, ns); err != nil {
+		logx.Error("npte netem apply: %s", err)
 		env.Exit(2)
 		return nil
 	}

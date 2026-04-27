@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/bassosimone/npte/internal/logx"
+	"github.com/bassosimone/npte/internal/registry"
 	"github.com/bassosimone/npte/internal/subprocess"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/validate"
@@ -65,6 +66,20 @@ func connectMain(ctx context.Context, args []string) error {
 	}
 	if left == right {
 		logx.Error("npte netns connect: left and right must differ (both are %q)", left)
+		env.Exit(2)
+		return nil
+	}
+
+	unlock := registry.MustLock(ctx, env, dryRun)
+	defer unlock()
+
+	if err := registry.RequireManaged(env, left); err != nil {
+		logx.Error("npte netns connect: %s", err)
+		env.Exit(2)
+		return nil
+	}
+	if err := registry.RequireManaged(env, right); err != nil {
+		logx.Error("npte netns connect: %s", err)
 		env.Exit(2)
 		return nil
 	}

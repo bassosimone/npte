@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/bassosimone/npte/internal/logx"
+	"github.com/bassosimone/npte/internal/registry"
 	"github.com/bassosimone/npte/internal/subprocess"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/validate"
@@ -143,6 +144,15 @@ func runMain(ctx context.Context, args []string) error {
 			env.Exit(2)
 			return nil
 		}
+	}
+
+	unlock := registry.MustLock(ctx, env, dryRun)
+	defer unlock()
+
+	if err := registry.RequireManaged(env, ns); err != nil {
+		logx.Error("npte netns run: %s", err)
+		env.Exit(2)
+		return nil
 	}
 
 	// Assemble: ip netns exec <ns> runuser -u <user> -- env K=V... <cmd> [args...]

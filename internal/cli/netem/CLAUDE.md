@@ -61,6 +61,43 @@ That changes the threat model for code in this directory:
 5. Prefer hardcoded argv literals to user-controlled bytes wherever
    possible.
 
+# Registry invariant — `internal/cli/netem`
+
+The NOPASSWD grant lets a caller invoke every verb in this package as
+root without authenticating. The validation invariant above bounds the
+*bytes* that reach argv; the **registry invariant** bounds the
+*namespaces* the privileged surface can touch.
+
+netem verbs do not create or destroy network namespaces; they shape
+interfaces inside an existing one. The first positional `<ns>` MUST
+refer to a namespace that npte itself created — i.e. one with a
+marker at `/run/npte/netns/<ns>`. See
+`internal/cli/netns/CLAUDE.md` for the full registry contract
+(marker scheme, kernel-op-then-marker-op ordering, no `--foreign`
+escape hatch).
+
+## When editing this package (registry side)
+
+1. Every verb MUST take the global registry lock at the top of its
+   run, **after shape validators** and **before any kernel op**:
+
+   ```go
+   unlock := registry.MustLock(ctx, env, dryRun)
+   defer unlock()
+   ```
+
+   The lock serializes all npte invocations and ensures
+   `/run/npte/netns/` exists with the right perms.
+
+2. Every verb MUST call `registry.RequireManaged(env, ns)` on its
+   first positional after the lock and before any kernel op. A
+   missing check means the verb can be exercised against a netns
+   npte does not own — the same passwordless-privesc shape as a
+   missing argv validator.
+
+3. New netem verbs follow the same pattern. If a future verb takes
+   more than one named netns, check all of them.
+
 ## References
 
 - `internal/cli/sudoers/sudoers.go` — what is allowlisted, and the
@@ -70,5 +107,10 @@ That changes the threat model for code in this directory:
   and `AllowedChildQdiscs` (in `tc.go`); and the per-flag netem
   grammar validators `NetemDelay`, `NetemLoss`, `NetemLimit`,
   `NetemRate`, `NetemSlot` (in `netem.go`).
+- `internal/registry/registry.go` — the marker-file scheme, lock
+  primitive, ownership predicate, and the kernel-op-then-marker-op
+  ordering rationale.
+- `internal/cli/netns/CLAUDE.md` — the broader registry contract
+  for verbs that own marker lifecycle (`create`/`destroy`).
 - The comment block before the validation section in each command
   file in this package — local manifestation of the invariant.

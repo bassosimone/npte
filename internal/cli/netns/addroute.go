@@ -7,6 +7,7 @@ import (
 	"net/netip"
 
 	"github.com/bassosimone/npte/internal/logx"
+	"github.com/bassosimone/npte/internal/registry"
 	"github.com/bassosimone/npte/internal/subprocess"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/validate"
@@ -82,6 +83,15 @@ func addRouteMain(ctx context.Context, args []string) error {
 			env.Exit(2)
 			return nil
 		}
+	}
+
+	unlock := registry.MustLock(ctx, env, dryRun)
+	defer unlock()
+
+	if err := registry.RequireManaged(env, ns); err != nil {
+		logx.Error("npte netns add-route: %s", err)
+		env.Exit(2)
+		return nil
 	}
 
 	logx.Details("npte: add route to %s via %s inside %q", dest, via, ns)

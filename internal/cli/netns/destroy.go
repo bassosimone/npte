@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/bassosimone/npte/internal/logx"
+	"github.com/bassosimone/npte/internal/registry"
 	"github.com/bassosimone/npte/internal/subprocess"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/validate"
@@ -58,11 +59,23 @@ func destroyMain(ctx context.Context, args []string) error {
 		return nil
 	}
 
+	unlock := registry.MustLock(ctx, env, dryRun)
+	defer unlock()
+
+	if err := registry.RequireManaged(env, ns); err != nil {
+		logx.Error("npte netns destroy: %s", err)
+		env.Exit(2)
+		return nil
+	}
+
 	logx.Details("npte: remove /etc/netns/%s", ns)
 	subprocess.MustRun(ctx, dryRun, "rm", "-rf", "/etc/netns/"+ns)
 
 	logx.Details("npte: destroy namespace %q", ns)
 	subprocess.MustRun(ctx, dryRun, "ip", "netns", "del", ns)
+
+	logx.Details("npte: unregister %q from the npte registry", ns)
+	registry.MustUnregister(ctx, dryRun, ns)
 
 	logx.Details("npte: namespace %q is gone", ns)
 	return nil
