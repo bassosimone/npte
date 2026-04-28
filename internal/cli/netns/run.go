@@ -6,6 +6,7 @@ import (
 	"context"
 	"math"
 	"strings"
+	"sync"
 
 	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/npte/internal/registry"
@@ -146,7 +147,32 @@ func runMain(ctx context.Context, args []string) error {
 		}
 	}
 
-	unlock := registry.MustLock(ctx, env, dryRun)
+	// Unlike every other verb in this package, `run` performs no
+	// marker operation — it just enters the namespace and execs the
+	// user's command, which may be a long-running server. Holding
+	// the global registry lock across that exec would block every
+	// other npte invocation, most importantly a sibling `npte netns
+	// run` for the client side of the same experiment.
+	//
+	// We therefore take the lock only across the RequireManaged
+	// check (which is what the registry invariant actually requires:
+	// the ownership predicate must be observed atomically with
+	// respect to concurrent create/destroy) and release it before
+	// exec. The privesc bound still holds: we confirmed under the
+	// lock that the namespace is npte-managed, and a concurrent
+	// destroy can at worst make `ip netns exec` fail with ENOENT —
+	// it cannot redirect us into a namespace npte does not own,
+	// since recreating a managed name requires `netns create`,
+	// which itself takes the lock.
+	//
+	// The unlock function returned by registry.MustLock is not
+	// idempotent (the underlying lockedfile.Mutex panics on a
+	// double Unlock), so we wrap it in sync.OnceFunc to make the
+	// "release early, also release on any error path" pattern
+	// safe: the explicit unlock before MustRun is the common case,
+	// and the deferred unlock is the safety net for the early-exit
+	// branches above (including future ones).
+	unlock := sync.OnceFunc(registry.MustLock(ctx, env, dryRun))
 	defer unlock()
 
 	if err := registry.RequireManaged(env, ns); err != nil {
@@ -159,8 +185,10 @@ func runMain(ctx context.Context, args []string) error {
 	argv := []string{"netns", "exec", ns, "runuser", "-u", userFlag, "--", "env"}
 	argv = append(argv, envFlags...)
 	argv = append(argv, fset.Args()[1:]...)
-
 	logx.Details("npte: enter namespace %q as user %q", ns, userFlag)
+
+	// Release the registry lock before exec; see the comment above.
+	unlock()
 	subprocess.MustRun(ctx, dryRun, "ip", argv...)
 	return nil
 }
