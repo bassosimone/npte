@@ -167,7 +167,7 @@ func TestRequireManaged(t *testing.T) {
 			"regular": func(string) (os.FileInfo, error) { return fakeStat{regular: true}, nil },
 			"dir":     func(string) (os.FileInfo, error) { return fakeStat{regular: false}, nil },
 		}
-		want := `test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`
+		want := `test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`
 		for label, stat := range stats {
 			t.Run(label, func(t *testing.T) {
 				s := testenv.Setup(t)

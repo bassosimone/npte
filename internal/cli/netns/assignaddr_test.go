@@ -25,7 +25,7 @@ func TestAssignAddr(t *testing.T) {
 		wantExit: -1,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
-			`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 			"ip netns exec client ip addr add 10.99.0.2/30 dev if-router",
 		},
 	}, {
@@ -69,7 +69,7 @@ func TestAssignAddr_dryRunSkipsStat(t *testing.T) {
 	assert.Equal(t, 0, statCalls, "dry-run must not consult Stat")
 	testenv.AssertLines(t, s.Stdout.String(), []any{
 		"install -d -m 0755 /run/npte/netns",
-		`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+		`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 		"ip netns exec client ip addr add 10.99.0.2/30 dev if-router",
 	})
 }

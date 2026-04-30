@@ -25,7 +25,7 @@ func TestDestroy(t *testing.T) {
 		wantExit: -1,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
-			`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 			"rm -rf /etc/netns/client",
 			"ip netns del client",
 			"rm -f /run/npte/netns/client",
@@ -63,7 +63,7 @@ func TestDestroy_dryRunSkipsStat(t *testing.T) {
 	assert.Equal(t, 0, statCalls, "dry-run must not consult Stat")
 	testenv.AssertLines(t, s.Stdout.String(), []any{
 		"install -d -m 0755 /run/npte/netns",
-		`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+		`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 		"rm -rf /etc/netns/client",
 		"ip netns del client",
 		"rm -f /run/npte/netns/client",

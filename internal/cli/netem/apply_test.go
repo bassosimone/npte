@@ -25,7 +25,7 @@ func TestApply(t *testing.T) {
 		wantExit: -1,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
-			`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 			"ip netns exec client tc qdisc add dev if-router root handle 1: netem delay 10ms",
 		},
 	}, {
@@ -34,7 +34,7 @@ func TestApply(t *testing.T) {
 		wantExit: -1,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
-			`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 			"ip netns exec client tc qdisc add dev if-router root handle 1: netem delay 10ms",
 			"ip netns exec client tc qdisc add dev if-router parent 1: handle 2: cake bandwidth 30mbit",
 		},
@@ -62,7 +62,7 @@ func TestApply(t *testing.T) {
 		wantExit: 2,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
-			`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 			"ip netns exec client tc qdisc add dev if-router root handle 1: netem delay 10ms",
 		},
 	}}
@@ -94,7 +94,7 @@ func TestApply_dryRunSkipsStat(t *testing.T) {
 	assert.Equal(t, 0, statCalls, "dry-run must not consult Stat")
 	testenv.AssertLines(t, s.Stdout.String(), []any{
 		"install -d -m 0755 /run/npte/netns",
-		`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+		`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 		"ip netns exec client tc qdisc add dev if-router root handle 1: netem delay 10ms",
 	})
 }

@@ -29,7 +29,9 @@ func clearMain(ctx context.Context, args []string) error {
 			"from tc is tolerated.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
-			"to reproduce the effect of a live run.",
+			"to reproduce the effect of a live run. The script sets no shell "+
+			"options of its own; wrap it (e.g. with `set -euxo pipefail`) "+
+			"if you want fail-fast semantics.",
 	)
 	usage.PositionalArgumentsUsage = "<ns> <if>"
 	fset.Exit = env.Exit

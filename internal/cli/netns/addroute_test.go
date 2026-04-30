@@ -25,7 +25,7 @@ func TestAddRoute(t *testing.T) {
 		wantExit: -1,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
-			`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 			"ip netns exec client ip route add default via 10.99.0.1",
 		},
 	}, {
@@ -34,7 +34,7 @@ func TestAddRoute(t *testing.T) {
 		wantExit: -1,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
-			`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 			"ip netns exec client ip route add 10.0.0.0/8 via 10.99.0.1",
 		},
 	}, {
@@ -82,7 +82,7 @@ func TestAddRoute_dryRunSkipsStat(t *testing.T) {
 	assert.Equal(t, 0, statCalls, "dry-run must not consult Stat")
 	testenv.AssertLines(t, s.Stdout.String(), []any{
 		"install -d -m 0755 /run/npte/netns",
-		`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+		`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 		"ip netns exec client ip route add default via 10.99.0.1",
 	})
 }

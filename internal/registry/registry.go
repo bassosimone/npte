@@ -28,6 +28,7 @@ import (
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/validate"
 	"github.com/bassosimone/runtimex"
+	"github.com/kballard/go-shellquote"
 )
 
 const (
@@ -129,12 +130,9 @@ func MustUnregister(ctx context.Context, dryRun bool, name string) {
 func RequireManaged(env *testable.Environ, dryRun bool, name string) error {
 	mp := markerPath(name)
 	if dryRun {
-		// NetnsName restricts name to ^[a-z][a-z0-9]*$ — no shell
-		// metacharacters — so inlining it is safe; the path is double-
-		// quoted defensively in case the constant ever grows spaces.
-		_, err := fmt.Fprintf(env.Stdout,
-			"test -f \"%s\" || { echo 'npte: %s: not managed by npte' >&2; exit 2; }\n",
-			mp, name)
+		_, err := fmt.Fprintf(env.Stdout, "test -f %s || { echo %s >&2; exit 2; }\n",
+			shellquote.Join(mp),
+			shellquote.Join(fmt.Sprintf("npte: %s: not managed by npte", name)))
 		return err
 	}
 	info, err := env.Stat(mp)

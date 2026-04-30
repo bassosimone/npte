@@ -267,6 +267,11 @@ the primitives remain the primary interface — reach for `netem
 apply` directly whenever the profile table does not cover your
 need.
 
+`--dry-run` output is a preview, not a deploy script: it sets no
+shell options of its own. Paste it as-is, or wrap it (e.g. with
+`set -euxo pipefail`) if you want fail-fast semantics. Same applies
+to every other `--dry-run` in this tutorial.
+
 The shortcut is hardcoded for the `client/router/server` star and
 its fixed interface names. Asymmetric topologies, different names,
 or shapes outside what the two profiles express all still live in

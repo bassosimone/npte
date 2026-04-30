@@ -25,8 +25,8 @@ func TestConnect(t *testing.T) {
 		wantExit: -1,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
-			`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
-			`test -f "/run/npte/netns/router" || { echo 'npte: router: not managed by npte' >&2; exit 2; }`,
+			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+			`test -f /run/npte/netns/router || { echo 'npte: router: not managed by npte' >&2; exit 2; }`,
 			"ip link add if-router type veth peer name if-client",
 			"ip link set if-router netns client",
 			"ip link set if-client netns router",
@@ -79,8 +79,8 @@ func TestConnect_dryRunSkipsStat(t *testing.T) {
 	assert.Equal(t, 0, statCalls, "dry-run must not consult Stat")
 	testenv.AssertLines(t, s.Stdout.String(), []any{
 		"install -d -m 0755 /run/npte/netns",
-		`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
-		`test -f "/run/npte/netns/router" || { echo 'npte: router: not managed by npte' >&2; exit 2; }`,
+		`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+		`test -f /run/npte/netns/router || { echo 'npte: router: not managed by npte' >&2; exit 2; }`,
 		"ip link add if-router type veth peer name if-client",
 		"ip link set if-router netns client",
 		"ip link set if-client netns router",
