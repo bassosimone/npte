@@ -9,7 +9,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/bassosimone/npte/internal/exitx"
+	"github.com/bassosimone/deferexit"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/rogpeppe/go-internal/lockedfile"
 )
@@ -42,7 +42,7 @@ type Environ struct {
 func NewEnvironOS() *Environ {
 	return &Environ{
 		Args:        os.Args,
-		Exit:        exitx.Panic,
+		Exit:        deferexit.Panic,
 		Stdin:       os.Stdin,
 		Stdout:      os.Stdout,
 		Stderr:      os.Stderr,
@@ -66,7 +66,7 @@ func NewEnvironOS() *Environ {
 		LogFatalOnError0: func(err error) {
 			if err != nil {
 				log.Print(err)
-				exitx.Panic(1)
+				deferexit.Panic(1)
 			}
 		},
 	}

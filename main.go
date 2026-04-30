@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime/debug"
 
+	"github.com/bassosimone/deferexit"
 	"github.com/bassosimone/npte/internal/cli/container"
 	"github.com/bassosimone/npte/internal/cli/doctor"
 	"github.com/bassosimone/npte/internal/cli/gateway"
@@ -15,7 +16,6 @@ import (
 	"github.com/bassosimone/npte/internal/cli/star"
 	"github.com/bassosimone/npte/internal/cli/sudoers"
 	"github.com/bassosimone/npte/internal/cli/tutorial"
-	"github.com/bassosimone/npte/internal/exitx"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/vclip"
 	"github.com/bassosimone/vflag"
@@ -32,11 +32,11 @@ func init() {
 }
 
 func main() {
-	// The default testable.Env routes exits through exitx as panics;
+	// The default testable.Env routes exits through deferexit as panics;
 	// recover here turns them back into a real os.Exit after deferred
-	// cleanup. See the [exitx] package doc for why we do not instead
-	// write `os.Exit(exitx.Run(realMain))`.
-	defer exitx.Recover(os.Exit)
+	// cleanup. See the [deferexit] package doc for why we do not instead
+	// write `os.Exit(deferexit.Run(realMain))`.
+	defer deferexit.Recover(os.Exit)
 	realMain()
 }
 

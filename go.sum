@@ -12,6 +12,8 @@ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuP
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/bassosimone/closepool v0.0.0-20260426203526-929def08d3da h1:SC1LAjvWWLyJBjtTaAAu1uhwUxOXekR/tNBzadCKrlU=
 github.com/bassosimone/closepool v0.0.0-20260426203526-929def08d3da/go.mod h1:/pEFe9OK8zhUCHsBzlx7xbjK8Cr1buT+nh2i9CWPJBU=
+github.com/bassosimone/deferexit v0.0.0-20260430074002-1397452dfab1 h1:YhQhLDlNCvhLHVZu7Fg5cKyILfha30z+Uw+Fsfi+VCQ=
+github.com/bassosimone/deferexit v0.0.0-20260430074002-1397452dfab1/go.mod h1:7iQMp0iTy0RYH1A+8daroFGoqe4vylEnFG3pHAEjowo=
 github.com/bassosimone/flagparser v0.0.0-20260426212133-dbf8a8d57c81 h1:+bNCaZuXOFq3gpQLoOmzeoiPJEnhEftaTSqWcrFxNBg=
 github.com/bassosimone/flagparser v0.0.0-20260426212133-dbf8a8d57c81/go.mod h1:JTI528eeYh298ifvp2OY6rsPvLgfL2kL52RvF3IJeIk=
 github.com/bassosimone/flagscanner v0.0.0-20260426205602-a02f7a8e1306 h1:dAHiSWR4/QMVcQ3Q6V6Xv+y4F4mxvBuVUlLmGsG0rgY=

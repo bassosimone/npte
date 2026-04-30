@@ -5,7 +5,7 @@ package main
 import (
 	"testing"
 
-	"github.com/bassosimone/npte/internal/exitx"
+	"github.com/bassosimone/deferexit"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/testenv"
 	"github.com/stretchr/testify/assert"
@@ -23,13 +23,13 @@ func Test_main(t *testing.T) {
 
 // runRealMain wires up testenv, sets env.Args and an exiting env.Exit
 // (the testenv stub only records the code and returns, but vclip expects
-// Exit to terminate, so we use exitx.Panic which exitx.Run can catch),
+// Exit to terminate, so we use deferexit.Panic which deferexit.Run can catch),
 // then invokes realMain and returns the captured stubs and exit code.
 func runRealMain(t *testing.T, argv ...string) (*testenv.Stubs, int) {
 	stubs := testenv.Setup(t)
 	testable.Env.Args = append([]string{"npte"}, argv...)
-	testable.Env.Exit = exitx.Panic
-	return stubs, exitx.Run(realMain)
+	testable.Env.Exit = deferexit.Panic
+	return stubs, deferexit.Run(realMain)
 }
 
 // Test that ensures an unknown command causes exit(2).

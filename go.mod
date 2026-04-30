@@ -4,6 +4,7 @@ go 1.25.7
 
 require (
 	github.com/bassosimone/closepool v0.0.0-20260426203526-929def08d3da
+	github.com/bassosimone/deferexit v0.0.0-20260430074002-1397452dfab1
 	github.com/bassosimone/runtimex v0.0.0-20260426205938-f859235d82e0
 	github.com/bassosimone/textwrap v0.0.0-20260426210759-497ff9a64d39
 	github.com/bassosimone/vclip v0.0.0-20260430054722-bd03761ef724
