@@ -24,8 +24,8 @@ github.com/bassosimone/runtimex v0.0.0-20260426205938-f859235d82e0 h1:wyPaBOiRso
 github.com/bassosimone/runtimex v0.0.0-20260426205938-f859235d82e0/go.mod h1:GDr46yuJzuDkzOMI1/9Voo3s7VmYBU/6pkuaI5FR7gE=
 github.com/bassosimone/textwrap v0.0.0-20260426210759-497ff9a64d39 h1:8kGf0qaGJhRe66rpwnndptI4wV3/tUIEKgjQYhlhN28=
 github.com/bassosimone/textwrap v0.0.0-20260426210759-497ff9a64d39/go.mod h1:SroxjmxXkIVaeta+FgkXfDe0NJQ8of3HOTevtTvLsKA=
-github.com/bassosimone/vclip v0.0.0-20260426225308-5c636546ddee h1:Rf1VIZ8s7UXMPoLV7l3WggUR1kycx7Fuc/7D2WblZP0=
-github.com/bassosimone/vclip v0.0.0-20260426225308-5c636546ddee/go.mod h1:Rlrsm4Ylwhk7/uQJw5p6yxaPsxt0aW7mE+mWYue+i0g=
+github.com/bassosimone/vclip v0.0.0-20260430054722-bd03761ef724 h1:HldFJZNSLoKDog9TkNGB0tJzBvoYIkppLSsfOqDLclI=
+github.com/bassosimone/vclip v0.0.0-20260430054722-bd03761ef724/go.mod h1:Rlrsm4Ylwhk7/uQJw5p6yxaPsxt0aW7mE+mWYue+i0g=
 github.com/bassosimone/vflag v0.0.0-20260426222617-67f3423bcf90 h1:C4NMjYWQUZEEWuxGhN5x432azRcEzsT5ztlvg8TZ3WI=
 github.com/bassosimone/vflag v0.0.0-20260426222617-67f3423bcf90/go.mod h1:ymv1CeQ403dWjzBmxlCmhN6FGFY3py5BBQ9MVUnC40Q=
 github.com/charmbracelet/colorprofile v0.4.3 h1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex9t5KX76i20Q=

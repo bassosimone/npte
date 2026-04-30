@@ -32,7 +32,15 @@ func init() {
 }
 
 func main() {
+	// The default testable.Env routes exits through exitx as panics;
+	// recover here turns them back into a real os.Exit after deferred
+	// cleanup. See the [exitx] package doc for why we do not instead
+	// write `os.Exit(exitx.Run(realMain))`.
 	defer exitx.Recover(os.Exit)
+	realMain()
+}
+
+func realMain() {
 	env := testable.Env
 
 	disp := vclip.NewDispatcherCommand("npte", vflag.ExitOnError)
@@ -62,5 +70,7 @@ func main() {
 	disp.AddCommand("netem", vclip.CommandFunc(netem.Main), "Apply or clear traffic shaping.")
 	disp.AddCommand("sudoers", vclip.CommandFunc(sudoers.Main), "Print a sudoers snippet for the invoking user.")
 
-	vclip.Main(context.Background(), disp, os.Args[1:])
+	root := vclip.NewRootCommand(disp)
+	root.LogFatalOnError0 = env.LogFatalOnError0
+	root.Main(context.Background(), env.Args[1:])
 }

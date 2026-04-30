@@ -61,6 +61,7 @@ func Setup(t *testing.T) *Stubs {
 	orig := testable.Env
 	t.Cleanup(func() { testable.Env = orig })
 	testable.Env = &testable.Environ{
+		Args:        os.Args,
 		Exit:        func(code int) { s.ExitCode = code },
 		Stdin:       strings.NewReader(""),
 		Stdout:      s.Stdout,

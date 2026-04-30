@@ -6,7 +6,7 @@ require (
 	github.com/bassosimone/closepool v0.0.0-20260426203526-929def08d3da
 	github.com/bassosimone/runtimex v0.0.0-20260426205938-f859235d82e0
 	github.com/bassosimone/textwrap v0.0.0-20260426210759-497ff9a64d39
-	github.com/bassosimone/vclip v0.0.0-20260426225308-5c636546ddee
+	github.com/bassosimone/vclip v0.0.0-20260430054722-bd03761ef724
 	github.com/bassosimone/vflag v0.0.0-20260426222617-67f3423bcf90
 	github.com/charmbracelet/glamour v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834

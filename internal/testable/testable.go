@@ -17,6 +17,7 @@ import (
 // Environ abstracts away side effects (filesystem, execution, locking, exit)
 // so that commands can be tested without root, namespaces, or real I/O.
 type Environ struct {
+	Args             []string
 	Exit             func(code int)
 	Stdin            io.Reader
 	Stdout           io.Writer
@@ -40,7 +41,8 @@ type Environ struct {
 // NewEnvironOS returns an [*Environ] wired to real OS operations.
 func NewEnvironOS() *Environ {
 	return &Environ{
-		Exit:        exitx.Do,
+		Args:        os.Args,
+		Exit:        exitx.Panic,
 		Stdin:       os.Stdin,
 		Stdout:      os.Stdout,
 		Stderr:      os.Stderr,
@@ -64,7 +66,7 @@ func NewEnvironOS() *Environ {
 		LogFatalOnError0: func(err error) {
 			if err != nil {
 				log.Print(err)
-				exitx.Do(1)
+				exitx.Panic(1)
 			}
 		},
 	}
