@@ -74,7 +74,7 @@ func showMain(ctx context.Context, args []string) error {
 	unlock := registry.MustLock(ctx, env, false)
 	defer unlock()
 
-	if err := registry.RequireManaged(env, ns); err != nil {
+	if err := registry.RequireManaged(env, false, ns); err != nil {
 		logx.Error("npte netns show: %s", err)
 		env.Exit(2)
 		return nil

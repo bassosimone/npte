@@ -102,54 +102,82 @@ func TestMustUnregister(t *testing.T) {
 }
 
 func TestRequireManaged(t *testing.T) {
-	tests := []struct {
-		name      string
-		stat      func(string) (os.FileInfo, error)
-		wantErr   string // substring; "" means no error
-		wantIsErr error  // errors.Is target; nil means none
-	}{{
-		name: "regular file: managed",
-		stat: func(string) (os.FileInfo, error) {
-			return fakeStat{regular: true}, nil
-		},
-		wantErr: "",
-	}, {
-		name: "missing marker: ErrNotManaged",
-		stat: func(string) (os.FileInfo, error) {
-			return nil, os.ErrNotExist
-		},
-		wantErr:   "client",
-		wantIsErr: ErrNotManaged,
-	}, {
-		name: "directory marker: rejects",
-		stat: func(string) (os.FileInfo, error) {
-			return fakeStat{regular: false}, nil
-		},
-		wantErr: "marker is not a regular file",
-	}, {
-		name: "other Stat error: wrapped",
-		stat: func(string) (os.FileInfo, error) {
-			return nil, errors.New("permission denied")
-		},
-		wantErr: "registry: permission denied",
-	}}
+	t.Run("live mode", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			stat      func(string) (os.FileInfo, error)
+			wantErr   string // substring; "" means no error
+			wantIsErr error  // errors.Is target; nil means none
+		}{{
+			name: "regular file: managed",
+			stat: func(string) (os.FileInfo, error) {
+				return fakeStat{regular: true}, nil
+			},
+			wantErr: "",
+		}, {
+			name: "missing marker: ErrNotManaged",
+			stat: func(string) (os.FileInfo, error) {
+				return nil, os.ErrNotExist
+			},
+			wantErr:   "client",
+			wantIsErr: ErrNotManaged,
+		}, {
+			name: "directory marker: rejects",
+			stat: func(string) (os.FileInfo, error) {
+				return fakeStat{regular: false}, nil
+			},
+			wantErr: "marker is not a regular file",
+		}, {
+			name: "other Stat error: wrapped",
+			stat: func(string) (os.FileInfo, error) {
+				return nil, errors.New("permission denied")
+			},
+			wantErr: "registry: permission denied",
+		}}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			testenv.Setup(t)
-			testable.Env.Stat = tc.stat
-			err := RequireManaged(testable.Env, "client")
-			if tc.wantErr == "" {
-				assert.NoError(t, err)
-				return
-			}
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), tc.wantErr)
-			if tc.wantIsErr != nil {
-				assert.ErrorIs(t, err, tc.wantIsErr)
-			}
-		})
-	}
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				s := testenv.Setup(t)
+				testable.Env.Stat = tc.stat
+				err := RequireManaged(testable.Env, false, "client")
+				assert.Empty(t, s.Stdout.String(), "live mode must not print to stdout")
+				if tc.wantErr == "" {
+					assert.NoError(t, err)
+					return
+				}
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.wantErr)
+				if tc.wantIsErr != nil {
+					assert.ErrorIs(t, err, tc.wantIsErr)
+				}
+			})
+		}
+	})
+
+	// Dry-run mode emits a paste-into-shell-faithful guard regardless of
+	// what the filesystem actually says. The point of the dry-run branch
+	// is precisely to not consult Stat — a dry-run after a dry-run
+	// `netns create` finds no real marker, and the live behaviour would
+	// abort the rest of the rendered script. We assert that the guard
+	// is emitted unchanged in three Stat scenarios that the live branch
+	// would treat differently.
+	t.Run("dry-run mode emits guard regardless of Stat", func(t *testing.T) {
+		stats := map[string]func(string) (os.FileInfo, error){
+			"missing": func(string) (os.FileInfo, error) { return nil, os.ErrNotExist },
+			"regular": func(string) (os.FileInfo, error) { return fakeStat{regular: true}, nil },
+			"dir":     func(string) (os.FileInfo, error) { return fakeStat{regular: false}, nil },
+		}
+		want := `test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`
+		for label, stat := range stats {
+			t.Run(label, func(t *testing.T) {
+				s := testenv.Setup(t)
+				testable.Env.Stat = stat
+				err := RequireManaged(testable.Env, true, "client")
+				require.NoError(t, err)
+				testenv.AssertLines(t, s.Stdout.String(), []any{want})
+			})
+		}
+	})
 }
 
 func TestList(t *testing.T) {

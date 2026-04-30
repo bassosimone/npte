@@ -73,12 +73,12 @@ func connectMain(ctx context.Context, args []string) error {
 	unlock := registry.MustLock(ctx, env, dryRun)
 	defer unlock()
 
-	if err := registry.RequireManaged(env, left); err != nil {
+	if err := registry.RequireManaged(env, dryRun, left); err != nil {
 		logx.Error("npte netns connect: %s", err)
 		env.Exit(2)
 		return nil
 	}
-	if err := registry.RequireManaged(env, right); err != nil {
+	if err := registry.RequireManaged(env, dryRun, right); err != nil {
 		logx.Error("npte netns connect: %s", err)
 		env.Exit(2)
 		return nil

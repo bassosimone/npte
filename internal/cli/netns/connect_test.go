@@ -4,8 +4,10 @@ package netns
 
 import (
 	"context"
+	"os"
 	"testing"
 
+	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/testenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,6 +25,8 @@ func TestConnect(t *testing.T) {
 		wantExit: -1,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
+			`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+			`test -f "/run/npte/netns/router" || { echo 'npte: router: not managed by npte' >&2; exit 2; }`,
 			"ip link add if-router type veth peer name if-client",
 			"ip link set if-router netns client",
 			"ip link set if-client netns router",
@@ -51,4 +55,36 @@ func TestConnect(t *testing.T) {
 			testenv.AssertLines(t, s.Stdout.String(), tc.wantOut)
 		})
 	}
+}
+
+// TestConnect_dryRunSkipsStat is a regression test for a bug where dry-run
+// composition (e.g. `npte star create --dry-run`) aborted at the first
+// `netns connect` because RequireManaged Stat'd the marker — which never
+// existed, since the previous `netns create -n` only printed its install
+// command. The fix moved the dry-run branch above the Stat call and made
+// it emit a shell guard instead. This test pins that behaviour: a dry-run
+// connect with Stat → ErrNotExist must succeed and the guard must be in
+// the rendered script.
+func TestConnect_dryRunSkipsStat(t *testing.T) {
+	s := testenv.Setup(t)
+	statCalls := 0
+	testable.Env.Stat = func(string) (os.FileInfo, error) {
+		statCalls++
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, connectMain(context.Background(), []string{"--dry-run", "client", "router"}))
+
+	assert.Equal(t, -1, s.ExitCode, "dry-run must not exit even with no marker on disk")
+	assert.Equal(t, 0, statCalls, "dry-run must not consult Stat")
+	testenv.AssertLines(t, s.Stdout.String(), []any{
+		"install -d -m 0755 /run/npte/netns",
+		`test -f "/run/npte/netns/client" || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+		`test -f "/run/npte/netns/router" || { echo 'npte: router: not managed by npte' >&2; exit 2; }`,
+		"ip link add if-router type veth peer name if-client",
+		"ip link set if-router netns client",
+		"ip link set if-client netns router",
+		"ip netns exec client ip link set if-router up",
+		"ip netns exec router ip link set if-client up",
+	})
 }

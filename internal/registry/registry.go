@@ -107,16 +107,37 @@ func MustUnregister(ctx context.Context, dryRun bool, name string) {
 	testable.Env.LogFatalOnError0(Unregister(ctx, dryRun, name))
 }
 
-// RequireManaged returns nil if a regular-file marker exists for
-// name, [ErrNotManaged] (wrapped with the name) if no marker is
-// present, or another error if the marker path resolves to something
-// other than a regular file (which should never arise in practice and
-// is worth surfacing rather than silently treating as "not managed").
+// RequireManaged enforces the ownership predicate for name.
+//
+// In live mode it returns nil if a regular-file marker exists for name,
+// [ErrNotManaged] (wrapped with the name) if no marker is present, or
+// another error if the marker path resolves to something other than a
+// regular file (which should never arise in practice and is worth
+// surfacing rather than silently treating as "not managed").
+//
+// In dry-run mode it does NOT Stat the filesystem: a dry-run after a
+// dry-run `netns create` would otherwise spuriously fail because no
+// real marker was written. Instead it emits a POSIX shell guard on
+// env.Stdout — `test -f "<marker>" || { echo ... >&2; exit 2; }` —
+// so the rendered script is paste-into-shell faithful: when run as one
+// piece it succeeds (the prior `netns create` lines write the marker),
+// and when run against a topology that does not exist it fails at the
+// same point a live invocation would.
 //
 // Callers MUST validate name (e.g. via [validate.NetnsName]) and hold
 // the global lock (see [Lock]) before calling.
-func RequireManaged(env *testable.Environ, name string) error {
-	info, err := env.Stat(markerPath(name))
+func RequireManaged(env *testable.Environ, dryRun bool, name string) error {
+	mp := markerPath(name)
+	if dryRun {
+		// NetnsName restricts name to ^[a-z][a-z0-9]*$ — no shell
+		// metacharacters — so inlining it is safe; the path is double-
+		// quoted defensively in case the constant ever grows spaces.
+		_, err := fmt.Fprintf(env.Stdout,
+			"test -f \"%s\" || { echo 'npte: %s: not managed by npte' >&2; exit 2; }\n",
+			mp, name)
+		return err
+	}
+	info, err := env.Stat(mp)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("%w: %s", ErrNotManaged, name)
@@ -124,7 +145,7 @@ func RequireManaged(env *testable.Environ, name string) error {
 		return fmt.Errorf("registry: %w", err)
 	}
 	if !info.Mode().IsRegular() {
-		return fmt.Errorf("registry: %s: marker is not a regular file", markerPath(name))
+		return fmt.Errorf("registry: %s: marker is not a regular file", mp)
 	}
 	return nil
 }

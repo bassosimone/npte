@@ -88,7 +88,7 @@ func addRouteMain(ctx context.Context, args []string) error {
 	unlock := registry.MustLock(ctx, env, dryRun)
 	defer unlock()
 
-	if err := registry.RequireManaged(env, ns); err != nil {
+	if err := registry.RequireManaged(env, dryRun, ns); err != nil {
 		logx.Error("npte netns add-route: %s", err)
 		env.Exit(2)
 		return nil
