@@ -65,6 +65,16 @@ namespace but with the invoking user's identity, not root's.
 The grant lets you cross the namespace boundary; it does not let
 you escalate while crossing it.
 
+For workloads you want to confine further — third-party binaries,
+freshly-built prototypes, or commands driven by an autonomous
+agent — `npte netns run --sandbox` adds a bubblewrap layer on top
+of the privilege drop: the host filesystem becomes read-only, the
+current directory the only writable path, and `/tmp` a fresh
+tmpfs per invocation. This is opt-in defense-in-depth — the bound
+above already prevents privilege escalation through the NOPASSWD
+grant, while `--sandbox` constrains what the dropped-to user can
+damage. The sandbox chapter has the full policy.
+
 `gateway` and `container` are kept out of the allowlist precisely
 because neither bound applies to them: `gateway` installs rules
 in the host namespace (the registry cannot fence it in), and

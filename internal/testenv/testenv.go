@@ -74,6 +74,7 @@ func Setup(t *testing.T) *Stubs {
 			return ""
 		},
 		Geteuid:   func() int { return 0 },
+		Getwd:     func() (string, error) { return "/home/sbs/src/github.com/bassosimone/npte", nil },
 		MkdirAll:  func(string, os.FileMode) error { return nil },
 		ReadFile:  func(string) ([]byte, error) { return nil, nil },
 		WriteFile: func(string, []byte, os.FileMode) error { return nil },

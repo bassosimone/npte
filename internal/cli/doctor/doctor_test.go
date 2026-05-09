@@ -31,6 +31,7 @@ func TestMain_Dependencies(t *testing.T) {
 		"runuser":          "/usr/sbin/runuser",
 		"systemd-nspawn":   "/usr/bin/systemd-nspawn",
 		"debootstrap":      "/usr/sbin/debootstrap",
+		"bwrap":            "/usr/bin/bwrap",
 	}
 
 	tests := []struct {
@@ -61,6 +62,7 @@ func TestMain_Dependencies(t *testing.T) {
 			"runuser":          "/usr/sbin/runuser",
 			"systemd-nspawn":   "/usr/bin/systemd-nspawn",
 			"debootstrap":      "/usr/sbin/debootstrap",
+			"bwrap":            "/usr/bin/bwrap",
 		},
 		wantExit:     1,
 		wantContains: []string{"MISSING (iproute2)", "apt install iproute2\n"},
@@ -70,7 +72,7 @@ func TestMain_Dependencies(t *testing.T) {
 		wantExit: 1,
 		wantContains: []string{
 			"MISSING",
-			"apt install iproute2 iptables grep procps kmod coreutils util-linux systemd-container debootstrap",
+			"apt install iproute2 iptables grep procps kmod coreutils util-linux systemd-container debootstrap bubblewrap",
 		},
 	}}
 

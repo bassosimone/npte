@@ -39,6 +39,7 @@ var All = []Dependency{
 	{"runuser", "util-linux"},
 	{"systemd-nspawn", "systemd-container"},
 	{"debootstrap", "debootstrap"},
+	{"bwrap", "bubblewrap"},
 }
 
 // allowed is the allowlist derived from [All].

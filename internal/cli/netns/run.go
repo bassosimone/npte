@@ -62,8 +62,11 @@ import (
 func runMain(ctx context.Context, args []string) error {
 	env := testable.Env
 
-	var envFlags []string
-	var dryRun bool
+	var (
+		envFlags []string
+		dryRun   bool
+		sandbox  bool
+	)
 
 	fset := vflag.NewFlagSet("npte netns run", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
@@ -80,6 +83,18 @@ func runMain(ctx context.Context, args []string) error {
 			"do to the invoking user's account. Use -e/--env to inject "+
 			"KEY=VALUE pairs; the inner process otherwise starts with "+
 			"runuser(1)'s default environment for the target user.",
+		"With --sandbox, the inner command is additionally wrapped in "+
+			"bubblewrap: the host filesystem is mounted read-only at /, "+
+			"the current working directory is rebound read-write, /tmp is "+
+			"a fresh tmpfs, and /proc and /dev are freshly mounted. The "+
+			"PID, IPC, and UTS namespaces are unshared from the host; the "+
+			"network namespace is explicitly shared so the command sees "+
+			"the netns entered by `ip netns exec`. Caveats: --sandbox is "+
+			"an integrity boundary, not a confidentiality one — anything "+
+			"$SUDO_USER could read on the host stays readable inside the "+
+			"sandbox; setuid elevation is disabled (PR_SET_NO_NEW_PRIVS); "+
+			"and writes outside the current directory — including caches "+
+			"and configs under $HOME — will see EROFS.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run. The script sets no shell "+
@@ -94,6 +109,7 @@ func runMain(ctx context.Context, args []string) error {
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell script instead of executing it.")
 	fset.StringSliceVar(&envFlags, 'e', "env", "Set environment variable `KEY=VALUE` (repeatable).")
+	fset.BoolVar(&sandbox, 0, "sandbox", "Wrap the command in a bubblewrap sandbox with the host filesystem read-only except the current working directory.")
 	fset.MinPositionalArgs = 2
 	fset.MaxPositionalArgs = math.MaxInt
 	fset.DisablePermute = true
@@ -183,14 +199,40 @@ func runMain(ctx context.Context, args []string) error {
 		return nil
 	}
 
-	// Assemble: ip netns exec <ns> runuser -u <user> -- env K=V... <cmd> [args...]
-	argv := []string{"netns", "exec", ns, "runuser", "-u", userFlag, "--", "env"}
+	// Start assembling: ip netns exec <ns> runuser -u <user> --
+	argv := []string{"netns", "exec", ns, "runuser", "-u", userFlag, "--"}
+
+	// Optionally chain with bwrap to sandbox the command
+	if sandbox {
+		// Load the working directory. No validator needed since the
+		// working directory is obtained via a syscall.
+		workDir, err := env.Getwd()
+		env.LogFatalOnError0(err)
+
+		// Assemble bwrap command to create the actual sandbox
+		argv = append(argv, "bwrap")
+		argv = append(argv, "--ro-bind", "/", "/")
+		argv = append(argv, "--tmpfs", "/tmp")
+		argv = append(argv, "--proc", "/proc")
+		argv = append(argv, "--dev", "/dev")
+		argv = append(argv, "--bind", workDir, workDir)
+		argv = append(argv, "--chdir", workDir)
+		argv = append(argv, "--share-net")
+		argv = append(argv, "--unshare-pid", "--unshare-ipc", "--unshare-uts")
+		argv = append(argv, "--die-with-parent")
+		argv = append(argv, "--")
+	}
+
+	// Add zero or more direct env assignments
+	argv = append(argv, "env")
 	argv = append(argv, envFlags...)
+
+	// Add the command to execute
 	argv = append(argv, fset.Args()[1:]...)
-	logx.Details("npte: enter namespace %q as user %q", ns, userFlag)
 
 	// Release the registry lock before exec; see the comment above.
 	unlock()
+	logx.Details("npte: enter namespace %q as user %q", ns, userFlag)
 	subprocess.MustRun(ctx, dryRun, "ip", argv...)
 	return nil
 }

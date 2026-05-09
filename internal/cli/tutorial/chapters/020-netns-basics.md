@@ -28,7 +28,10 @@ Run something inside `alice`:
 
 This works: loopback is up. The command runs as your normal user
 (inherited from `$SUDO_USER`), not as `root` — useful when the point is
-to test unprivileged software under realistic conditions.
+to test unprivileged software under realistic conditions. For an extra
+layer of confinement on top of that drop (read-only host filesystem,
+writable current directory only, fresh `/tmp`), pass `--sandbox`; the
+sandbox chapter covers the policy and its tradeoffs in detail.
 
 Now try the outside world:
 
