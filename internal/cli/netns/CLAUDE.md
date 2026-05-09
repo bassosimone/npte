@@ -72,8 +72,17 @@ the ones npte itself created.
    **after** the kernel ops succeed. `netns destroy` MUST end with
    `registry.MustUnregister(ctx, dryRun, ns)` **after**
    `ip netns del` succeeds. Kernel op first, marker op second:
-   orphan markers are recoverable (a future `npte netns gc`); orphan
-   namespaces are not.
+   orphan markers are recoverable by the operator (one-liner:
+   `sudo rm /run/npte/netns/<name>`); orphan namespaces are not.
+   We deliberately do not ship a recovery verb: a `gc` or a
+   destroy-tolerates-missing shape would have to disambiguate
+   "stale orphan marker" from "stale marker plus a same-named
+   foreign netns created out-of-band," and there is no metadata
+   on the marker that links it to a specific kernel-side identity,
+   so any automated reconciler risks silently touching a foreign
+   namespace. The crash window (between two consecutive
+   subprocesses) is narrow enough in practice that operator-hands
+   recovery is the right level of investment.
 
 4. Verbs that take more than one named netns (e.g. `connect`) MUST
    call `RequireManaged` on **every** one of them. Generalizes to

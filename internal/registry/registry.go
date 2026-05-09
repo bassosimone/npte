@@ -14,6 +14,23 @@
 // kernel or marker operation. The lock serializes all npte
 // invocations so that "kernel op then marker op" is observable as
 // atomic to other npte processes.
+//
+// Crash recovery: the lock is dropped when the process dies, but
+// markers persist on tmpfs across the lifetime of the running
+// system (reboot wipes both /run and all kernel netns, so a fresh
+// boot is always a clean slate). If a verb is killed mid-sequence
+// without a reboot — SIGKILL from OOM or `kill -9`, an unrecovered
+// panic — the registry can end up with an orphan marker (destroy
+// crashed before unlink) or an orphan kernel netns (create crashed
+// before register). Recovery is by the operator's hands: orphan
+// markers clear with `sudo rm /run/npte/netns/<name>`, orphan
+// kernel netns clear with `sudo ip netns del <name>`. We
+// deliberately do not ship a `gc` verb: a marker carries no
+// metadata linking it to a specific kernel-side identity, so an
+// automated reconciler cannot distinguish a stale orphan marker
+// from a stale marker plus a same-named foreign netns created
+// out-of-band, and would risk silently bringing the privileged
+// surface to bear on a namespace npte did not create.
 package registry
 
 import (
