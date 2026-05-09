@@ -51,6 +51,13 @@ func TestCreate(t *testing.T) {
 		name:     "rejects ipv6 subnet",
 		args:     []string{"--dry-run", "router", "fc00::/64", "eth0"},
 		wantExit: 2,
+	}, {
+		// extIface flows through validate.IfaceName before any kernel
+		// command is emitted; a value with shell metacharacters must be
+		// rejected with exit 2.
+		name:     "rejects bad ext-iface",
+		args:     []string{"--dry-run", "router", "10.99.0.0/30", "bad iface"},
+		wantExit: 2,
 	}}
 
 	for _, tc := range tests {
