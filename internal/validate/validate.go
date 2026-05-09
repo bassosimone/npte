@@ -65,12 +65,8 @@ func IfaceName(name string) error {
 
 // IPAddr reports whether s is a valid IPv4 or IPv6 address (without a prefix).
 func IPAddr(s string) error {
-	addr, err := netip.ParseAddr(s)
-	if err != nil {
+	if _, err := netip.ParseAddr(s); err != nil {
 		return fmt.Errorf("ip address %q: %w", s, err)
-	}
-	if !addr.IsValid() {
-		return fmt.Errorf("ip address %q is not valid", s)
 	}
 	return nil
 }
@@ -142,12 +138,8 @@ func DebootstrapSuite(s string) error {
 // may be set (e.g. "10.0.1.1/24" is accepted) since `ip addr add` accepts
 // the same form.
 func CIDR(s string) error {
-	prefix, err := netip.ParsePrefix(s)
-	if err != nil {
+	if _, err := netip.ParsePrefix(s); err != nil {
 		return fmt.Errorf("cidr %q: %w", s, err)
-	}
-	if !prefix.IsValid() {
-		return fmt.Errorf("cidr %q is not valid", s)
 	}
 	return nil
 }

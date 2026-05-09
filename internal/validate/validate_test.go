@@ -174,6 +174,39 @@ func TestEnvVarName(t *testing.T) {
 	}
 }
 
+func TestDebootstrapSuite(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr string
+	}{
+		{"empty", "", "empty"},
+		{"noble", "noble", ""},
+		{"bookworm", "bookworm", ""},
+		{"trixie", "trixie", ""},
+		{"alnum", "buster10", ""},
+		{"leading digit", "1noble", "must match"},
+		{"uppercase", "Noble", "must match"},
+		{"hyphen", "noble-updates", "must match"},
+		{"underscore", "noble_x", "must match"},
+		{"shell metachar", "noble;rm", "must match"},
+		{"slash", "noble/x", "must match"},
+		{"space", "no ble", "must match"},
+		{"leading hyphen", "-noble", "must match"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := DebootstrapSuite(tc.input)
+			if tc.wantErr == "" {
+				assert.NoError(t, err)
+				return
+			}
+			assert.ErrorContains(t, err, tc.wantErr)
+		})
+	}
+}
+
 func TestCIDR(t *testing.T) {
 	tests := []struct {
 		name    string
