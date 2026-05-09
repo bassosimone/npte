@@ -68,6 +68,19 @@ func createMain(ctx context.Context, args []string) error {
 	unlock := registry.MustLock(ctx, env, dryRun)
 	defer unlock()
 
+	// Host-level side effect: `modprobe` loads a module into the host
+	// kernel; modules are not namespaced, so this crosses the netns
+	// boundary on purpose. tcp_bbr has to be present in the host kernel
+	// before a process inside the namespace can select it as a
+	// congestion-control algorithm.
+	//
+	// The argv is a hardcoded literal — `tcp_bbr`, never a caller-
+	// supplied byte — so no NOPASSWD caller can use this verb to coerce
+	// the host into loading an arbitrary module. This is the same shape
+	// of concern documented for tc's `sch_<kind>` autoload in
+	// `internal/validate/tc.go`, where the bound is enforced by an
+	// allowlist on the kind argument; here the bound is that the kind
+	// is not an argument at all.
 	logx.Details("npte: load tcp_bbr kernel module")
 	subprocess.MustRun(ctx, dryRun, "modprobe", "tcp_bbr")
 
