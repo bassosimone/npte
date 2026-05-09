@@ -3,6 +3,8 @@
 package testenv
 
 import (
+	"errors"
+	"fmt"
 	"os/exec"
 	"regexp"
 	"testing"
@@ -11,6 +13,29 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// fakeTB satisfies [TB] without calling out to a real *testing.T, so
+// tests for the testenv helpers themselves can exercise the t.Errorf /
+// t.Fatalf branches without failing the parent test. Calls are recorded
+// verbatim; we deliberately do not abort on Fatalf — the only caller
+// that hits Fatalf in production code (AssertLines's default case) sits
+// at the tail of a switch inside a loop, and the surrounding test feeds
+// only one bad element.
+type fakeTB struct {
+	helperCalls int
+	cleanups    []func()
+	errorfMsgs  []string
+	fatalfMsgs  []string
+}
+
+func (f *fakeTB) Helper()              { f.helperCalls++ }
+func (f *fakeTB) Cleanup(fn func())    { f.cleanups = append(f.cleanups, fn) }
+func (f *fakeTB) Errorf(s string, a ...any) {
+	f.errorfMsgs = append(f.errorfMsgs, fmt.Sprintf(s, a...))
+}
+func (f *fakeTB) Fatalf(s string, a ...any) {
+	f.fatalfMsgs = append(f.fatalfMsgs, fmt.Sprintf(s, a...))
+}
 
 func TestSetup_capturesExitAndStreams(t *testing.T) {
 	s := Setup(t)
@@ -99,14 +124,32 @@ func TestSetup_runCommandRecordsArgv(t *testing.T) {
 }
 
 // TestSetup_logFatalOnError0NilIsNoOp covers the nil-error fast path of
-// the LogFatalOnError0 stub. The non-nil branch calls t.Fatalf which
-// would fail the calling test by design, so it is deliberately not
-// exercised here — see [Setup] for why that asymmetry is intentional.
+// the LogFatalOnError0 stub.
 func TestSetup_logFatalOnError0NilIsNoOp(t *testing.T) {
 	Setup(t)
 	assert.NotPanics(t, func() {
 		testable.Env.LogFatalOnError0(nil)
 	})
+}
+
+// TestSetup_logFatalOnError0NonNilCallsFatalf covers the failure branch
+// of the LogFatalOnError0 stub by passing in a fakeTB and observing
+// that Fatalf is invoked with the wrapped error.
+func TestSetup_logFatalOnError0NonNilCallsFatalf(t *testing.T) {
+	orig := testable.Env
+	t.Cleanup(func() { testable.Env = orig })
+
+	fake := &fakeTB{}
+	Setup(fake)
+	testable.Env.LogFatalOnError0(errors.New("boom"))
+
+	require.Len(t, fake.fatalfMsgs, 1)
+	assert.Contains(t, fake.fatalfMsgs[0], "unexpected internal error")
+	assert.Contains(t, fake.fatalfMsgs[0], "boom")
+	assert.Empty(t, fake.errorfMsgs)
+	// Setup registers a Cleanup to restore testable.Env; the fake
+	// captures it but does not auto-run, so we restore manually above.
+	assert.Len(t, fake.cleanups, 1)
 }
 
 func TestAssertLines_literalMatch(t *testing.T) {
@@ -128,4 +171,32 @@ func TestAssertLines_noTrailingNewline(t *testing.T) {
 
 func TestAssertLines_emptyMatch(t *testing.T) {
 	AssertLines(t, "", nil)
+}
+
+// TestAssertLines_lineCountMismatch covers the early-return branch when
+// the number of want elements differs from the number of output lines.
+// Using a real *testing.T would propagate the failure to the parent, so
+// we drive AssertLines via a fakeTB and observe that exactly one Errorf
+// is recorded (from assert.Equal on the lengths) and Fatalf is not.
+func TestAssertLines_lineCountMismatch(t *testing.T) {
+	fake := &fakeTB{}
+	AssertLines(fake, "only-one-line\n", []any{"a", "b"})
+
+	require.Len(t, fake.errorfMsgs, 1)
+	assert.Contains(t, fake.errorfMsgs[0], "stdout line count differs")
+	assert.Empty(t, fake.fatalfMsgs)
+}
+
+// TestAssertLines_unsupportedWantType covers the default switch branch
+// that rejects a want element whose type is neither string nor
+// *regexp.Regexp. We feed exactly one bad element so that the loop
+// body is hit once and the recorded Fatalf naming is unambiguous.
+func TestAssertLines_unsupportedWantType(t *testing.T) {
+	fake := &fakeTB{}
+	AssertLines(fake, "anything\n", []any{42})
+
+	require.Len(t, fake.fatalfMsgs, 1)
+	assert.Contains(t, fake.fatalfMsgs[0], "unsupported want type")
+	assert.Contains(t, fake.fatalfMsgs[0], "int")
+	assert.Empty(t, fake.errorfMsgs)
 }

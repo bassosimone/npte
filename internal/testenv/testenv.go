@@ -22,13 +22,26 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/stretchr/testify/assert"
 )
+
+// TB is the subset of [testing.TB] used by [Setup] and [AssertLines].
+// We accept this narrower interface (rather than *testing.T directly) so
+// that unit tests for the testenv helpers themselves can pass in a stub
+// that records Errorf / Fatalf without failing the parent test —
+// *testing.T can't be faked from outside the testing package because of
+// its unexported private() marker, but the surface we actually need is
+// small and easy to satisfy.
+type TB interface {
+	Cleanup(func())
+	Helper()
+	Errorf(format string, args ...any)
+	Fatalf(format string, args ...any)
+}
 
 // SelfPath is the absolute path returned by the stubbed Executable; it is
 // also the cmd.Path / cmd.Args[0] of every captured RunCommand entry that
@@ -51,7 +64,7 @@ type Stubs struct {
 
 // Setup swaps testable.Env with a stubbed [*testable.Environ] for the
 // duration of t and returns the captures.
-func Setup(t *testing.T) *Stubs {
+func Setup(t TB) *Stubs {
 	t.Helper()
 	s := &Stubs{
 		Stdout:   &bytes.Buffer{},
@@ -114,7 +127,7 @@ func (regularFileInfo) Sys() any           { return nil }
 // entry trimmed, equals want element-wise. Each want element is either a
 // literal string (exact match) or a [*regexp.Regexp] (matched against the
 // corresponding output line). Used to assert dry-run output shape.
-func AssertLines(t *testing.T, got string, want []any) {
+func AssertLines(t TB, got string, want []any) {
 	t.Helper()
 	lines := strings.Split(got, "\n")
 	if n := len(lines); n > 0 && lines[n-1] == "" {
