@@ -83,6 +83,10 @@ func createMain(ctx context.Context, args []string) error {
 	subprocess.MustRun(ctx, dryRun, "ip", "netns", "exec", ns,
 		"sysctl", "-w", "net.ipv4.ip_forward=1")
 
+	// Workaround for https://github.com/uutils/coreutils/issues/11532
+	logx.Details("ensure /etc/netns/%s is clean (workaround for uutils/coreutils#11532)", ns)
+	subprocess.MustRun(ctx, dryRun, "rm", "-rf", "/etc/netns/"+ns)
+
 	logx.Details("npte: install resolv.conf at /etc/netns/%s/resolv.conf", ns)
 	subprocess.MustPipeTo(ctx, dryRun, []byte(resolvConf),
 		"install", "-D", "-m", "0644", "/dev/stdin",
