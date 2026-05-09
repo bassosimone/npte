@@ -64,6 +64,16 @@ func TestApply(t *testing.T) {
 			"install -d -m 0755 /run/npte/netns",
 			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 		},
+	}, {
+		// --cake-bandwidth value runs through validate.NetemRate; a malformed
+		// value must fail loud before any tc command is emitted.
+		name:     "rejects bad cake-bandwidth",
+		args:     []string{"--dry-run", "--delay", "10ms", "--child", "cake", "--cake-bandwidth", "garbage", "client", "if-router"},
+		wantExit: 2,
+		wantOut: []any{
+			"install -d -m 0755 /run/npte/netns",
+			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
+		},
 	}}
 
 	for _, tc := range tests {
@@ -96,4 +106,26 @@ func TestApply_dryRunSkipsLstat(t *testing.T) {
 		`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
 		"ip netns exec client tc qdisc add dev if-router root handle 1: netem delay 10ms",
 	})
+}
+
+// TestApply_liveRejectsUnmanaged pins the NOPASSWD audit invariant: in
+// live mode, apply refuses to install a qdisc on a namespace npte does
+// not own (no marker at /run/npte/netns/<ns>). Without this check the
+// privileged surface would extend to every netns on the host.
+func TestApply_liveRejectsUnmanaged(t *testing.T) {
+	s := testenv.Setup(t)
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, applyMain(context.Background(),
+		[]string{"--delay", "10ms", "client", "if-router"}))
+
+	assert.Equal(t, 2, s.ExitCode)
+	// No tc command must reach RunCommand once the marker check fails.
+	for _, argv := range s.Commands {
+		for _, a := range argv {
+			assert.NotEqual(t, "tc", a, "tc must not run when ns is unmanaged")
+		}
+	}
 }

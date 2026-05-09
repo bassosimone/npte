@@ -69,3 +69,22 @@ func TestDestroy_dryRunSkipsLstat(t *testing.T) {
 		"rm -f /run/npte/netns/client",
 	})
 }
+
+// TestDestroy_liveRejectsUnmanaged pins the NOPASSWD audit invariant:
+// in live mode, destroy refuses to delete a namespace npte does not own.
+func TestDestroy_liveRejectsUnmanaged(t *testing.T) {
+	s := testenv.Setup(t)
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, destroyMain(context.Background(), []string{"client"}))
+
+	assert.Equal(t, 2, s.ExitCode)
+	for _, argv := range s.Commands {
+		for _, a := range argv {
+			assert.NotEqual(t, "ip", a, "ip must not run when ns is unmanaged")
+			assert.NotEqual(t, "rm", a, "rm must not run when ns is unmanaged")
+		}
+	}
+}

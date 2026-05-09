@@ -73,3 +73,22 @@ func TestAssignAddr_dryRunSkipsLstat(t *testing.T) {
 		"ip netns exec client ip addr add 10.99.0.2/30 dev if-router",
 	})
 }
+
+// TestAssignAddr_liveRejectsUnmanaged pins the NOPASSWD audit invariant:
+// in live mode, assign-addr refuses to touch a namespace npte does not own.
+func TestAssignAddr_liveRejectsUnmanaged(t *testing.T) {
+	s := testenv.Setup(t)
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, assignAddrMain(context.Background(),
+		[]string{"client", "if-router", "10.99.0.2/30"}))
+
+	assert.Equal(t, 2, s.ExitCode)
+	for _, argv := range s.Commands {
+		for _, a := range argv {
+			assert.NotEqual(t, "ip", a, "ip must not run when ns is unmanaged")
+		}
+	}
+}

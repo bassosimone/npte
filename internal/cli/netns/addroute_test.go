@@ -86,3 +86,22 @@ func TestAddRoute_dryRunSkipsLstat(t *testing.T) {
 		"ip netns exec client ip route add default via 10.99.0.1",
 	})
 }
+
+// TestAddRoute_liveRejectsUnmanaged pins the NOPASSWD audit invariant:
+// in live mode, add-route refuses to touch a namespace npte does not own.
+func TestAddRoute_liveRejectsUnmanaged(t *testing.T) {
+	s := testenv.Setup(t)
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, addRouteMain(context.Background(),
+		[]string{"client", "default", "10.99.0.1"}))
+
+	assert.Equal(t, 2, s.ExitCode)
+	for _, argv := range s.Commands {
+		for _, a := range argv {
+			assert.NotEqual(t, "ip", a, "ip must not run when ns is unmanaged")
+		}
+	}
+}

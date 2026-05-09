@@ -69,3 +69,22 @@ func TestClear_dryRunSkipsLstat(t *testing.T) {
 		"ip netns exec client tc qdisc del dev if-router root || true",
 	})
 }
+
+// TestClear_liveRejectsUnmanaged pins the NOPASSWD audit invariant: in
+// live mode, clear refuses to touch a namespace npte does not own.
+func TestClear_liveRejectsUnmanaged(t *testing.T) {
+	s := testenv.Setup(t)
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, clearMain(context.Background(),
+		[]string{"client", "if-router"}))
+
+	assert.Equal(t, 2, s.ExitCode)
+	for _, argv := range s.Commands {
+		for _, a := range argv {
+			assert.NotEqual(t, "tc", a, "tc must not run when ns is unmanaged")
+		}
+	}
+}

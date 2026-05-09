@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/testenv"
@@ -88,3 +89,57 @@ func TestConnect_dryRunSkipsLstat(t *testing.T) {
 		"ip netns exec router ip link set if-client up",
 	})
 }
+
+// TestConnect_liveRejectsUnmanagedLeft pins the NOPASSWD audit invariant
+// for the left positional: in live mode, connect refuses to wire a veth
+// into a namespace npte does not own.
+func TestConnect_liveRejectsUnmanagedLeft(t *testing.T) {
+	s := testenv.Setup(t)
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, connectMain(context.Background(),
+		[]string{"client", "router"}))
+
+	assert.Equal(t, 2, s.ExitCode)
+	for _, argv := range s.Commands {
+		for _, a := range argv {
+			assert.NotEqual(t, "ip", a, "ip must not run when ns is unmanaged")
+		}
+	}
+}
+
+// TestConnect_liveRejectsUnmanagedRight pins the NOPASSWD audit invariant
+// for the right positional: even when left is managed, connect must
+// refuse if right is not.
+func TestConnect_liveRejectsUnmanagedRight(t *testing.T) {
+	s := testenv.Setup(t)
+	testable.Env.Lstat = func(name string) (os.FileInfo, error) {
+		// Accept the left marker, refuse the right one.
+		if name == "/run/npte/netns/client" {
+			return regularFileInfo("client"), nil
+		}
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, connectMain(context.Background(),
+		[]string{"client", "router"}))
+
+	assert.Equal(t, 2, s.ExitCode)
+	for _, argv := range s.Commands {
+		for _, a := range argv {
+			assert.NotEqual(t, "ip", a, "ip must not run when ns is unmanaged")
+		}
+	}
+}
+
+// regularFileInfo implements os.FileInfo for a fake regular file.
+type regularFileInfo string
+
+func (n regularFileInfo) Name() string       { return string(n) }
+func (regularFileInfo) Size() int64          { return 0 }
+func (regularFileInfo) Mode() os.FileMode    { return 0o644 }
+func (regularFileInfo) ModTime() time.Time   { return time.Time{} }
+func (regularFileInfo) IsDir() bool          { return false }
+func (regularFileInfo) Sys() any             { return nil }

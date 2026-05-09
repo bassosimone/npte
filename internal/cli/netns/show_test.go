@@ -4,8 +4,10 @@ package netns
 
 import (
 	"context"
+	"os"
 	"testing"
 
+	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/testenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,5 +57,27 @@ func TestShow(t *testing.T) {
 			assert.Equal(t, tc.wantExit, s.ExitCode)
 			testenv.AssertLines(t, s.Stdout.String(), tc.wantOut)
 		})
+	}
+}
+
+// TestShow_liveRejectsUnmanaged pins the NOPASSWD audit invariant: show
+// refuses to inspect a namespace npte does not own. Even though show only
+// runs read-only `ip`/`tc`/`ss` commands, the registry contract still
+// applies: the privileged surface must stay scoped to managed netns.
+func TestShow_liveRejectsUnmanaged(t *testing.T) {
+	s := testenv.Setup(t)
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, showMain(context.Background(), []string{"client"}))
+
+	assert.Equal(t, 2, s.ExitCode)
+	for _, argv := range s.Commands {
+		for _, a := range argv {
+			assert.NotEqual(t, "ip", a, "ip must not run when ns is unmanaged")
+			assert.NotEqual(t, "tc", a, "tc must not run when ns is unmanaged")
+			assert.NotEqual(t, "ss", a, "ss must not run when ns is unmanaged")
+		}
 	}
 }

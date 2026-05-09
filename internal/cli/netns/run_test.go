@@ -249,3 +249,24 @@ func TestRun_dryRunSkipsLstat(t *testing.T) {
 		"ip netns exec client runuser -u alice -- env ip addr",
 	})
 }
+
+// TestRun_liveRejectsUnmanaged pins the NOPASSWD audit invariant: in live
+// mode, run refuses to enter a namespace npte does not own.
+func TestRun_liveRejectsUnmanaged(t *testing.T) {
+	s := testenv.Setup(t)
+	s.SudoUser = "alice"
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		return nil, os.ErrNotExist
+	}
+
+	require.NoError(t, runMain(context.Background(),
+		[]string{"client", "ip", "addr"}))
+
+	assert.Equal(t, 2, s.ExitCode)
+	for _, argv := range s.Commands {
+		for _, a := range argv {
+			assert.NotEqual(t, "ip", a, "ip must not run when ns is unmanaged")
+			assert.NotEqual(t, "runuser", a, "runuser must not run when ns is unmanaged")
+		}
+	}
+}
