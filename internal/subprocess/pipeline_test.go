@@ -11,6 +11,7 @@ import (
 
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPipeline_Dry(t *testing.T) {
@@ -102,6 +103,49 @@ func TestPipeline_Live_Filtering(t *testing.T) {
 func TestPipeline_NoStages(t *testing.T) {
 	err := Pipeline(context.Background(), false)
 	assert.ErrorContains(t, err, "pipeline has no stages")
+}
+
+// TestPipeline_Live_StartFailureCleanup covers the cleanup path that
+// runs when one stage's Start() succeeds but a later stage's Start()
+// fails. Stage 0 resolves to /bin/true (forks + execs cleanly, exits
+// fast); stage 1 resolves to a path that does not exist, so execve
+// returns ENOENT and Start() surfaces it. The wrapper must:
+//
+//   - close every io.Pipe in the closepool (so no goroutine wedges on
+//     a half-open pipe),
+//   - Kill+Wait every previously-started stage (here stage 0, which
+//     by then is most likely a zombie — Kill on a zombie is a defined
+//     no-op and Wait reaps it; both return values are discarded),
+//   - return a wrapped error naming the failing stage index and argv0.
+func TestPipeline_Live_StartFailureCleanup(t *testing.T) {
+	orig := testable.Env
+	env := testable.NewEnvironOS()
+	env.Stdout = io.Discard
+	env.Stderr = io.Discard
+	env.LookPath = func(name string) (string, error) {
+		switch name {
+		case "iptables-save":
+			return "/bin/true", nil
+		case "grep":
+			// A path that exists nowhere on the FS forces execve(2) to
+			// return ENOENT inside cmd.Start(). POSIX-stable; we don't
+			// rely on a Linux-specific quirk.
+			return "/npte-test-nonexistent/bogus-binary", nil
+		default:
+			return "", fmt.Errorf("unexpected: %s", name)
+		}
+	}
+	testable.Env = env
+	t.Cleanup(func() { testable.Env = orig })
+
+	err := Pipeline(context.Background(), false,
+		[]string{"iptables-save"},
+		[]string{"grep", "x"},
+	)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "pipeline stage 1")
+	assert.Contains(t, err.Error(), "grep")
+	assert.Contains(t, err.Error(), "start:")
 }
 
 // TestPipeline_Live_LookPathError pins the deps-allowlist gate inside
