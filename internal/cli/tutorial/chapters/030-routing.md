@@ -156,6 +156,31 @@ As in the previous chapter, destroying a namespace cascades to its
 interfaces, the peer ends of its veth pairs, and its iptables
 state; the host is left as we found it.
 
+### Recovering from a stale marker
+
+Marker and kernel namespace are written and removed in two
+consecutive operations, not atomically. Reboot is a clean slate
+(both `/run` and the kernel's namespace list go away with it), but
+if `npte` is killed mid-sequence — `kill -9`, OOM, an unrecovered
+panic — you can be left with the two halves out of step. The
+symptoms point at which half:
+
+- `npte: <name>: not managed by npte` while `sudo ip netns list`
+  shows the namespace: an orphan kernel namespace from a crashed
+  `create`. Clear it with `sudo ip netns del <name>`.
+
+- `Cannot find network namespace "<name>"` (or similar from a
+  later verb) while `/run/npte/netns/<name>` exists: an orphan
+  marker from a crashed `destroy`. Clear it with
+  `sudo rm /run/npte/netns/<name>`.
+
+`npte` does not ship a `gc` verb for this on purpose. A marker
+carries no metadata tying it to a specific kernel-side namespace,
+so an automated reconciler cannot tell a stale marker apart from
+a stale marker plus a same-named foreign namespace someone else
+created out-of-band — and would risk silently bringing the
+privileged surface to bear on a namespace `npte` did not create.
+
 ## Recap
 
 - A leaf namespace with only a connected route can reach its

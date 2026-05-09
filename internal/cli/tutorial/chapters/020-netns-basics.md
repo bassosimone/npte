@@ -144,9 +144,13 @@ ends of any attached veth pairs, and the namespace's iptables state:
     sudo npte netns destroy bob
 
 The host is now back to the state it was in before the chapter
-started. Nothing persists: `npte netns` intentionally does not remember
-anything across invocations. Every namespace you want is built with a
-short sequence of composable commands, and torn down with `destroy`.
+started. Nothing about your topology persists: `npte netns` keeps
+no description of what you built between invocations. Every
+namespace you want is rebuilt with a short sequence of composable
+commands, and torn down with `destroy`. (`npte` does keep one
+small per-namespace bookkeeping marker on tmpfs, just so it knows
+which namespaces it owns — the next chapter and the sudo chapter
+say more about why that matters; you can otherwise ignore it.)
 
 ## Recap
 
@@ -159,7 +163,8 @@ short sequence of composable commands, and torn down with `destroy`.
 - `npte netns connect` wires two namespaces with a veth pair.
   Addressing is a separate concern — use `assign-addr` on each end.
 
-- There is no persisted state. Composition is the interface.
+- No topology persists across invocations. Composition is the
+  interface.
 
 The next chapter builds a three-namespace topology — client, router,
 server — with the router also acting as an internet gateway.
