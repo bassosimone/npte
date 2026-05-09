@@ -4,6 +4,7 @@ package netem
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/bassosimone/npte/internal/logx"
@@ -14,6 +15,15 @@ import (
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
+
+// applyCommand is a command that [applyMain] needs to defer execution of.
+type applyCommand struct {
+	// description describes the command
+	description string
+
+	// argv is the argument vector
+	argv []string
+}
 
 // applyMain is the main of the `netem apply` subcommand.
 func applyMain(ctx context.Context, args []string) error {
@@ -134,12 +144,18 @@ func applyMain(ctx context.Context, args []string) error {
 		return nil
 	}
 
+	// We defer execution of all commands to when we have validated all
+	// input so that we do not leave the system in a partial state
+	var allCommands []applyCommand
+
 	rootArgs := append(
 		[]string{"ip", "netns", "exec", ns, "tc", "qdisc", "add", "dev", iface, "root", "handle", "1:", "netem"},
 		netemArgs...,
 	)
-	logx.Details("npte: install root netem qdisc on %q inside %q", iface, ns)
-	subprocess.MustRun(ctx, dryRun, rootArgs[0], rootArgs[1:]...)
+	allCommands = append(allCommands, applyCommand{
+		description: fmt.Sprintf("npte: install root netem qdisc on %q inside %q", iface, ns),
+		argv:        rootArgs,
+	})
 
 	if child != "" {
 		if err := validate.ChildQdiscKind(child); err != nil {
@@ -167,8 +183,17 @@ func applyMain(ctx context.Context, args []string) error {
 				childArgs = append(childArgs, "bandwidth", cakeBandwidth)
 			}
 		}
-		logx.Details("npte: attach child qdisc %q on %q inside %q", child, iface, ns)
-		subprocess.MustRun(ctx, dryRun, childArgs[0], childArgs[1:]...)
+		allCommands = append(allCommands, applyCommand{
+			description: fmt.Sprintf("npte: attach child qdisc %q on %q inside %q", child, iface, ns),
+			argv:        childArgs,
+		})
+	}
+
+	// Now run all the commands we deferred execution of
+	for _, cmd := range allCommands {
+		logx.Details("%s", cmd.description)
+		runtimex.Assert(len(cmd.argv) > 0)
+		subprocess.MustRun(ctx, dryRun, cmd.argv[0], cmd.argv[1:]...)
 	}
 
 	logx.Details("npte: shaping installed on %q inside %q", iface, ns)

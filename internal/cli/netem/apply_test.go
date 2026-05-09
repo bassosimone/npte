@@ -55,15 +55,14 @@ func TestApply(t *testing.T) {
 		args:     []string{"--dry-run", "--delay", "garbage", "client", "if-router"},
 		wantExit: 2,
 	}, {
-		// Child-kind validation runs after the root netem command is emitted,
-		// so the lock prefix and the root line still appear on stdout.
+		// Child-kind validation runs before any kernel command is emitted, so on a
+		// bad --child value neither the root nor child netem line appears.
 		name:     "rejects bad child kind",
 		args:     []string{"--dry-run", "--delay", "10ms", "--child", "bogus", "client", "if-router"},
 		wantExit: 2,
 		wantOut: []any{
 			"install -d -m 0755 /run/npte/netns",
 			`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,
-			"ip netns exec client tc qdisc add dev if-router root handle 1: netem delay 10ms",
 		},
 	}}
 
