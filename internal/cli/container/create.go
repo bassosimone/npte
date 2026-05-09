@@ -31,9 +31,13 @@ func createMain(ctx context.Context, args []string) error {
 			"host. For non-Debian/Ubuntu derivatives (Kali, Devuan), drop to "+
 			"`debootstrap` directly — the same applies to --include=, --variant=, "+
 			"custom mirrors, and other debootstrap knobs.",
-		"<rootfs> must be an absolute path. The target directory must not yet "+
-			"exist: debootstrap will populate it, and bootstrapping over an existing "+
-			"tree risks silently corrupting it.",
+		"<rootfs> must be an absolute path; the target directory must not "+
+			"exist or must be empty (debootstrap refuses to populate a non-"+
+			"empty tree). For safety, pick a path that is fully root-owned "+
+			"end-to-end — e.g. /var/lib/machines/<name>, the systemd-nspawn "+
+			"convention. debootstrap runs as root and writes through whatever "+
+			"path you hand it; an unprivileged owner along the path can "+
+			"modify the tree while debootstrap is populating it.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run. The script sets no shell "+
@@ -65,14 +69,6 @@ func createMain(ctx context.Context, args []string) error {
 		env.Exit(2)
 		return nil
 	}
-	if !dryRun {
-		if _, err := env.Stat(rootfs); err == nil {
-			logx.Error("npte container create: rootfs already exists: %s", rootfs)
-			env.Exit(1)
-			return nil
-		}
-	}
-
 	logx.Details("npte: bootstrap %q into %s (this may take a while)", suite, rootfs)
 	subprocess.MustRun(ctx, dryRun, "debootstrap", suite, rootfs)
 
