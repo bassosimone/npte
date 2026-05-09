@@ -3,13 +3,17 @@
 package testable
 
 import (
+	"bytes"
+	"errors"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
 	"testing"
 
+	"github.com/bassosimone/deferexit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,4 +47,38 @@ func TestNewEnvironOS_RunCommand(t *testing.T) {
 	cmd.Stdout = io.Discard
 	cmd.Stderr = io.Discard
 	require.NoError(t, env.RunCommand(cmd))
+}
+
+// TestNewEnvironOS_LogFatalOnError0_nilIsNoOp covers the fast path:
+// passing nil must do nothing (no log, no panic, no exit).
+func TestNewEnvironOS_LogFatalOnError0_nilIsNoOp(t *testing.T) {
+	env := NewEnvironOS()
+	assert.NotPanics(t, func() {
+		env.LogFatalOnError0(nil)
+	})
+}
+
+// TestNewEnvironOS_LogFatalOnError0_errorLogsAndExits covers the failure
+// path: a non-nil error is written to the log package's default writer
+// and then deferexit.Panic(1) fires. We redirect log output to a buffer
+// and use deferexit.Run to recover the synthetic exit code.
+func TestNewEnvironOS_LogFatalOnError0_errorLogsAndExits(t *testing.T) {
+	env := NewEnvironOS()
+
+	var buf bytes.Buffer
+	origOut := log.Writer()
+	origFlags := log.Flags()
+	log.SetOutput(&buf)
+	log.SetFlags(0) // suppress the timestamp prefix so the assertion is stable
+	t.Cleanup(func() {
+		log.SetOutput(origOut)
+		log.SetFlags(origFlags)
+	})
+
+	code := deferexit.Run(func() {
+		env.LogFatalOnError0(errors.New("boom"))
+	})
+
+	assert.Equal(t, 1, code)
+	assert.Equal(t, "boom\n", buf.String())
 }
