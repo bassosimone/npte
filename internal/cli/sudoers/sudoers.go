@@ -94,11 +94,16 @@ func Main(ctx context.Context, args []string) error {
 // The warning is a false positive, but it is scary enough that
 // recommending the drop-in path is bad DX.
 //
-// Cmnd_Alias and Defaults! were considered and dropped: with three
-// rules an alias adds indirection without much reuse, and `env_reset`
-// plus a `secure_path` are sudo's defaults on every mainstream
-// distro, so per-rule overrides would be belt-and-suspenders
-// documentation rather than an enforced invariant.
+// Cmnd_Alias and Defaults! were considered and dropped. With three
+// rules an alias adds indirection without much reuse. Scoping
+// `env_reset` and `secure_path` per-rule via `Defaults!alias` was
+// also considered: it would let the snippet enforce the env policy
+// it relies on regardless of global sudoers. We dropped it because
+// per-command `Defaults` syntax and `secure_path` honoring vary
+// across distros and sudo versions, so the scoped form is brittle
+// in practice. Instead, the snippet states the assumption in the
+// trailing comment and leaves the policy to the operator, who
+// already controls the global sudoers.
 const snippet = `
 # This snippet allows running the following commands without a password:
 #
@@ -118,5 +123,21 @@ const snippet = `
 #     sudo visudo
 #
 # visudo validates the snippet's syntax before activating the change.
+#
+# Caveat: before applying these rules, make sure your sudoers config
+# satisfies the following — npte's NOPASSWD surface relies on it,
+# and overriding either silently turns this snippet into a
+# passwordless privilege-escalation path:
+#
+# (a) env_reset is on, and env_keep does not add loader variables
+#     (LD_PRELOAD, LD_LIBRARY_PATH, LD_AUDIT, ...) — npte does not
+#     scrub the child environment in Go and trusts sudo to do it.
+#
+# (b) secure_path is set — npte and its privileged children resolve
+#     helpers (tc, iptables modules, ...) by basename, so a caller-
+#     controlled PATH redirects those lookups.
+#
+# These are sudo's defaults on every mainstream distro; the warning
+# is here for the operator who has changed them.
 
 `
