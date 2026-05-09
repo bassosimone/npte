@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -59,6 +60,27 @@ func TestLock(t *testing.T) {
 		assert.NotNil(t, unlock)
 		unlock()
 		assert.Empty(t, s.Stdout.String(), "live mode does not print")
+	})
+
+	// `install -d` failing must surface as a Lock error before LockFile
+	// is called: a mkdir failure (e.g. EROFS, EACCES) means we cannot
+	// safely proceed to take the global lock or touch markers.
+	t.Run("live mode propagates install -d error", func(t *testing.T) {
+		testenv.Setup(t)
+		lockCalled := false
+		testable.Env.LockFile = func(string) (func(), error) {
+			lockCalled = true
+			return func() {}, nil
+		}
+		testable.Env.RunCommand = func(*exec.Cmd) error {
+			return errors.New("install: cannot create directory: read-only file system")
+		}
+
+		unlock, err := Lock(context.Background(), testable.Env, false)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "read-only file system")
+		assert.Nil(t, unlock)
+		assert.False(t, lockCalled, "LockFile must not run after install -d fails")
 	})
 }
 
