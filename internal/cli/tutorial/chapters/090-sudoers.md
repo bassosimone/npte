@@ -33,6 +33,46 @@ Still password-protected:
 - `npte container *` — runs `systemd-nspawn` with capabilities that
   reach beyond the namespace.
 
+## Why this is safe to allowlist
+
+NOPASSWD on a verb class means anyone with write access to the
+allowlisted user's account — a malicious script, a compromised
+shell rc file, a rogue dependency in a build tree — can run those
+verbs as root without authenticating. That sounds alarming, and it
+would be, were it not bounded.
+
+The bound is the registry. Every `netns` and `netem` verb other
+than `create` checks for a marker file at `/run/npte/netns/<name>`
+before doing any kernel work, and refuses if the marker is
+missing. `create` writes the marker only after `ip netns add`
+succeeds; `destroy` removes it only after `ip netns del` succeeds.
+So a caller who has the NOPASSWD grant cannot point any of these
+verbs at namespaces `npte` did not create — Docker's, libvirt's,
+the host root namespace, or any namespace an operator built by
+hand with `ip netns add`. The privileged surface is bounded to
+the set `npte` itself owns.
+
+A second bound matters for `npte netns run`, the one allowlisted
+verb that runs user-supplied code inside a namespace. `ip netns
+exec` shares the host's mount namespace — a root shell launched
+inside a fresh netns still sees the host's `/etc`, `/root`,
+`/home`, `/var/lib/docker`, and so on. So if `run` simply
+exec'd the user's command as root, NOPASSWD on `netns *` would
+collapse to NOPASSWD on `/bin/bash`. To prevent that, `npte
+netns run` drops privilege to `$SUDO_USER` via `runuser(1)`
+before exec'ing the inner command: the command lands inside the
+namespace but with the invoking user's identity, not root's.
+The grant lets you cross the namespace boundary; it does not let
+you escalate while crossing it.
+
+`gateway` and `container` are kept out of the allowlist precisely
+because neither bound applies to them: `gateway` installs rules
+in the host namespace (the registry cannot fence it in), and
+`container` runs `systemd-nspawn` with capabilities that escape
+any single namespace (the privilege drop would not bound the
+inner workload). Asking for the sudo password on each invocation
+is the right friction for operations these bounds cannot cover.
+
 ## Installing the snippet
 
 The snippet binds the allowlist to `/usr/local/sbin/npte`. Sudoers
