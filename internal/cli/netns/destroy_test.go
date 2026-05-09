@@ -46,21 +46,21 @@ func TestDestroy(t *testing.T) {
 	}
 }
 
-// TestDestroy_dryRunSkipsStat pins the contract that dry-run does not
+// TestDestroy_dryRunSkipsLstat pins the contract that dry-run does not
 // consult the filesystem to decide whether the namespace is managed:
 // instead it emits a paste-into-shell guard. See registry.RequireManaged.
-func TestDestroy_dryRunSkipsStat(t *testing.T) {
+func TestDestroy_dryRunSkipsLstat(t *testing.T) {
 	s := testenv.Setup(t)
-	statCalls := 0
-	testable.Env.Stat = func(string) (os.FileInfo, error) {
-		statCalls++
+	lstatCalls := 0
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		lstatCalls++
 		return nil, os.ErrNotExist
 	}
 
 	require.NoError(t, destroyMain(context.Background(), []string{"--dry-run", "client"}))
 
 	assert.Equal(t, -1, s.ExitCode, "dry-run must not exit even with no marker on disk")
-	assert.Equal(t, 0, statCalls, "dry-run must not consult Stat")
+	assert.Equal(t, 0, lstatCalls, "dry-run must not consult Lstat")
 	testenv.AssertLines(t, s.Stdout.String(), []any{
 		"install -d -m 0755 /run/npte/netns",
 		`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,

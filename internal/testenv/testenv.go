@@ -77,7 +77,7 @@ func Setup(t *testing.T) *Stubs {
 		MkdirAll:  func(string, os.FileMode) error { return nil },
 		ReadFile:  func(string) ([]byte, error) { return nil, nil },
 		WriteFile: func(string, []byte, os.FileMode) error { return nil },
-		Stat:      func(name string) (os.FileInfo, error) { return regularFileInfo(name), nil },
+		Lstat:     func(name string) (os.FileInfo, error) { return regularFileInfo(name), nil },
 		Remove:    func(string) error { return nil },
 		ReadDir:   func(string) ([]os.DirEntry, error) { return nil, nil },
 		RunCommand: func(cmd *exec.Cmd) error {
@@ -98,8 +98,8 @@ func Setup(t *testing.T) *Stubs {
 }
 
 // regularFileInfo implements [os.FileInfo] for a fake regular file. It is
-// returned by the stubbed Stat so that registry.RequireManaged accepts the
-// path as a valid marker without touching the filesystem.
+// returned by the stubbed Lstat so that registry.RequireManaged accepts
+// the path as a valid marker without touching the filesystem.
 type regularFileInfo string
 
 func (n regularFileInfo) Name() string     { return string(n) }

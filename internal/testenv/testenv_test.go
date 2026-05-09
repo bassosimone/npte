@@ -38,9 +38,9 @@ func TestSetup_sudoUser(t *testing.T) {
 	assert.Equal(t, "", testable.Env.Getenv("OTHER"))
 }
 
-func TestSetup_statReturnsRegularFile(t *testing.T) {
+func TestSetup_lstatReturnsRegularFile(t *testing.T) {
 	Setup(t)
-	info, err := testable.Env.Stat("/some/path")
+	info, err := testable.Env.Lstat("/some/path")
 	require.NoError(t, err)
 	assert.True(t, info.Mode().IsRegular())
 	assert.False(t, info.IsDir())

@@ -28,7 +28,7 @@ type Environ struct {
 	MkdirAll         func(path string, perm os.FileMode) error
 	ReadFile         func(name string) ([]byte, error)
 	WriteFile        func(name string, data []byte, perm os.FileMode) error
-	Stat             func(name string) (os.FileInfo, error)
+	Lstat            func(name string) (os.FileInfo, error)
 	Remove           func(name string) error
 	ReadDir          func(name string) ([]os.DirEntry, error)
 	RunCommand       func(cmd *exec.Cmd) error
@@ -52,7 +52,7 @@ func NewEnvironOS() *Environ {
 		MkdirAll:    os.MkdirAll,
 		ReadFile:    os.ReadFile,
 		WriteFile:   os.WriteFile,
-		Stat:        os.Stat,
+		Lstat:       os.Lstat,
 		Remove:      os.Remove,
 		ReadDir:     os.ReadDir,
 		RunCommand: func(cmd *exec.Cmd) error {

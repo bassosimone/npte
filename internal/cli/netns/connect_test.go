@@ -57,26 +57,26 @@ func TestConnect(t *testing.T) {
 	}
 }
 
-// TestConnect_dryRunSkipsStat is a regression test for a bug where dry-run
+// TestConnect_dryRunSkipsLstat is a regression test for a bug where dry-run
 // composition (e.g. `npte star create --dry-run`) aborted at the first
-// `netns connect` because RequireManaged Stat'd the marker — which never
+// `netns connect` because RequireManaged stat'd the marker — which never
 // existed, since the previous `netns create -n` only printed its install
-// command. The fix moved the dry-run branch above the Stat call and made
-// it emit a shell guard instead. This test pins that behaviour: a dry-run
-// connect with Stat → ErrNotExist must succeed and the guard must be in
-// the rendered script.
-func TestConnect_dryRunSkipsStat(t *testing.T) {
+// command. The fix moved the dry-run branch above the filesystem call and
+// made it emit a shell guard instead. This test pins that behaviour: a
+// dry-run connect with Lstat → ErrNotExist must succeed and the guard must
+// be in the rendered script.
+func TestConnect_dryRunSkipsLstat(t *testing.T) {
 	s := testenv.Setup(t)
-	statCalls := 0
-	testable.Env.Stat = func(string) (os.FileInfo, error) {
-		statCalls++
+	lstatCalls := 0
+	testable.Env.Lstat = func(string) (os.FileInfo, error) {
+		lstatCalls++
 		return nil, os.ErrNotExist
 	}
 
 	require.NoError(t, connectMain(context.Background(), []string{"--dry-run", "client", "router"}))
 
 	assert.Equal(t, -1, s.ExitCode, "dry-run must not exit even with no marker on disk")
-	assert.Equal(t, 0, statCalls, "dry-run must not consult Stat")
+	assert.Equal(t, 0, lstatCalls, "dry-run must not consult Lstat")
 	testenv.AssertLines(t, s.Stdout.String(), []any{
 		"install -d -m 0755 /run/npte/netns",
 		`test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`,

@@ -112,9 +112,17 @@ func MustUnregister(ctx context.Context, dryRun bool, name string) {
 //
 // In live mode it returns nil if a regular-file marker exists for name,
 // [ErrNotManaged] (wrapped with the name) if no marker is present, or
-// another error if the marker path resolves to something other than a
-// regular file (which should never arise in practice and is worth
-// surfacing rather than silently treating as "not managed").
+// another error if the marker dirent is not a regular file (which
+// should never arise in practice and is worth surfacing rather than
+// silently treating as "not managed").
+//
+// We use [Lstat] rather than Stat so that a symlink at the marker path
+// is detected as non-regular regardless of what it points to. Under
+// the documented trust model (root-owned 0755 /run/npte/netns/, only
+// npte writes into it) a symlink there cannot arise from an attacker;
+// this is defense-in-depth and also keeps RequireManaged consistent
+// with [List], which uses dirent-level type information and already
+// skips non-regular entries.
 //
 // In dry-run mode it does NOT Stat the filesystem: a dry-run after a
 // dry-run `netns create` would otherwise spuriously fail because no
@@ -130,12 +138,21 @@ func MustUnregister(ctx context.Context, dryRun bool, name string) {
 func RequireManaged(env *testable.Environ, dryRun bool, name string) error {
 	mp := markerPath(name)
 	if dryRun {
+		// The shell guard uses `test -f`, which follows symlinks: the
+		// live branch's Lstat rejects a symlink at the marker path,
+		// but the rendered script accepts a symlink that resolves to
+		// a regular file. This residual asymmetry is intentional —
+		// the trust model (root-owned 0755 /run/npte/netns/) already
+		// excludes a symlink at the marker path, and keeping the
+		// guard a single `test -f` preserves diagnostic clarity in
+		// the rendered script. Do not "fix" it by switching to
+		// `{ test -f X && test ! -L X; }` without weighing that.
 		_, err := fmt.Fprintf(env.Stdout, "test -f %s || { echo %s >&2; exit 2; }\n",
 			shellquote.Join(mp),
 			shellquote.Join(fmt.Sprintf("npte: %s: not managed by npte", name)))
 		return err
 	}
-	info, err := env.Stat(mp)
+	info, err := env.Lstat(mp)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("%w: %s", ErrNotManaged, name)

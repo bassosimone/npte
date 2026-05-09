@@ -105,31 +105,40 @@ func TestRequireManaged(t *testing.T) {
 	t.Run("live mode", func(t *testing.T) {
 		tests := []struct {
 			name      string
-			stat      func(string) (os.FileInfo, error)
+			lstat     func(string) (os.FileInfo, error)
 			wantErr   string // substring; "" means no error
 			wantIsErr error  // errors.Is target; nil means none
 		}{{
 			name: "regular file: managed",
-			stat: func(string) (os.FileInfo, error) {
-				return fakeStat{regular: true}, nil
+			lstat: func(string) (os.FileInfo, error) {
+				return fakeStat{mode: 0o644}, nil
 			},
 			wantErr: "",
 		}, {
 			name: "missing marker: ErrNotManaged",
-			stat: func(string) (os.FileInfo, error) {
+			lstat: func(string) (os.FileInfo, error) {
 				return nil, os.ErrNotExist
 			},
 			wantErr:   "client",
 			wantIsErr: ErrNotManaged,
 		}, {
 			name: "directory marker: rejects",
-			stat: func(string) (os.FileInfo, error) {
-				return fakeStat{regular: false}, nil
+			lstat: func(string) (os.FileInfo, error) {
+				return fakeStat{mode: fs.ModeDir | 0o755}, nil
 			},
 			wantErr: "marker is not a regular file",
 		}, {
-			name: "other Stat error: wrapped",
-			stat: func(string) (os.FileInfo, error) {
+			// Lstat reports the symlink itself, not its target, so even
+			// a symlink that points at a regular file fails the
+			// IsRegular() check and is rejected.
+			name: "symlink marker: rejects",
+			lstat: func(string) (os.FileInfo, error) {
+				return fakeStat{mode: fs.ModeSymlink | 0o777}, nil
+			},
+			wantErr: "marker is not a regular file",
+		}, {
+			name: "other Lstat error: wrapped",
+			lstat: func(string) (os.FileInfo, error) {
 				return nil, errors.New("permission denied")
 			},
 			wantErr: "registry: permission denied",
@@ -138,7 +147,7 @@ func TestRequireManaged(t *testing.T) {
 		for _, tc := range tests {
 			t.Run(tc.name, func(t *testing.T) {
 				s := testenv.Setup(t)
-				testable.Env.Stat = tc.stat
+				testable.Env.Lstat = tc.lstat
 				err := RequireManaged(testable.Env, false, "client")
 				assert.Empty(t, s.Stdout.String(), "live mode must not print to stdout")
 				if tc.wantErr == "" {
@@ -161,17 +170,17 @@ func TestRequireManaged(t *testing.T) {
 	// abort the rest of the rendered script. We assert that the guard
 	// is emitted unchanged in three Stat scenarios that the live branch
 	// would treat differently.
-	t.Run("dry-run mode emits guard regardless of Stat", func(t *testing.T) {
+	t.Run("dry-run mode emits guard regardless of Lstat", func(t *testing.T) {
 		stats := map[string]func(string) (os.FileInfo, error){
 			"missing": func(string) (os.FileInfo, error) { return nil, os.ErrNotExist },
-			"regular": func(string) (os.FileInfo, error) { return fakeStat{regular: true}, nil },
-			"dir":     func(string) (os.FileInfo, error) { return fakeStat{regular: false}, nil },
+			"regular": func(string) (os.FileInfo, error) { return fakeStat{mode: 0o644}, nil },
+			"dir":     func(string) (os.FileInfo, error) { return fakeStat{mode: fs.ModeDir | 0o755}, nil },
 		}
 		want := `test -f /run/npte/netns/client || { echo 'npte: client: not managed by npte' >&2; exit 2; }`
 		for label, stat := range stats {
 			t.Run(label, func(t *testing.T) {
 				s := testenv.Setup(t)
-				testable.Env.Stat = stat
+				testable.Env.Lstat = stat
 				err := RequireManaged(testable.Env, true, "client")
 				require.NoError(t, err)
 				testenv.AssertLines(t, s.Stdout.String(), []any{want})
@@ -224,21 +233,17 @@ func TestList(t *testing.T) {
 	}
 }
 
-// fakeStat is a [os.FileInfo] whose Mode() reports either a regular file or
-// a directory, depending on regular.
-type fakeStat struct{ regular bool }
+// fakeStat is an [os.FileInfo] whose Mode() returns a caller-supplied
+// fs.FileMode, so tests can express regular / directory / symlink
+// without the fakeStat helper deciding the encoding.
+type fakeStat struct{ mode fs.FileMode }
 
-func (fakeStat) Name() string { return "" }
-func (fakeStat) Size() int64  { return 0 }
-func (f fakeStat) Mode() fs.FileMode {
-	if f.regular {
-		return 0o644
-	}
-	return fs.ModeDir | 0o755
-}
-func (fakeStat) ModTime() time.Time { return time.Time{} }
-func (f fakeStat) IsDir() bool      { return !f.regular }
-func (fakeStat) Sys() any           { return nil }
+func (fakeStat) Name() string        { return "" }
+func (fakeStat) Size() int64         { return 0 }
+func (f fakeStat) Mode() fs.FileMode { return f.mode }
+func (fakeStat) ModTime() time.Time  { return time.Time{} }
+func (f fakeStat) IsDir() bool       { return f.mode.IsDir() }
+func (fakeStat) Sys() any            { return nil }
 
 // fakeEntry is a minimal [os.DirEntry] for List tests.
 type fakeEntry struct {
@@ -255,5 +260,8 @@ func (e fakeEntry) Type() fs.FileMode {
 	return fs.ModeDir
 }
 func (e fakeEntry) Info() (os.FileInfo, error) {
-	return fakeStat{regular: e.regular}, nil
+	if e.regular {
+		return fakeStat{mode: 0o644}, nil
+	}
+	return fakeStat{mode: fs.ModeDir | 0o755}, nil
 }
