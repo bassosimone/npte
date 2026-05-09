@@ -32,6 +32,18 @@ func TestRun(t *testing.T) {
 			"systemd-nspawn -D /var/lib/machines/test --network-namespace-path=/run/netns/client -- ip addr",
 		},
 	}, {
+		name: "dry-run with capability and bind",
+		args: []string{
+			"--dry-run", "--netns", "client",
+			"--capability", "CAP_NET_ADMIN",
+			"--bind", "/dev/net/tun",
+			"/var/lib/machines/test", "openvpn", "--config", "/etc/openvpn/client.conf",
+		},
+		wantExit: -1,
+		wantOut: []any{
+			"systemd-nspawn -D /var/lib/machines/test --network-namespace-path=/run/netns/client --capability=CAP_NET_ADMIN --bind=/dev/net/tun -- openvpn --config /etc/openvpn/client.conf",
+		},
+	}, {
 		name:     "rejects relative rootfs",
 		args:     []string{"--dry-run", "rel/path"},
 		wantExit: 2,

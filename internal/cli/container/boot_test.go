@@ -25,11 +25,11 @@ func TestBoot(t *testing.T) {
 			"systemd-nspawn --boot -D /var/lib/machines/test",
 		},
 	}, {
-		name:     "dry-run with netns and bind",
-		args:     []string{"--dry-run", "--netns", "client", "--bind", "/dev/net/tun", "/var/lib/machines/test"},
+		name:     "dry-run with netns, capability and bind",
+		args:     []string{"--dry-run", "--netns", "client", "--capability", "CAP_NET_ADMIN", "--bind", "/dev/net/tun", "/var/lib/machines/test"},
 		wantExit: -1,
 		wantOut: []any{
-			"systemd-nspawn --boot -D /var/lib/machines/test --network-namespace-path=/run/netns/client --bind=/dev/net/tun",
+			"systemd-nspawn --boot -D /var/lib/machines/test --network-namespace-path=/run/netns/client --capability=CAP_NET_ADMIN --bind=/dev/net/tun",
 		},
 	}, {
 		name:     "rejects relative rootfs",
