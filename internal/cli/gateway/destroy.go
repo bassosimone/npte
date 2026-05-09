@@ -59,10 +59,23 @@ func destroyMain(ctx context.Context, args []string) error {
 	tag := "npte:gw:" + ns
 	hostIface := "if-" + ns
 
+	// Match the literal `--comment "<tag>"` token that modern
+	// iptables-save (1.8+, both legacy and nft backends) emits for each
+	// rule. Anchoring on the quoted comment argument ensures we only
+	// delete rules whose comment is exactly our tag, not unrelated rules
+	// whose comment happens to contain `npte:gw:<ns>` as a substring.
+	// Pre-1.8 iptables-save sometimes omitted the quotes for shell-safe
+	// values; we accept the resulting false negatives on those systems
+	// (the operator can clean stale rules by hand) in exchange for the
+	// substantially safer false-positive behavior on modern hosts.
+	commentToken := `--comment "` + tag + `"`
+
 	logx.Details("npte: remove host-side iptables rules tagged %q", tag)
 	subprocess.MustPipeline(ctx, dryRun,
 		[]string{"iptables-save"},
-		[]string{"grep", "-Fv", tag},
+		// `--` terminates grep's option parsing so the pattern (which
+		// itself starts with `--`) is not mistaken for a flag.
+		[]string{"grep", "-Fv", "--", commentToken},
 		[]string{"iptables-restore"},
 	)
 

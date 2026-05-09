@@ -22,7 +22,7 @@ func TestDestroy(t *testing.T) {
 		args:     []string{"--dry-run", "router"},
 		wantExit: -1,
 		wantOut: []any{
-			"iptables-save | grep -Fv npte:gw:router | iptables-restore",
+			`iptables-save | grep -Fv -- '--comment "npte:gw:router"' | iptables-restore`,
 			"ip link del if-router || true",
 		},
 	}, {
