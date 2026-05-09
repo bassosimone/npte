@@ -179,3 +179,38 @@ func TestRunTolerant_Live_Failure(t *testing.T) {
 	MustRunTolerant(context.Background(), false, "ip")
 	assert.NoError(t, captured)
 }
+
+// Make sure that PipeTo refuses to run commands that are not in the
+// deps allowlist: the LookPath gate fires before any exec attempt, so
+// no RunCommand call is made and the allowlist error is surfaced
+// verbatim through MustPipeTo's LogFatalOnError0.
+func TestMustPipeTo_Disallowed(t *testing.T) {
+	var captured error
+	orig := testable.Env
+	env := testable.NewEnvironOS()
+	env.Stdout = io.Discard
+	env.Stderr = io.Discard
+	env.LogFatalOnError0 = func(err error) { captured = err }
+	testable.Env = env
+	t.Cleanup(func() { testable.Env = orig })
+
+	MustPipeTo(context.Background(), false, []byte("body"), "nonexistent-bogus-cmd")
+	assert.ErrorContains(t, captured, `command "nonexistent-bogus-cmd" is not in the allowlist`)
+}
+
+// Make sure that RunTolerant also enforces the deps allowlist: setup
+// errors (per its own contract) are still reported even though it
+// suppresses non-zero exits from the child.
+func TestMustRunTolerant_Disallowed(t *testing.T) {
+	var captured error
+	orig := testable.Env
+	env := testable.NewEnvironOS()
+	env.Stdout = io.Discard
+	env.Stderr = io.Discard
+	env.LogFatalOnError0 = func(err error) { captured = err }
+	testable.Env = env
+	t.Cleanup(func() { testable.Env = orig })
+
+	MustRunTolerant(context.Background(), false, "nonexistent-bogus-cmd")
+	assert.ErrorContains(t, captured, `command "nonexistent-bogus-cmd" is not in the allowlist`)
+}

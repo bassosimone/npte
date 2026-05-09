@@ -103,3 +103,22 @@ func TestPipeline_NoStages(t *testing.T) {
 	err := Pipeline(context.Background(), false)
 	assert.ErrorContains(t, err, "pipeline has no stages")
 }
+
+// TestPipeline_Live_LookPathError pins the deps-allowlist gate inside
+// the stage setup loop: a non-allowlisted argv0 must surface as an
+// allowlist error before any exec.Cmd is built or Start is called, so
+// no stub on testable.Env.LookPath is needed (deps.LookPath
+// short-circuits on the allowlist check).
+func TestPipeline_Live_LookPathError(t *testing.T) {
+	orig := testable.Env
+	env := testable.NewEnvironOS()
+	env.Stdout = io.Discard
+	env.Stderr = io.Discard
+	testable.Env = env
+	t.Cleanup(func() { testable.Env = orig })
+
+	err := Pipeline(context.Background(), false,
+		[]string{"nonexistent-bogus-cmd"},
+	)
+	assert.ErrorContains(t, err, `command "nonexistent-bogus-cmd" is not in the allowlist`)
+}
