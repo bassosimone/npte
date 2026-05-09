@@ -3,6 +3,7 @@
 package testenv
 
 import (
+	"os/exec"
 	"regexp"
 	"testing"
 
@@ -68,6 +69,44 @@ func TestSetup_otherStubsAreNoOps(t *testing.T) {
 	unlock, err := testable.Env.LockFile("/x")
 	assert.NoError(t, err)
 	unlock()
+
+	// Getwd is consulted by netns/run.go for the sandbox workdir.
+	wd, err := testable.Env.Getwd()
+	assert.NoError(t, err)
+	assert.Equal(t, "/home/sbs/src/github.com/bassosimone/npte", wd)
+
+	// Executable is consulted by star/* for the npte self-recursion path.
+	self, err := testable.Env.Executable()
+	assert.NoError(t, err)
+	assert.Equal(t, SelfPath, self)
+}
+
+// TestSetup_runCommandRecordsArgv pins the contract that the stubbed
+// RunCommand captures cmd.Args (not just cmd.Path) into Stubs.Commands
+// and returns nil, so live-mode tests can assert what would have been
+// exec'd without needing --dry-run.
+func TestSetup_runCommandRecordsArgv(t *testing.T) {
+	s := Setup(t)
+	cmd := exec.Command("/usr/bin/ip", "netns", "list")
+
+	require.NoError(t, testable.Env.RunCommand(cmd))
+	require.NoError(t, testable.Env.RunCommand(exec.Command("/usr/bin/tc", "qdisc", "show")))
+
+	assert.Equal(t, [][]string{
+		{"/usr/bin/ip", "netns", "list"},
+		{"/usr/bin/tc", "qdisc", "show"},
+	}, s.Commands)
+}
+
+// TestSetup_logFatalOnError0NilIsNoOp covers the nil-error fast path of
+// the LogFatalOnError0 stub. The non-nil branch calls t.Fatalf which
+// would fail the calling test by design, so it is deliberately not
+// exercised here — see [Setup] for why that asymmetry is intentional.
+func TestSetup_logFatalOnError0NilIsNoOp(t *testing.T) {
+	Setup(t)
+	assert.NotPanics(t, func() {
+		testable.Env.LogFatalOnError0(nil)
+	})
 }
 
 func TestAssertLines_literalMatch(t *testing.T) {
