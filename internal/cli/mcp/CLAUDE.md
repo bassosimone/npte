@@ -128,14 +128,14 @@ rules apply:
 
 The exception is the `start_netns_run` `Env` field: the MCP layer
 sorts entries before serializing to `-e KEY=VALUE` tokens so that the
-argv is deterministic (and the `argv.json` spool file is
+argv is deterministic (and the `argv.json` session file is
 reproducible).
 
 ### 4. Server `instructions` is authoritative; per-tool descriptions
 are a fallback
 
 The handshake-time `instructions` block in `serve.go` ships the
-trust-bridge framing, spool layout, sandbox-escape rule, and
+trust-bridge framing, session layout, sandbox-escape rule, and
 process-lifecycle contract once per session. Per-tool descriptions
 carry only what is specific to that tool. When editing either:
 
@@ -143,13 +143,13 @@ carry only what is specific to that tool. When editing either:
   contract) belongs in `instructions`. Do not duplicate it into
   per-tool descriptions — duplication invites drift.
 - Per-tool descriptions MAY repeat the short `startPreamble` ("See
-  server instructions for trust model, spool layout, and process
+  server instructions for trust model, session layout, and process
   lifecycle.") as a hint to clients that do not surface
   `instructions` to the LLM. They MUST NOT contradict `instructions`.
-- The resolved `absSpoolDir` is substituted into `instructions` at
-  startup so the agent learns the spool path declaratively rather
+- The resolved `absSessionDir` is substituted into `instructions` at
+  startup so the agent learns the session path declaratively rather
   than from string surgery. Keep it there; do not add a
-  `get_spool_dir` tool.
+  `get_session_dir` tool.
 
 ### 5. The MCP server itself drops nothing
 
@@ -184,7 +184,7 @@ those, the work belongs in a sudoers-allowlisted verb, not here.
 4. **Editing `startProc`.** It is the choke point for every
    privileged invocation. Changes that affect argv composition (the
    `[]string{"/usr/bin/sudo", "-n", sm.exePath}` prefix, sudo
-   non-interactivity, the spool layout) are security-relevant. The
+   non-interactivity, the session layout) are security-relevant. The
    `-n` flag is what turns "verb is outside the allowlist" into a
    clean exit-non-zero failure rather than a hung password prompt.
 
@@ -202,6 +202,6 @@ those, the work belongs in a sudoers-allowlisted verb, not here.
   the MCP relies on by inheritance.
 - `internal/cli/tutorial/chapters/110-mcp.md` — user-facing
   description of the trust bridge, the `.mcp.json` wiring, the
-  toolbox, and the spool layout.
+  toolbox, and the session layout.
 - `internal/cli/tutorial/chapters/100-sandbox.md` — the bubblewrap
   policy that invariant #2 propagates to the agent.

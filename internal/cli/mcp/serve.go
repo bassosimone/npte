@@ -11,6 +11,7 @@ import (
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
+	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -31,10 +32,13 @@ func serveMain(ctx context.Context, args []string) error {
 			"(privilege drop, per-command sandboxing). Requires "+
 			"passwordless sudo for /usr/bin/sudo; see `npte sudoers`.",
 		"Per-invocation artifacts (argv.json, stdout.txt, stderr.txt, "+
-			"exitcode.txt) are written under ./.npte/spool/<uuid>/ in "+
-			"the current working directory. The MCP server only writes "+
-			"these files; it never reads them back, so the agent is "+
-			"free to inspect or modify them.",
+			"exitcode.txt) are written under "+
+			"./.npte/sessions/<sessionId>/<procId>/ in the current "+
+			"working directory; <sessionId> is a UUIDv7 minted at "+
+			"`mcp serve` startup, so successive invocations get fresh, "+
+			"chronologically sortable directories. The MCP server only "+
+			"writes these files; it never reads them back, so the agent "+
+			"is free to inspect or modify them.",
 	)
 	fset.Exit = env.Exit
 	fset.Stderr = env.Stderr
@@ -45,17 +49,17 @@ func serveMain(ctx context.Context, args []string) error {
 
 	exe, err := env.Executable()
 	env.LogFatalOnError0(err)
-	spoolDir := filepath.Join(".npte", "spool")
-	absSpoolDir, err := filepath.Abs(spoolDir)
+	sessionID := runtimex.PanicOnError1(uuid.NewV7()).String()
+	absSessionDir, err := filepath.Abs(filepath.Join(".npte", "sessions", sessionID))
 	env.LogFatalOnError0(err)
-	err = env.MkdirAll(absSpoolDir, 0700)
+	err = env.MkdirAll(absSessionDir, 0700)
 	env.LogFatalOnError0(err)
-	mgr := newSessionManager(env, exe, absSpoolDir)
+	mgr := newSessionManager(env, exe, absSessionDir)
 
 	// Server-level instructions shipped to the client at handshake. Per
 	// the MCP spec, clients MAY surface these as a hint to the LLM
 	// (typically appended to the system prompt). Putting the shared
-	// trust-bridge framing, sandbox-escape rule, spool layout, and
+	// trust-bridge framing, sandbox-escape rule, session layout, and
 	// process-lifecycle contract here means we pay for them once at
 	// session start instead of in every per-tool description.
 	instructions := "npte exposes privileged network-namespace primitives " +
@@ -63,19 +67,33 @@ func serveMain(ctx context.Context, args []string) error {
 		"a trust bridge, not a sandbox: it runs outside the agent's " +
 		"sandbox and relies on npte's own privilege drop and per-command " +
 		"sandboxing.\n\n" +
-		"Spool root for this session: " + absSpoolDir + "\n" +
+		"Session root for this invocation: " + absSessionDir + "\n" +
 		"Every start_* call writes argv.json, stdout.txt, stderr.txt, " +
-		"and (after termination) exitcode.txt to <spool_root>/<procId>/. " +
-		"Read these via Bash; the MCP never reads them back.\n\n" +
+		"and (after termination) exitcode.txt to " +
+		"<session_root>/<procId>/. Read these via Bash; the MCP never " +
+		"reads them back. procIds are UUIDv7, so `ls <session_root>/` " +
+		"is chronological. To enumerate every command run this session " +
+		"with its exit code:\n\n" +
+		"    for d in <session_root>/*/; do\n" +
+		"      pid=$(basename \"$d\")\n" +
+		"      ec=$(cat \"$d/exitcode.txt\" 2>/dev/null || echo running)\n" +
+		"      printf '%s  %s  %s\\n' \"$pid\" \"$ec\" \"$(cat \"$d/argv.json\")\"\n" +
+		"    done\n\n" +
+		"Filter on $ec for failures only. Prefer this one-liner over " +
+		"asking the user to recall what ran. The parent directory " +
+		"(./.npte/sessions/) holds one subdirectory per `mcp serve` " +
+		"invocation, also UUIDv7-named; prior sessions are not " +
+		"reachable from this server but their on-disk contents persist " +
+		"for archival.\n\n" +
 		"Sandbox-escape rule: use a start_* tool ONLY when your sandbox " +
 		"prevents you from invoking npte via Bash. For non-privileged " +
 		"operations (e.g., `npte --help`, `npte doctor`, `npte tutorial`, " +
-		"or reading files under <spool_root>) you MUST prefer Bash.\n\n" +
+		"or reading files under <session_root>) you MUST prefer Bash.\n\n" +
 		"Process lifecycle: pair every successful start_* with `wait` " +
 		"on the returned procId. Use `kill` to send SIGINT. A `wait` " +
 		"returning terminated=true reaps the proc (one-shot); subsequent " +
 		"wait/kill on the same procId fail with \"no such process\". The " +
-		"on-disk spool directory survives the reap."
+		"procDir survives the reap."
 
 	// TODO(bassosimone): need to figure out a way to share the version across
 	// multiple components, probably ./internal/version/version.go.
@@ -90,7 +108,7 @@ func serveMain(ctx context.Context, args []string) error {
 	// clients that don't surface instructions to the LLM.
 	const startPreamble = "Start a privileged npte invocation as a " +
 		"background process. See server instructions for trust model, " +
-		"spool layout, and process lifecycle. "
+		"session layout, and process lifecycle. "
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "start_netns_list",
@@ -178,10 +196,9 @@ func serveMain(ctx context.Context, args []string) error {
 			"once `wait` returns `terminated=true`, the process is " +
 			"removed from the MCP's in-memory table and subsequent " +
 			"`wait`/`kill` calls for the same procId will fail with " +
-			"\"no such process\". The on-disk spool directory survives " +
-			"the reap; read `exitcode.txt`, `stdout.txt`, and " +
-			"`stderr.txt` from procDir via Bash if you need the data " +
-			"later.",
+			"\"no such process\". The procDir survives the reap; read " +
+			"`exitcode.txt`, `stdout.txt`, and `stderr.txt` from " +
+			"procDir via Bash if you need the data later.",
 	}, mgr.Wait)
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "kill",

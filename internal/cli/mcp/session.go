@@ -47,30 +47,31 @@ type sessionProc struct {
 //
 // Construct using [newSessionManager].
 type sessionManager struct {
-	env      *testable.Environ
-	exePath  string
-	procs    map[string]*sessionProc
-	procsMu  sync.Mutex
-	spoolDir string
+	env        *testable.Environ
+	exePath    string
+	procs      map[string]*sessionProc
+	procsMu    sync.Mutex
+	sessionDir string
 }
 
 // newSessionManager constructs a [sessionManager]. exePath is the absolute
-// path to the npte binary the manager will re-exec under sudo. spoolDir is
-// the absolute path under which per-process subdirectories are created; the
-// caller must ensure it already exists on disk.
-func newSessionManager(env *testable.Environ, exePath string, spoolDir string) *sessionManager {
+// path to the npte binary the manager will re-exec under sudo. sessionDir
+// is the absolute path to the current MCP session's directory, under which
+// per-process subdirectories are created; the caller must ensure it
+// already exists on disk.
+func newSessionManager(env *testable.Environ, exePath string, sessionDir string) *sessionManager {
 	return &sessionManager{
-		env:      env,
-		exePath:  exePath,
-		procs:    make(map[string]*sessionProc),
-		procsMu:  sync.Mutex{},
-		spoolDir: spoolDir,
+		env:        env,
+		exePath:    exePath,
+		procs:      make(map[string]*sessionProc),
+		procsMu:    sync.Mutex{},
+		sessionDir: sessionDir,
 	}
 }
 
 // startOutput is the output schema shared by every `start_*` MCP tool.
 type startOutput struct {
-	ProcDir string `json:"procDir" jsonschema:"Absolute path to the per-process spool directory. Contains argv.json (the full sudo-prefixed argv), stdout.txt (child stdout), stderr.txt (child stderr), and exitcode.txt (written when the process terminates). Read these files via your normal filesystem access; the MCP server only writes them and never reads them back."`
+	ProcDir string `json:"procDir" jsonschema:"Absolute path to the per-process directory under the current MCP session. Contains argv.json (the full sudo-prefixed argv), stdout.txt (child stdout), stderr.txt (child stderr), and exitcode.txt (written when the process terminates). Read these files via your normal filesystem access; the MCP server only writes them and never reads them back."`
 	ProcID  string `json:"procId" jsonschema:"Opaque UUIDv7 identifying the process. Pass to wait or kill."`
 }
 
@@ -92,7 +93,7 @@ func (sm *sessionManager) startProc(nptArgs []string) (*startOutput, error) {
 
 	// Create subdirectory for the agent to get process information
 	procID := runtimex.PanicOnError1(uuid.NewV7()).String()
-	procDir := filepath.Join(sm.spoolDir, procID)
+	procDir := filepath.Join(sm.sessionDir, procID)
 	if err := sm.env.MkdirAll(procDir, 0700); err != nil {
 		return nil, err
 	}
