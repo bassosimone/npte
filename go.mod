@@ -22,7 +22,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.24.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/bassosimone/flagparser v0.0.0-20260506051140-fdbb96732c6f // indirect
+	github.com/bassosimone/flagparser v0.0.0-20260510230626-4d62c3d9c5ab // indirect
 	github.com/bassosimone/flagscanner v0.0.0-20260426205602-a02f7a8e1306 // indirect
 	github.com/bassosimone/must v0.0.0-20260506051955-56ca05051aad // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect

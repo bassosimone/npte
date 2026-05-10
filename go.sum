@@ -14,8 +14,8 @@ github.com/bassosimone/closepool v0.0.0-20260510173206-317d036a9a9d h1:cuvN3TW1Z
 github.com/bassosimone/closepool v0.0.0-20260510173206-317d036a9a9d/go.mod h1:/pEFe9OK8zhUCHsBzlx7xbjK8Cr1buT+nh2i9CWPJBU=
 github.com/bassosimone/deferexit v0.0.0-20260430074002-1397452dfab1 h1:YhQhLDlNCvhLHVZu7Fg5cKyILfha30z+Uw+Fsfi+VCQ=
 github.com/bassosimone/deferexit v0.0.0-20260430074002-1397452dfab1/go.mod h1:7iQMp0iTy0RYH1A+8daroFGoqe4vylEnFG3pHAEjowo=
-github.com/bassosimone/flagparser v0.0.0-20260506051140-fdbb96732c6f h1:k+hBIySO8fkyrUQC/SWFQT9+zLuzPGxI7uXWdhlouY8=
-github.com/bassosimone/flagparser v0.0.0-20260506051140-fdbb96732c6f/go.mod h1:OEyHoZRVSY83jJEINInoL7EjxD7gOp2mGmX+YHHyqWY=
+github.com/bassosimone/flagparser v0.0.0-20260510230626-4d62c3d9c5ab h1:X4G3n8tO7Kg4DXLT1VEVHownVMEhAkcAumz2Dl6X1og=
+github.com/bassosimone/flagparser v0.0.0-20260510230626-4d62c3d9c5ab/go.mod h1:OEyHoZRVSY83jJEINInoL7EjxD7gOp2mGmX+YHHyqWY=
 github.com/bassosimone/flagscanner v0.0.0-20260426205602-a02f7a8e1306 h1:dAHiSWR4/QMVcQ3Q6V6Xv+y4F4mxvBuVUlLmGsG0rgY=
 github.com/bassosimone/flagscanner v0.0.0-20260426205602-a02f7a8e1306/go.mod h1:rNk3EiWuBQknQM0tuUa5DK0g7JxcVCLaCyCmnCcDlTk=
 github.com/bassosimone/iotest v0.0.0-20260506051330-9d159be61497 h1:dZ2lNZi24GgwVbfzQjwNBAXv4hD5CDqMxdqTQMU+sbQ=
