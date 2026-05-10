@@ -95,6 +95,14 @@ func createMain(ctx context.Context, args []string) error {
 		"sysctl", "-w", "net.ipv4.tcp_wmem=4096 131072 33554432")
 	subprocess.MustRun(ctx, dryRun, "ip", "netns", "exec", ns,
 		"sysctl", "-w", "net.ipv4.ip_forward=1")
+	// Allow unprivileged ICMP datagram sockets for every GID in the
+	// namespace. Without this, ping(1) inside `npte netns run --sandbox`
+	// fails: bwrap sets PR_SET_NO_NEW_PRIVS so neither setuid-root ping
+	// nor cap_net_raw file-caps can escalate. Kernel default is "1 0"
+	// (no group allowed); we open it across the namespace because the
+	// netns is a single-tenant lab — there are no other users to gate.
+	subprocess.MustRun(ctx, dryRun, "ip", "netns", "exec", ns,
+		"sysctl", "-w", "net.ipv4.ping_group_range=0 2147483647")
 
 	// Workaround for https://github.com/uutils/coreutils/issues/11532
 	logx.Details("ensure /etc/netns/%s is clean (workaround for uutils/coreutils#11532)", ns)

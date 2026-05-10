@@ -33,6 +33,7 @@ func TestCreate(t *testing.T) {
 			"ip netns exec client sysctl -w 'net.ipv4.tcp_rmem=4096 131072 33554432'",
 			"ip netns exec client sysctl -w 'net.ipv4.tcp_wmem=4096 131072 33554432'",
 			"ip netns exec client sysctl -w net.ipv4.ip_forward=1",
+			"ip netns exec client sysctl -w 'net.ipv4.ping_group_range=0 2147483647'",
 			"rm -rf /etc/netns/client",
 			heredocOpen,
 			"nameserver 1.1.1.1",
