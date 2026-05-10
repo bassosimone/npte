@@ -12,6 +12,7 @@ import (
 	"github.com/bassosimone/npte/internal/cli/doctor"
 	"github.com/bassosimone/npte/internal/cli/gateway"
 	"github.com/bassosimone/npte/internal/cli/lab"
+	"github.com/bassosimone/npte/internal/cli/mcp"
 	"github.com/bassosimone/npte/internal/cli/netem"
 	"github.com/bassosimone/npte/internal/cli/netns"
 	"github.com/bassosimone/npte/internal/cli/sudoers"
@@ -63,14 +64,15 @@ func realMain() {
 		"Run `npte tutorial` for a walkthrough.",
 	)
 	disp.AddVersionHandlers(version)
+	disp.AddCommand("container", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
 	disp.AddCommand("doctor", vclip.CommandFunc(doctor.Main), "Check for required external commands.")
-	disp.AddCommand("tutorial", vclip.CommandFunc(tutorial.Main), "Show the npte tutorials.")
-	disp.AddCommand("netns", vclip.CommandFunc(netns.Main), "Manage network namespaces.")
 	disp.AddCommand("gateway", vclip.CommandFunc(gateway.Main), "Manage namespaces as internet gateways.")
 	disp.AddCommand("lab", vclip.CommandFunc(lab.Main), "Compose a fixed three-node client/router/server lab.")
-	disp.AddCommand("container", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
+	disp.AddCommand("mcp", vclip.CommandFunc(mcp.Main), "Serve npte over MCP for agents (experimental).")
 	disp.AddCommand("netem", vclip.CommandFunc(netem.Main), "Apply or clear traffic shaping.")
+	disp.AddCommand("netns", vclip.CommandFunc(netns.Main), "Manage network namespaces.")
 	disp.AddCommand("sudoers", vclip.CommandFunc(sudoers.Main), "Print a sudoers snippet for the invoking user.")
+	disp.AddCommand("tutorial", vclip.CommandFunc(tutorial.Main), "Show the npte tutorials.")
 
 	root := vclip.NewRootCommand(disp)
 	root.LogFatalOnError0 = env.LogFatalOnError0
