@@ -25,9 +25,15 @@ applies and clears link shaping;
 .B container
 runs commands inside a
 .BR systemd-nspawn (1)
-container; and
+container;
 .B lab
-wires a fixed client/router/server topology for the common case.
+wires a fixed client/router/server topology for the common case;
+and
+.B mcp
+speaks the Model Context Protocol over stdio, exposing the
+.BR netns ", " netem ", and " lab
+primitives to a coding agent that cannot shell to
+.BR sudo (8).
 .PP
 Most subcommands require root and exec external utilities such as
 .BR ip (8),

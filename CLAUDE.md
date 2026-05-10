@@ -57,6 +57,14 @@ npte lab     create|destroy|netem         — composes the `netns` primitives
                                             topology. Does NOT call `gateway`
                                             or `container`; layer those on
                                             top when needed.
+
+npte mcp     serve                        — stdio MCP server exposing the
+                                            `netns`/`netem`/`lab` primitives
+                                            as tools to a coding agent that
+                                            cannot shell to sudo. Forks
+                                            `sudo npte ...` as a child;
+                                            inherits the sudoers and
+                                            `--sandbox` bounds. Experimental.
 ```
 
 Every leaf subcommand that touches the kernel supports `--dry-run`, which prints a
@@ -99,7 +107,8 @@ No command persists state; topologies are built imperatively by composing primit
 Tutorial chapters live in `internal/cli/tutorial/chapters/NNN-*.md` and are embedded
 via `go:embed`. The leading `NNN-` prefix orders them; `tutorial.Main` strips the
 prefix, extracts the `# Title`, and auto-generates the TOC. Chapter slugs are stable
-(`netns-basics`, `routing`, `netem`, `bufferbloat`, `browser`, `containers`, `podman`).
+(`netns-basics`, `routing`, `netem`, `bufferbloat`, `browser`, `containers`, `podman`,
+`sudoers`, `sandbox`, `mcp`).
 
 ## Conventions
 

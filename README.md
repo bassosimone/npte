@@ -94,6 +94,10 @@ https://github.com/bassosimone/npte/tree/main/internal/cli/tutorial/chapters).
 
 - `sudoers` — print `sudoers` `NOPASSWD` configuration for selected subcommands.
 
+- `mcp` — speak the Model Context Protocol over stdio so a sandboxed
+  coding agent can drive the `netns`/`netem`/`lab` primitives without
+  shelling to `sudo`. Experimental. See `npte tutorial mcp`.
+
 All the subcommands that modify the kernel state also support the `--dry-run`
 flag, which prints a round-trippable shell script to stdout instead of executing.
 
