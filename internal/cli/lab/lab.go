@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// Package star implements the star subcommand.
-package star
+// Package lab implements the lab subcommand.
+package lab
 
 import (
 	"context"
@@ -14,38 +14,38 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
-// Main is the main of the star subcommand.
+// Main is the main of the lab subcommand.
 func Main(ctx context.Context, args []string) error {
 	env := testable.Env
 
-	disp := vclip.NewDispatcherCommand("npte star", vflag.ExitOnError)
+	disp := vclip.NewDispatcherCommand("npte lab", vflag.ExitOnError)
 	disp.Exit = env.Exit
 	disp.Stderr = env.Stderr
 	disp.Stdout = env.Stdout
 	disp.AddDescription(
-		"Compose a fixed three-node star topology built entirely from the other "+
-			"`npte` primitives. The leaves are named `client` and `server`; the hub "+
-			"is named `router`. The leaves can talk to each other through the "+
-			"router; the star itself does not include a host uplink, so off-link "+
-			"connectivity requires layering `npte gateway create router "+
-			"172.16.1.0/24 <ext-iface>` on top.",
+		"Compose a fixed three-node `client — router — server` lab built entirely "+
+			"from the other `npte` primitives. The leaves are named `client` and "+
+			"`server`; the middle node is named `router`. The leaves can talk to "+
+			"each other through the router; the lab itself does not include a host "+
+			"uplink, so off-link connectivity requires layering `npte gateway "+
+			"create router 172.16.1.0/24 <ext-iface>` on top.",
 		"This is batteries-included convenience: the exact sequence of `npte netns` "+
 			"invocations it performs is visible with `--dry-run`. For non-default "+
 			"names, addresses, or topologies, call the underlying primitives "+
 			"directly.",
-		"Because `star` only composes `netns` primitives — no host-namespace "+
+		"Because `lab` only composes `netns` primitives — no host-namespace "+
 			"state — it is safe to run under the same NOPASSWD sudoers allowlist "+
 			"as `netns` and `netem`. See `npte sudoers` for the snippet.",
 	)
-	disp.AddCommand("create", vclip.CommandFunc(createMain), "Create the `client`/`router`/`server` star.")
-	disp.AddCommand("destroy", vclip.CommandFunc(destroyMain), "Destroy the `client`/`router`/`server` star.")
-	disp.AddCommand("netem", vclip.CommandFunc(netemMain), "Shape the star's access links with a named profile.")
+	disp.AddCommand("create", vclip.CommandFunc(createMain), "Create the `client`/`router`/`server` lab.")
+	disp.AddCommand("destroy", vclip.CommandFunc(destroyMain), "Destroy the `client`/`router`/`server` lab.")
+	disp.AddCommand("netem", vclip.CommandFunc(netemMain), "Shape the lab's access link with a named profile.")
 
 	return disp.Main(ctx, args)
 }
 
 // runSelf executes the current `npte` binary with the given arguments,
-// so that `npte star` can compose other `npte` subcommands without
+// so that `npte lab` can compose other `npte` subcommands without
 // duplicating their logic.
 //
 // The binary path is resolved once by the caller via [os.Executable],

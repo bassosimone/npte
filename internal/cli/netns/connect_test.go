@@ -59,7 +59,7 @@ func TestConnect(t *testing.T) {
 }
 
 // TestConnect_dryRunSkipsLstat is a regression test for a bug where dry-run
-// composition (e.g. `npte star create --dry-run`) aborted at the first
+// composition (e.g. `npte lab create --dry-run`) aborted at the first
 // `netns connect` because RequireManaged stat'd the marker — which never
 // existed, since the previous `netns create -n` only printed its install
 // command. The fix moved the dry-run branch above the filesystem call and

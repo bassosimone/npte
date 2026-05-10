@@ -45,7 +45,7 @@ type TB interface {
 
 // SelfPath is the absolute path returned by the stubbed Executable; it is
 // also the cmd.Path / cmd.Args[0] of every captured RunCommand entry that
-// originates from `npte star`'s self-recursion.
+// originates from `npte lab`'s self-recursion.
 const SelfPath = "/usr/local/sbin/npte"
 
 // Stubs holds the buffers and the captured exit code for a test.
@@ -57,7 +57,7 @@ type Stubs struct {
 	SudoUser string
 	// Commands records the full argv (including the binary as Args[0]) of
 	// every command passed to the stubbed RunCommand. Useful for asserting
-	// what `npte star` would dispatch, since runSelf always exec's even in
+	// what `npte lab` would dispatch, since runSelf always exec's even in
 	// dry-run mode.
 	Commands [][]string
 }

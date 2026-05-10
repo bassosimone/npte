@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package star
+package lab
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/bassosimone/vflag"
 )
 
-// linkShape describes the shape of one direction of the star's access link.
+// linkShape describes the shape of one direction of the lab's access link.
 //
 // Exactly one of two combinations is valid per shape (enforced at init):
 //
@@ -44,10 +44,13 @@ type linkShape struct {
 	childArgs []string // pass-through flags for `npte netem apply --child ...`
 }
 
-// profile is a named pair of link shapes, one per direction of the star's
+// profile is a named pair of link shapes, one per direction of the lab's
 // access link. downlink shapes router→client traffic (installed on
 // router/if-client); uplink shapes router→server traffic (installed on
-// router/if-server).
+// router/if-server). Both placements live on the router because the
+// router *forwards* traffic, so packets do not have a local TCP socket
+// here and TCP Small Queues / BQL do not throttle qdisc backlog the way
+// they would on the originating endpoint — netem can actually fill.
 type profile struct {
 	description string
 	downlink    linkShape
@@ -102,17 +105,17 @@ func profileNames() []string {
 	return names
 }
 
-// netemMain is the main of the `star netem` subcommand.
+// netemMain is the main of the `lab netem` subcommand.
 func netemMain(ctx context.Context, args []string) error {
 	env := testable.Env
 
-	fset := vflag.NewFlagSet("npte star netem", vflag.ExitOnError)
+	fset := vflag.NewFlagSet("npte lab netem", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 
 	// Build the "Available profiles:" block dynamically so the help text
 	// cannot drift out of sync with the profiles map.
 	desc := []string{
-		"Shape the star's access links with a named profile. Implemented as " +
+		"Shape the lab's access links with a named profile. Implemented as " +
 			"a composition of `npte netem clear` and `npte netem apply` calls " +
 			"against router/if-client (shapes router→client, i.e. downlink) " +
 			"and router/if-server (shapes router→server, i.e. uplink).",
@@ -135,7 +138,7 @@ func netemMain(ctx context.Context, args []string) error {
 		desc = append(desc, wrapped)
 	}
 	desc = append(desc,
-		"This is batteries-included convenience for the canonical star. For "+
+		"This is batteries-included convenience for the canonical lab. For "+
 			"asymmetric shapes beyond what the profiles express, or different "+
 			"qdisc trees, call `npte netem apply` directly.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
@@ -163,14 +166,14 @@ func netemMain(ctx context.Context, args []string) error {
 		var ok bool
 		prof, ok = profiles[profileName]
 		if !ok {
-			logx.Error("npte star netem: unknown profile %q", profileName)
-			logx.Error("npte star netem: available profiles: %v", profileNames())
+			logx.Error("npte lab netem: unknown profile %q", profileName)
+			logx.Error("npte lab netem: available profiles: %v", profileNames())
 			env.Exit(2)
 			return nil
 		}
 	}
 
-	self := selfPath("npte star netem")
+	self := selfPath("npte lab netem")
 
 	pass := func(argv ...string) []string {
 		if dryRun {
@@ -180,15 +183,15 @@ func netemMain(ctx context.Context, args []string) error {
 	}
 
 	if profileName == "" {
-		logx.Details("npte: clear shaping on star access links")
+		logx.Details("npte: clear shaping on lab access links")
 	} else {
-		logx.Details("npte: apply profile %q to star access links", profileName)
+		logx.Details("npte: apply profile %q to lab access links", profileName)
 	}
 
 	// Clear first unconditionally: makes the command idempotent and lets
 	// the user switch between profiles without a separate teardown step.
 	// `netem clear` is itself tolerant of an absent root qdisc, so this
-	// is a no-op on a freshly-created star.
+	// is a no-op on a freshly-created lab.
 	runSelf(ctx, self, pass("netem", "clear", "router", "if-client")...)
 	runSelf(ctx, self, pass("netem", "clear", "router", "if-server")...)
 

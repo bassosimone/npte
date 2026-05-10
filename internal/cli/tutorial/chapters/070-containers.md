@@ -11,28 +11,28 @@ breaks the performance-testing persistence the rest of this
 tutorial relies on. The fix is a second, orthogonal namespace: a
 private filesystem tree, bound to the existing network namespace
 by `systemd-nspawn`. This chapter walks the pattern end to end —
-a star, a debootstrap tree, a booted container, nginx inside,
+a lab, a debootstrap tree, a booted container, nginx inside,
 and a curl from `client` that hits it.
 
 We still use `sudo` to gain the required `root` privileges.
 
-## 1. A star and a tree
+## 1. A lab and a tree
 
 Build the topology, plus a gateway on top so the booted container
 in `server` can reach Ubuntu's apt mirrors when we install nginx in
 §5. Find your host's internet-facing interface with `ip route show
 default`, then:
 
-    sudo npte star create
+    sudo npte lab create
     sudo npte gateway create router 172.16.1.0/24 <uplink>
 
-Same star as chapter 4 plus a `router` uplink: `client` at
+Same lab as chapter 4 plus a `router` uplink: `client` at
 `172.16.3.2`, `server` at `172.16.2.2`, `router` NATing to the
 host. No traffic shaping — shaping is orthogonal to the container
 story.
 
-Splitting `star` and `gateway` keeps the password-prompt cost
-focused: `star` is allowlisted via `npte sudoers`, so only
+Splitting `lab` and `gateway` keeps the password-prompt cost
+focused: `lab` is allowlisted via `npte sudoers`, so only
 `gateway create` and `gateway destroy` actually prompt. The
 `debootstrap` step that follows is a host-side fetch and does not
 need the gateway; only the in-container `apt install nginx` later
@@ -115,7 +115,7 @@ see the exact command. Two namespace kinds come together here:
   this tree, not the host.
 
 - The **network namespace** is `/run/netns/server`, already built
-  by `star create`. `nspawn` does not create or address it; it
+  by `lab create`. `nspawn` does not create or address it; it
   joins it as-is. From inside the container, `ip link show` lists
   `lo` and `if-router` — the same interfaces `npte netns run
   server ip link show` would print on the host.
@@ -254,10 +254,10 @@ hook on the way down.
 Then, from terminal B:
 
     sudo npte gateway destroy router
-    sudo npte star destroy
+    sudo npte lab destroy
 
 `gateway destroy` removes the host-side NAT/FORWARD rules and the
-uplink veth; `star destroy` removes the three namespaces and the
+uplink veth; `lab destroy` removes the three namespaces and the
 veth pairs. The **filesystem tree does not go**: it still sits at
 `$HOME/containers/noble`, nginx still installed, the resolved.conf
 drop-in still in place, root password still set. Attach it to a

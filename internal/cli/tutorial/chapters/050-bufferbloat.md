@@ -17,7 +17,7 @@ introduction.
 
 We still use `sudo` to gain the required `root` privileges.
 
-## 1. Three terminals, a star, and a server
+## 1. Three terminals, a lab, and a server
 
 Bufferbloat is a property of a link **under load** that you only
 see by observing a *separate* small flow at the same time as the
@@ -33,7 +33,7 @@ terminals, not two:
 
 Build the topology in any of them:
 
-    sudo npte star create
+    sudo npte lab create
 
 This chapter, like chapter 4, stays inside the topology — iperf3
 between leaves and ping between leaves. No internet egress needed,
@@ -236,7 +236,7 @@ on the same two interfaces — `router/if-client` for downlink,
 `router/if-server` for uplink — they bundle cleanly behind a
 single convenience command.
 
-`npte star netem --profile <name>` clears both shaped interfaces
+`npte lab netem --profile <name>` clears both shaped interfaces
 and re-applies a named profile. Two profiles ship:
 
 - `4g-bloated` — the dumb-FIFO shape from §3, with `--limit`
@@ -248,17 +248,17 @@ and re-applies a named profile. Two profiles ship:
 
 Same access link, one knob:
 
-    sudo npte star netem --profile 4g-bloated
+    sudo npte lab netem --profile 4g-bloated
     # run iperf3 from terminal B; watch terminal C climb to seconds
 
-    sudo npte star netem --profile 4g-managed
+    sudo npte lab netem --profile 4g-managed
     # re-run iperf3; terminal C stays close to 50ms
 
 With `--profile ""` (the default, no flag), both interfaces are
 cleared and nothing is re-applied — the one-line equivalent of the
 `netem clear` pair you have been typing.
 
-`npte star netem --profile 4g-managed --dry-run` prints the exact
+`npte lab netem --profile 4g-managed --dry-run` prints the exact
 `netem clear` / `netem apply` calls the command would run, in the
 same shell-quoted form used elsewhere. Two properties follow from
 this: the shortcut is pure composition of the primitives you
@@ -272,7 +272,7 @@ shell options of its own. Paste it as-is, or wrap it (e.g. with
 `set -euxo pipefail`) if you want fail-fast semantics. Same applies
 to every other `--dry-run` in this tutorial.
 
-The shortcut is hardcoded for the `client/router/server` star and
+The shortcut is hardcoded for the `client/router/server` lab and
 its fixed interface names. Asymmetric topologies, different names,
 or shapes outside what the two profiles express all still live in
 the long form from §3 and §4.
@@ -282,7 +282,7 @@ the long form from §3 and §4.
 Stop the iperf3 server in terminal A and the ping in terminal C
 with `Ctrl-C`, then tear the topology down from terminal B:
 
-    sudo npte star destroy
+    sudo npte lab destroy
 
 The qdiscs we installed go with the namespaces; the host is back
 to the state it was in before the chapter started.
@@ -320,8 +320,8 @@ to the state it was in before the chapter started.
   multiple classes, hierarchies — drop down to raw `tc` via
   `sudo ip netns exec <ns> tc ...`.
 
-- `npte star netem --profile <name>` is a convenience wrapper
-  around the same primitives, scoped to the canonical star: it
+- `npte lab netem --profile <name>` is a convenience wrapper
+  around the same primitives, scoped to the canonical lab: it
   expands to `netem clear` + `netem apply` calls on
   `router/if-client` and `router/if-server`. Use `--dry-run` to
   see the expansion; fall back to `netem apply` directly when the

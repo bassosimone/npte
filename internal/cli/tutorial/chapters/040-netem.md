@@ -1,6 +1,6 @@
 # Shaping the access link with netem
 
-The previous chapter built a `client — router — server` star and used
+The previous chapter built a `client — router — server` lab and used
 `ping` and `curl` to confirm reachability. That tells you whether
 packets get through, not what the link feels like under load. This
 chapter shapes the client's access link with `tc`/`netem` — adding
@@ -16,21 +16,21 @@ iperf3` is enough.
 
 We still use `sudo` to gain the required `root` privileges.
 
-## 1. Two terminals, a star, and a server
+## 1. Two terminals, a lab, and a server
 
 Everything in this chapter runs in two terminals side by side. One
 holds the `iperf3` server inside the `server` namespace; the other
 shapes the link and runs the `iperf3` client. Open them now.
 
-Build the topology in either terminal — `npte star create` is the
+Build the topology in either terminal — `npte lab create` is the
 short form of the recipe you assembled by hand last chapter. It
 creates the three namespaces, wires `client` and `server` to
 `router`, addresses every link out of `172.16.0.0/16`, and installs
 default routes on the leaves:
 
-    sudo npte star create
+    sudo npte lab create
 
-`star create` does **not** include a host uplink: this chapter only
+`lab create` does **not** include a host uplink: this chapter only
 needs `client` and `server` to talk to each other through `router`,
 and the iperf3 traffic below stays inside the topology. Adding a
 gateway would be wasted host-side state. After the command runs,
@@ -329,9 +329,9 @@ Clear both directions before moving on:
 Stop the iperf3 server in terminal A with `Ctrl-C`, then tear the
 topology down from terminal B:
 
-    sudo npte star destroy
+    sudo npte lab destroy
 
-`star destroy` removes the three namespaces. The veth pairs and any
+`lab destroy` removes the three namespaces. The veth pairs and any
 per-namespace iptables state go with them; the host is back to
 where it started. Any netem qdiscs left installed are gone too,
 since they live inside the namespaces.

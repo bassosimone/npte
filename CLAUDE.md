@@ -52,7 +52,7 @@ npte netem   apply|clear                  — thin wrapper around `tc qdisc ... 
 npte container create|run|boot            — debootstrap + systemd-nspawn, with an
                                             optional --netns binding
 
-npte star    create|destroy|netem         — composes the `netns` primitives
+npte lab     create|destroy|netem         — composes the `netns` primitives
                                             into a fixed client-router-server
                                             topology. Does NOT call `gateway`
                                             or `container`; layer those on
@@ -92,7 +92,7 @@ Each subcommand file follows the same shape:
    to do the kernel work.
 
 No command persists state; topologies are built imperatively by composing primitives.
-`star` is the one exception — it hard-codes a specific composition.
+`lab` is the one exception — it hard-codes a specific composition.
 
 ### Embedded documentation
 

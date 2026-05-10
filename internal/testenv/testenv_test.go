@@ -100,7 +100,7 @@ func TestSetup_otherStubsAreNoOps(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "/home/sbs/src/github.com/bassosimone/npte", wd)
 
-	// Executable is consulted by star/* for the npte self-recursion path.
+	// Executable is consulted by lab/* for the npte self-recursion path.
 	self, err := testable.Env.Executable()
 	assert.NoError(t, err)
 	assert.Equal(t, SelfPath, self)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package star
+package lab
 
 import (
 	"context"
@@ -11,18 +11,18 @@ import (
 	"github.com/bassosimone/vflag"
 )
 
-// createMain is the main of the `star create` subcommand.
+// createMain is the main of the `lab create` subcommand.
 func createMain(ctx context.Context, args []string) error {
 	env := testable.Env
 
-	fset := vflag.NewFlagSet("npte star create", vflag.ExitOnError)
+	fset := vflag.NewFlagSet("npte lab create", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Creates a three-node star topology. Two leaf namespaces, `client` and "+
+		"Creates a three-node lab topology. Two leaf namespaces, `client` and "+
 			"`server`, each share a veth pair with a hub namespace, `router`. Both "+
 			"leaves get a default route via the router. Off-link traffic is not "+
 			"wired up: the leaves can talk to each other through the router, but "+
-			"there is no host uplink and no NAT. To give the star internet egress, "+
+			"there is no host uplink and no NAT. To give the lab internet egress, "+
 			"layer `npte gateway create router 172.16.1.0/24 <ext-iface>` on top.",
 		"Addresses are fixed, and drawn from 172.16.0.0/16 — the quietest "+
 			"corner of RFC1918 in practice (home/ISP CPE prefer 192.168/16 or "+
@@ -31,7 +31,7 @@ func createMain(ctx context.Context, args []string) error {
 		"    server↔router uses 172.16.2.0/24 (server=.2, router=.1)",
 		"    client↔router uses 172.16.3.0/24 (client=.2, router=.1)",
 		"    router↔host   uses 172.16.1.0/24 — reserved for `npte gateway "+
-			"create`, not wired by `star create` itself.",
+			"create`, not wired by `lab create` itself.",
 		"Implementation is a composition of `npte netns create`, `npte netns "+
 			"connect`, `npte netns assign-addr`, and `npte netns add-route`. For "+
 			"non-default names, subnets, or shapes, call those primitives directly.",
@@ -52,7 +52,7 @@ func createMain(ctx context.Context, args []string) error {
 	fset.MaxPositionalArgs = 0
 	runtimex.PanicOnError0(fset.Parse(args))
 
-	self := selfPath("npte star create")
+	self := selfPath("npte lab create")
 
 	// Propagate --dry-run to each child invocation so the composed output
 	// is a contiguous shell script mirroring what a live run would do.
@@ -65,7 +65,7 @@ func createMain(ctx context.Context, args []string) error {
 		return argv
 	}
 
-	logx.Details("npte: compose star topology (client/router/server), no internet egress")
+	logx.Details("npte: compose lab topology (client/router/server), no internet egress")
 
 	runSelf(ctx, self, pass("netns", "create", "client")...)
 	runSelf(ctx, self, pass("netns", "create", "router")...)
@@ -82,7 +82,7 @@ func createMain(ctx context.Context, args []string) error {
 	runSelf(ctx, self, pass("netns", "add-route", "client", "default", "172.16.3.1")...)
 	runSelf(ctx, self, pass("netns", "add-route", "server", "default", "172.16.2.1")...)
 
-	logx.Details("npte: star topology is up (leaf↔leaf only)")
+	logx.Details("npte: lab topology is up (leaf↔leaf only)")
 	logx.Details("npte: for internet egress, run: npte gateway create router 172.16.1.0/24 <ext-iface>")
 	return nil
 }

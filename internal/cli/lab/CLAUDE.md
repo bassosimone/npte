@@ -1,23 +1,23 @@
-# star — auditing notes
+# lab — auditing notes
 
 ## Why this file exists
 
-`star` is allowlisted for NOPASSWD sudo execution by `npte sudoers`,
+`lab` is allowlisted for NOPASSWD sudo execution by `npte sudoers`,
 on the same line as `netns *` and `netem *`. That allowlist is only
-safe because every code path under `star/` is a pure composition of
+safe because every code path under `lab/` is a pure composition of
 *namespace-scoped* primitives — operations that touch private kernel
 state inside namespaces the user owns, never host-namespace state.
 
 If a future change adds a single call that reaches outside that
 boundary, the sudoers contract silently breaks: a user with the
 snippet installed gains passwordless ability to invoke that call
-through `npte star ...`.
+through `npte lab ...`.
 
-This file is the audit checklist for changes under `star/`.
+This file is the audit checklist for changes under `lab/`.
 
 ## The invariant
 
-Every operation `star` performs MUST be expressible as a child
+Every operation `lab` performs MUST be expressible as a child
 invocation of one of:
 
 - `npte netns create | destroy | connect | assign-addr | add-route | run`
@@ -26,13 +26,13 @@ invocation of one of:
 That is what `runSelf` is for, and that is the only kernel-touching
 mechanism this package is allowed to use.
 
-## What `star` MUST NOT call
+## What `lab` MUST NOT call
 
-The following are forbidden inside `star/`, whether via `runSelf`,
+The following are forbidden inside `lab/`, whether via `runSelf`,
 `subprocess.MustRun`, or any other path:
 
 - `npte gateway *` — installs host-side iptables/sysctl. The whole
-  reason `star` no longer calls this is to keep the NOPASSWD line
+  reason `lab` no longer calls this is to keep the NOPASSWD line
   defensible.
 - `npte container *` — runs `systemd-nspawn` with capabilities that
   reach beyond the namespace.
@@ -47,7 +47,7 @@ The following are forbidden inside `star/`, whether via `runSelf`,
 When reviewing a change to this package, ask:
 
 > "If a user installed the `npte sudoers` snippet and then ran
-> `sudo npte star <new-thing> ...`, would they gain a privilege
+> `sudo npte lab <new-thing> ...`, would they gain a privilege
 > they did not have via `sudo npte netns ...` or `sudo npte netem
 > ...` alone?"
 
@@ -58,7 +58,7 @@ template) and let the user invoke it with a password prompt.
 ## Related files
 
 - `internal/cli/sudoers/sudoers.go` — emits the NOPASSWD snippet
-  that includes `npte star *`. If you change which subcommand
+  that includes `npte lab *`. If you change which subcommand
   classes are allowlisted, update both.
 - `internal/cli/tutorial/chapters/090-sudoers.md` — user-facing
   description of the same boundary.

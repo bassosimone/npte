@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package star
+package lab
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStarNetem(t *testing.T) {
+func TestLabNetem(t *testing.T) {
 	tests := []struct {
 		name     string
 		args     []string
@@ -96,11 +96,11 @@ func TestApplyArgs_loss(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-// TestStarNetem_selfPathError pins the contract that selfPath logs and
+// TestLabNetem_selfPathError pins the contract that selfPath logs and
 // exits 1 when testable.Env.Executable fails. We swap Exit for
 // deferexit.Panic and wrap the call in deferexit.Run so the exit halts
 // netemMain (mirroring production), then assert no child npte ran.
-func TestStarNetem_selfPathError(t *testing.T) {
+func TestLabNetem_selfPathError(t *testing.T) {
 	s := testenv.Setup(t)
 	testable.Env.Exit = deferexit.Panic
 	testable.Env.Executable = func() (string, error) {

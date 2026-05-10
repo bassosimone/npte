@@ -19,7 +19,7 @@ import (
 //
 // Today only `cake` is allowed: it is the one kind we surface knobs
 // for (`--cake-bandwidth`) and the only kind any tutorial chapter or
-// star-netem profile invokes. Add a kind back the day a concrete
+// lab-netem profile invokes. Add a kind back the day a concrete
 // use case shows up, alongside whatever per-kind flags it needs;
 // kinds with no exposed knobs would only run at kernel defaults,
 // which is meaningful for self-tuning AQMs but useless for FIFOs

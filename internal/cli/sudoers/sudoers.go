@@ -31,7 +31,7 @@ func Main(ctx context.Context, args []string) error {
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Prints a sudoers snippet that allowlists the npte netns, "+
-			"netem, and star subcommands for the invoking user, with "+
+			"netem, and lab subcommands for the invoking user, with "+
 			"NOPASSWD. Other npte subcommands (gateway, container, "+
 			"tutorial, ...) are not covered and continue to prompt for "+
 			"the sudo password.",
@@ -109,14 +109,14 @@ const snippet = `
 #
 # - ` + installPath + ` netns *
 # - ` + installPath + ` netem *
-# - ` + installPath + ` star *
+# - ` + installPath + ` lab *
 #
 # The user who is granted permission is the one who invoked
 # the 'npte sudoers' command.
 
 %[1]s ALL=(root) NOPASSWD: ` + installPath + ` netns *
 %[1]s ALL=(root) NOPASSWD: ` + installPath + ` netem *
-%[1]s ALL=(root) NOPASSWD: ` + installPath + ` star *
+%[1]s ALL=(root) NOPASSWD: ` + installPath + ` lab *
 
 # Install this snippet by pasting it into /etc/sudoers via:
 #

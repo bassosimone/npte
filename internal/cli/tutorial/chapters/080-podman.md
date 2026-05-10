@@ -20,11 +20,11 @@ from `npte` without rebuilding anything.
 
 We still use `sudo` to gain the required `root` privileges.
 
-## 1. A star and a container runtime
+## 1. A lab and a container runtime
 
 Build the topology:
 
-    sudo npte star create
+    sudo npte lab create
 
 No gateway this time. Image pulls run as `podman` on the host (see
 the explanatory note in §2), and the container we run only **serves**
@@ -36,7 +36,7 @@ Same shape as the previous chapter on the wire — `client` at
 needed for `apt install` last chapter.
 
 No shaping either. Shaping is orthogonal to the container story and
-belongs in a separate pass with `npte star netem`.
+belongs in a separate pass with `npte lab netem`.
 
 Install podman on the host:
 
@@ -46,7 +46,7 @@ Install podman on the host:
 important property is `--network=ns:<path>`: instead of creating a
 new network namespace for the container, podman joins the one at the
 given path. `/run/netns/server` is exactly the path `npte netns
-create server` (called by `star create`) pinned the namespace at, so
+create server` (called by `lab create`) pinned the namespace at, so
 `--network=ns:/run/netns/server` plugs the container straight into
 the topology.
 
@@ -153,7 +153,7 @@ Stop the container:
 `--rm` deletes the container record on stop, so `podman ps -a` will
 be empty. Then tear down the topology:
 
-    sudo npte star destroy
+    sudo npte lab destroy
 
 The three namespaces go, the veth pairs are pulled. No gateway
 state to clean up — we never installed any. The **image store does
@@ -171,7 +171,7 @@ are done.
 
 - `/run/netns/<ns>` is where `npte netns create` pins the namespace.
   Passing that path to podman plugs the container directly into the
-  star — no bridge, no veth, no extra NAT in the middle.
+  lab — no bridge, no veth, no extra NAT in the middle.
 
 - Any OCI image on any OCI-compatible registry works the same way:
   `sudo podman run --network=ns:/run/netns/<ns> <image>`. nginx,

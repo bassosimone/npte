@@ -11,8 +11,8 @@ that fall out of those two together.
 
 The bread-and-butter case. The ndt8 client and server are ordinary
 Linux binaries; we want to watch them under a realistic access link
-without leaving the laptop. `npte star create` wires three namespaces
-into a `client — router — server` topology, and `npte star netem
+without leaving the laptop. `npte lab create` wires three namespaces
+into a `client — router — server` topology, and `npte lab netem
 --profile <name>` shapes both directions of the access links from a
 named profile. The two profiles shipped today, `4g-bloated` and
 `4g-managed`, illustrate what the profile system is for: the same
@@ -27,7 +27,7 @@ behaves on a realistic access link is to run a real browser there.
 internally, `ip netns exec <ns> runuser -u $SUDO_USER -- env K=V... <cmd>`
 — so the browser sees real TCP/IP through `router`, with no SOCKS proxy
 or other intermediary in the path. `gateway` underneath gives internet
-egress; `star netem` on top gives the impairment. The browser is just
+egress; `lab netem` on top gives the impairment. The browser is just
 another binary the namespace runs.
 
 ### Attach a filesystem when binaries on the host aren't enough
@@ -46,7 +46,7 @@ Sometimes the realistic link is the host's actual internet connection,
 and what we want is a controlled amount of latency or loss layered on
 top — to see how a client copes when a real high-bandwidth path
 develops a kink. `npte gateway create` adds a host-NAT'd uplink to a
-namespace; `npte netem apply` (or `star netem`) layers the impairment.
+namespace; `npte netem apply` (or `lab netem`) layers the impairment.
 The shaping is entirely on the namespace side, so the host's
 connectivity is unaffected.
 
@@ -78,7 +78,7 @@ namespaces, veth pairs as links, `tc`/`netem` for shaping. It
 established that one Linux box is enough for serious network
 experimentation — the premise `npte` rests on. Beyond that premise,
 Mininet's vocabulary of built-in named topologies (`minimal`,
-`linear`, `tree`, `single`, `torus`) is the lineage `npte`'s `star`
+`linear`, `tree`, `single`, `torus`) is the lineage `npte`'s `lab`
 belongs to: a small set of named common cases is more useful in
 practice than a configurable topology DSL.
 
@@ -102,7 +102,7 @@ enough.
 `npte` deliberately stops short of either DSL. The aim is to stay
 minimal — primitives that compose, no scenario format — leaving
 room for higher-level tools to define topology on top if anyone
-needs that. In practice, `star` with netem on the router covers
+needs that. In practice, `lab` with netem on the router covers
 most of what we actually do.
 
 ### tc / netem
@@ -179,9 +179,9 @@ which is what `npte` is for. Containers are available through
 `npte container` when an experiment also needs a non-host filesystem
 (use case 3); they are opt-in, not the default.
 
-### `star` as the only built-in topology
+### `lab` as the only built-in topology
 
-Composable primitives are the rule; `star` is the exception. It
+Composable primitives are the rule; `lab` is the exception. It
 hard-codes the `client — router — server` shape because that is
 the topology we use every day, and rebuilding it from `netns` and
 `netem` calls each time would be busy work. There is no `--shape`
@@ -194,7 +194,7 @@ the "fixed" part of `npte` exactly one topology wide.
 Every `npte` operation that touches the kernel runs as root via
 `sudo` — there is no privileged daemon, no IPC, no setuid binary.
 The `sudoers` subcommand prints a snippet that grants `NOPASSWD` for
-`netns`, `netem`, and `star`, so the frequent verbs — creating
+`netns`, `netem`, and `lab`, so the frequent verbs — creating
 isolated namespaces and shaping their internal links, none of which
 disturbs the host's own routing — stop prompting for a password.
 
@@ -242,7 +242,7 @@ the dump. The `sudoers` subcommand likewise prints a verbatim
 sudoers fragment.
 
 The privilege model is shaped to match. The verbs allowlisted by
-the sudoers snippet (`netns`, `netem`, `star`) are exactly the ones
+the sudoers snippet (`netns`, `netem`, `lab`) are exactly the ones
 safe for an agent to run autonomously; anything that would reach
 the host's own routing or filesystem still prompts for a password,
 keeping a human in the loop. The cumulative effect: an agent

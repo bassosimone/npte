@@ -143,7 +143,7 @@ func buildTOC(chapters []chapter) string {
 			"commands are small primitives for creating, connecting, "+
 			"addressing, routing, and shaping these. The chapters "+
 			"below build up from a single empty namespace to a "+
-			"`client — router — server` star with realistic traffic "+
+			"`client — router — server` lab with realistic traffic "+
 			"shaping on the access link, and end with the queueing "+
 			"dynamics that make a shaped link feel either tolerable or "+
 			"broken under load.",

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package star
+package lab
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStarDestroy(t *testing.T) {
+func TestLabDestroy(t *testing.T) {
 	tests := []struct {
 		name     string
 		args     []string

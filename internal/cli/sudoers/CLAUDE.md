@@ -2,7 +2,7 @@
 
 This package emits the `sudoers` snippet that grants **NOPASSWD**
 sudo for a fixed set of npte verb globs (currently `netns *`,
-`netem *`, `star *`). Everything in those globs is invocable as
+`netem *`, `lab *`). Everything in those globs is invocable as
 root by anyone with write access to the allowlisted user's account,
 without authenticating.
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package star
+package lab
 
 import (
 	"context"
@@ -17,7 +17,7 @@ func npte(args ...string) []string {
 	return append([]string{testenv.SelfPath}, args...)
 }
 
-func TestStarCreate(t *testing.T) {
+func TestLabCreate(t *testing.T) {
 	tests := []struct {
 		name     string
 		args     []string

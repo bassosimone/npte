@@ -26,14 +26,14 @@ const expectedHappyPath = `
 #
 # - /usr/local/sbin/npte netns *
 # - /usr/local/sbin/npte netem *
-# - /usr/local/sbin/npte star *
+# - /usr/local/sbin/npte lab *
 #
 # The user who is granted permission is the one who invoked
 # the 'npte sudoers' command.
 
 alice ALL=(root) NOPASSWD: /usr/local/sbin/npte netns *
 alice ALL=(root) NOPASSWD: /usr/local/sbin/npte netem *
-alice ALL=(root) NOPASSWD: /usr/local/sbin/npte star *
+alice ALL=(root) NOPASSWD: /usr/local/sbin/npte lab *
 
 # Install this snippet by pasting it into /etc/sudoers via:
 #

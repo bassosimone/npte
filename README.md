@@ -9,7 +9,7 @@ shaping, and optional lightweight containers.
 It is a collection of small, composable primitives: create and connect
 namespaces (`netns`), attach a host-NATed uplink (`gateway`), shape a link
 with `tc`/`netem` (`netem`), and optionally run commands inside a
-`systemd-nspawn` container (`container`). The `star` command wires a fixed
+`systemd-nspawn` container (`container`). The `lab` command wires a fixed
 topology for the common case.
 
 > **Linux-only.** Most subcommands require `root` and use external commands
@@ -65,7 +65,7 @@ https://github.com/bassosimone/npte/tree/main/internal/cli/tutorial/chapters).
 - `container` — `debootstrap` + `systemd-nspawn` helpers, with optional
   binding to an existing namespace.
 
-- `star` — compose a fixed three-node client/router/server topology
+- `lab` — compose a fixed three-node client/router/server topology
   out of the `netns` primitives.
 
 - `sudoers` — print `sudoers` `NOPASSWD` configuration for selected subcommands.

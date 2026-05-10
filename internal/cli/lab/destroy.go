@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-package star
+package lab
 
 import (
 	"context"
@@ -11,22 +11,22 @@ import (
 	"github.com/bassosimone/vflag"
 )
 
-// destroyMain is the main of the `star destroy` subcommand.
+// destroyMain is the main of the `lab destroy` subcommand.
 func destroyMain(ctx context.Context, args []string) error {
 	env := testable.Env
 
-	fset := vflag.NewFlagSet("npte star destroy", vflag.ExitOnError)
+	fset := vflag.NewFlagSet("npte lab destroy", vflag.ExitOnError)
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
-		"Undoes `npte star create`: destroys the `client`, `server`, and "+
+		"Undoes `npte lab create`: destroys the `client`, `server`, and "+
 			"`router` namespaces. The `netns destroy` calls cascade to the veth "+
 			"pairs and per-namespace iptables state.",
 		"Does NOT touch gateway state. If `npte gateway create router ...` "+
-			"was layered on top of the star, run `npte gateway destroy router` "+
+			"was layered on top of the lab, run `npte gateway destroy router` "+
 			"separately — order does not matter, since `gateway destroy` is "+
 			"tolerant of an absent namespace and removes host-side state by "+
 			"its `npte:gw:<ns>` tag.",
-		"Takes no arguments: names and layout match `npte star create`. This "+
+		"Takes no arguments: names and layout match `npte lab create`. This "+
 			"command is strict — a first-error exit surfaces partial state rather "+
 			"than hiding it. To clean up manually, call `npte netns destroy` "+
 			"directly.",
@@ -47,7 +47,7 @@ func destroyMain(ctx context.Context, args []string) error {
 	fset.MaxPositionalArgs = 0
 	runtimex.PanicOnError0(fset.Parse(args))
 
-	self := selfPath("npte star destroy")
+	self := selfPath("npte lab destroy")
 
 	pass := func(argv ...string) []string {
 		if dryRun {
@@ -56,12 +56,12 @@ func destroyMain(ctx context.Context, args []string) error {
 		return argv
 	}
 
-	logx.Details("npte: tear down star topology (client/router/server)")
+	logx.Details("npte: tear down lab topology (client/router/server)")
 
 	runSelf(ctx, self, pass("netns", "destroy", "client")...)
 	runSelf(ctx, self, pass("netns", "destroy", "server")...)
 	runSelf(ctx, self, pass("netns", "destroy", "router")...)
 
-	logx.Details("npte: star topology is gone")
+	logx.Details("npte: lab topology is gone")
 	return nil
 }
