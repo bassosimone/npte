@@ -35,6 +35,7 @@ func TestShow(t *testing.T) {
 			"=== qdisc ===", "",
 			"=== neigh ===", "",
 			"=== sockets ===", "",
+			"=== pids ===", "",
 		},
 	}, {
 		name:     "filtered sections",

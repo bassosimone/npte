@@ -137,9 +137,9 @@ func TestConnect_liveRejectsUnmanagedRight(t *testing.T) {
 // regularFileInfo implements os.FileInfo for a fake regular file.
 type regularFileInfo string
 
-func (n regularFileInfo) Name() string       { return string(n) }
-func (regularFileInfo) Size() int64          { return 0 }
-func (regularFileInfo) Mode() os.FileMode    { return 0o644 }
-func (regularFileInfo) ModTime() time.Time   { return time.Time{} }
-func (regularFileInfo) IsDir() bool          { return false }
-func (regularFileInfo) Sys() any             { return nil }
+func (n regularFileInfo) Name() string     { return string(n) }
+func (regularFileInfo) Size() int64        { return 0 }
+func (regularFileInfo) Mode() os.FileMode  { return 0o644 }
+func (regularFileInfo) ModTime() time.Time { return time.Time{} }
+func (regularFileInfo) IsDir() bool        { return false }
+func (regularFileInfo) Sys() any           { return nil }

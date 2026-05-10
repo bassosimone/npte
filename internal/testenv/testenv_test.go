@@ -28,8 +28,8 @@ type fakeTB struct {
 	fatalfMsgs  []string
 }
 
-func (f *fakeTB) Helper()              { f.helperCalls++ }
-func (f *fakeTB) Cleanup(fn func())    { f.cleanups = append(f.cleanups, fn) }
+func (f *fakeTB) Helper()           { f.helperCalls++ }
+func (f *fakeTB) Cleanup(fn func()) { f.cleanups = append(f.cleanups, fn) }
 func (f *fakeTB) Errorf(s string, a ...any) {
 	f.errorfMsgs = append(f.errorfMsgs, fmt.Sprintf(s, a...))
 }

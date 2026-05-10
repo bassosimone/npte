@@ -29,8 +29,11 @@ func showMain(ctx context.Context, args []string) error {
 		"The sections are: link (interfaces, MAC, MTU, up/down), addr "+
 			"(IPv4/IPv6 addresses), route and route6 (per-family routing "+
 			"tables), qdisc (traffic shaping with packet/drop counters via "+
-			"`tc -s`), neigh (ARP/NDP table), and sockets (listening TCP/UDP "+
-			"sockets with owning processes via `ss -tunlp`).",
+			"`tc -s`), neigh (ARP/NDP table), sockets (listening TCP/UDP "+
+			"sockets with owning processes via `ss -tunlp`), and pids "+
+			"(PIDs of processes whose net namespace is this one, one per "+
+			"line, in the order `ip netns pids` returns them — kernel "+
+			"readdir order, not numeric).",
 		"Use --section to restrict the dump to a subset of sections (e.g. "+
 			"`--section route --section qdisc`). When --section is not "+
 			"given, all sections are emitted. Names not in the canonical "+
@@ -97,6 +100,7 @@ func showMain(ctx context.Context, args []string) error {
 		{"qdisc", []string{"netns", "exec", ns, "tc", "-s", "qdisc", "show"}},
 		{"neigh", []string{"-n", ns, "neigh", "show"}},
 		{"sockets", []string{"netns", "exec", ns, "ss", "-tunlp"}},
+		{"pids", []string{"netns", "pids", ns}},
 	}
 	for _, s := range sections {
 		if len(wantSections) > 0 && !slices.Contains(wantSections, s.title) {
