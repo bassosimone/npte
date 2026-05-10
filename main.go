@@ -25,9 +25,11 @@ import (
 var version string
 
 func init() {
-	version = "(devel)"
-	if binfo, ok := debug.ReadBuildInfo(); ok {
-		version = binfo.Main.Version
+	if version == "" {
+		version = "(devel)"
+		if binfo, ok := debug.ReadBuildInfo(); ok && binfo.Main.Version != "" {
+			version = binfo.Main.Version
+		}
 	}
 }
 

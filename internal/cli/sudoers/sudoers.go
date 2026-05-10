@@ -21,7 +21,10 @@ import (
 // `npte sudoers` is invoked. If the user's binary lives somewhere
 // else, the right answer is to install it here, not to teach the
 // snippet about per-host paths.
-const installPath = "/usr/local/sbin/npte"
+//
+// It is a variable so that `./scripts/makedeb.bash` can override
+// this value to `/usr/sbin/npte` for the debian package.
+var installPath = "/usr/local/sbin/npte"
 
 // Main is the main of the sudoers subcommand.
 func Main(ctx context.Context, args []string) error {
@@ -104,7 +107,7 @@ func Main(ctx context.Context, args []string) error {
 // in practice. Instead, the snippet states the assumption in the
 // trailing comment and leaves the policy to the operator, who
 // already controls the global sudoers.
-const snippet = `
+var snippet = `
 # This snippet allows running the following commands without a password:
 #
 # - ` + installPath + ` netns *

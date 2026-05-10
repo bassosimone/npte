@@ -20,6 +20,8 @@ topology for the common case.
 
 You need Go >= 1.25.
 
+### From source
+
 ```bash
 go install -v github.com/bassosimone/npte@latest
 sudo install -m555 "$(go env GOPATH)/bin/npte" /usr/local/sbin/npte
@@ -34,6 +36,28 @@ that only `root` can modify.
 
 For local development, `go build .` is fine; the resulting
 binary will report its version as `(devel)`.
+
+### As a Debian package
+
+On Debian/Ubuntu, you can build a `.deb` from a source checkout and
+install it with `dpkg`. There is no public APT repository; the
+package is something you produce locally and install once.
+
+```bash
+git clone https://github.com/bassosimone/npte
+cd npte
+./scripts/makedeb.bash
+sudo dpkg -i npte_*.deb
+```
+
+`makedeb.bash` builds the binary, stages the file tree, and runs
+`dpkg-deb` to assemble the archive. The package installs the binary
+at `/usr/sbin/npte` (rather than `/usr/local/sbin/npte`, which is
+reserved for hand-installed binaries by Debian convention); the
+`npte sudoers` snippet emitted by a packaged build is adjusted
+accordingly via build-time ldflags. If `dpkg -i` complains about
+missing runtime dependencies, run `sudo apt-get -f install` to
+pull them in.
 
 ## Quick Start
 

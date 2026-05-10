@@ -213,10 +213,11 @@ be a hardcoded literal, and a registry of marker files at
 itself created. Both invariants are documented in the package's
 `CLAUDE.md` and re-examined when editing.
 
-The install path matters too. `npte` is meant to live at
-`/usr/local/sbin/npte`, which only root can write, because the
-absolute path in the sudoers snippet has to point at something an
-unprivileged process cannot replace.
+The install path matters too. `npte` is meant to live in a directory
+only root can write — `/usr/local/sbin/npte` for source installs,
+`/usr/sbin/npte` for the `.deb` — because the absolute path in the
+sudoers snippet has to point at something an unprivileged process
+cannot replace.
 
 ### External tools over Go netlink bindings
 

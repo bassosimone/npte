@@ -1,0 +1,87 @@
+.TH NPTE 8 "@DATE@" "npte @VERSION@" "System Administration"
+.SH NAME
+npte \- Network Performance Testing Environment
+.SH SYNOPSIS
+.B npte
+.I command
+.RI [ args ...]
+.SH DESCRIPTION
+.B npte
+tests how a network client behaves on a realistic access link by
+building isolated Linux network namespaces, wiring them together
+with veth pairs, and shaping the resulting links with
+.BR tc (8)
+and
+.BR tc-netem (8).
+No real hardware or second machine is required.
+.PP
+The tool is a collection of small, composable subcommands:
+.B netns
+creates and connects namespaces;
+.B gateway
+attaches a host\-NATed uplink to a namespace;
+.B netem
+applies and clears link shaping;
+.B container
+runs commands inside a
+.BR systemd-nspawn (1)
+container; and
+.B lab
+wires a fixed client/router/server topology for the common case.
+.PP
+Most subcommands require root and exec external utilities such as
+.BR ip (8),
+.BR tc (8),
+.BR iptables (8),
+.BR sysctl (8),
+.BR systemd-nspawn (1),
+.BR debootstrap (8),
+and
+.BR runuser (1).
+Run
+.B npte doctor
+to check which of these are present on the host.
+.SH EXAMPLES
+For the full list of commands and per\-command help, run:
+.PP
+.RS 4
+.B npte \-\-help
+.br
+.BI "npte " command " \-\-help"
+.RE
+.PP
+For an interactive walkthrough \(em basic namespaces, routing,
+.BR tc-netem (8)
+shaping, bufferbloat experiments, browsers, containers \(em run:
+.PP
+.RS 4
+.B npte tutorial
+.RE
+.PP
+To allowlist the
+.BR netns ", " netem ", and " lab
+subcommands for passwordless
+.BR sudo (8)
+on the invoking user's account, run:
+.PP
+.RS 4
+.B npte sudoers
+.RE
+.PP
+The output is a sudoers snippet ready to paste via
+.BR visudo (8).
+.SH SEE ALSO
+.BR ip (8),
+.BR ip-netns (8),
+.BR tc (8),
+.BR tc-netem (8),
+.BR iptables (8),
+.BR systemd-nspawn (1),
+.BR debootstrap (8),
+.BR sudoers (5)
+.SH AUTHOR
+Simone Basso <bassosimone@gmail.com>
+.SH LICENSE
+GPL\-3.0\-or\-later. See
+.I /usr/share/common-licenses/GPL-3
+for the full text.

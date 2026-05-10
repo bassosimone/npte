@@ -85,11 +85,13 @@ is the right friction for operations these bounds cannot cover.
 
 ## Installing the snippet
 
-The snippet binds the allowlist to `/usr/local/sbin/npte`. Sudoers
-matches commands by absolute path, so the binary must live there
-for the rule to apply. If your `npte` binary is somewhere else
-(`$GOPATH/bin`, a build tree, …), copy or symlink it to
-`/usr/local/sbin/npte` before installing the snippet.
+The snippet binds the allowlist to a fixed absolute path: typically
+`/usr/local/sbin/npte` for source installs and `/usr/sbin/npte` for
+the `.deb`. Sudoers matches commands by absolute path, so the binary
+must live at the path the snippet names. Run `npte sudoers` to see
+which path applies to your build; if your `npte` binary is somewhere
+else (`$GOPATH/bin`, a build tree, …), copy it to that path before
+installing the snippet.
 
 Print the snippet (run without `sudo`):
 
