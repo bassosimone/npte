@@ -110,13 +110,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ## Direct Dependencies
 
 - [github.com/bassosimone/closepool](https://pkg.go.dev/github.com/bassosimone/closepool)
+- [github.com/bassosimone/deferexit](https://pkg.go.dev/github.com/bassosimone/deferexit)
 - [github.com/bassosimone/runtimex](https://pkg.go.dev/github.com/bassosimone/runtimex)
 - [github.com/bassosimone/textwrap](https://pkg.go.dev/github.com/bassosimone/textwrap)
 - [github.com/bassosimone/vclip](https://pkg.go.dev/github.com/bassosimone/vclip)
 - [github.com/bassosimone/vflag](https://pkg.go.dev/github.com/bassosimone/vflag)
 - [github.com/charmbracelet/glamour](https://pkg.go.dev/github.com/charmbracelet/glamour)
 - [github.com/charmbracelet/lipgloss](https://pkg.go.dev/github.com/charmbracelet/lipgloss)
+- [github.com/google/uuid](https://pkg.go.dev/github.com/google/uuid)
 - [github.com/kballard/go-shellquote](https://pkg.go.dev/github.com/kballard/go-shellquote)
+- [github.com/modelcontextprotocol/go-sdk](https://pkg.go.dev/github.com/modelcontextprotocol/go-sdk)
 - [github.com/rogpeppe/go-internal](https://pkg.go.dev/github.com/rogpeppe/go-internal)
 - [github.com/stretchr/testify](https://pkg.go.dev/github.com/stretchr/testify)
 
