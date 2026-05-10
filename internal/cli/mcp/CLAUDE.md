@@ -159,6 +159,46 @@ Do not add code paths in this package that exec, mount, or otherwise
 require elevated capabilities directly. If a feature seems to need
 those, the work belongs in a sudoers-allowlisted verb, not here.
 
+### 6. Netem tools accept only the canonical shaping target
+
+`start_netem_apply` and `start_netem_clear` MUST reject any
+`netns` other than `router` and any `iface` other than
+`if-client` or `if-server`. The MCP exposes only the canned lab
+(see `start_lab_create`), whose three-namespace hub-and-spoke
+topology puts both path bottlenecks at the router's two veth
+endpoints. Shaping at any other point produces results that do
+not correspond to a documented scenario, and an agent that does
+so silently is hard to catch from the spool alone.
+
+Two layers cooperate:
+
+- A `validateNetemTarget` helper in `netem.go` enforces the
+  allowlist before `startProc` is called. Failure surfaces as a
+  clean MCP tool error rather than running a wrong-place qdisc.
+- The `jsonschema` descriptions on the four affected fields
+  (`Netns`/`Iface` on `netemApplyInput` and `netemClearInput`)
+  quote the allowed values so the agent reads the rule at the
+  moment of argument selection. They MUST stay in sync with the
+  helper.
+
+The lab-shaping paragraph in `serve.go`'s `instructions` block
+teaches the *why* (which hub is canonical, why leaves are
+wrong); this invariant is the *structural guarantee*. Both are
+load-bearing: the paragraph keeps the agent from burning calls
+on retries with the wrong namespace, the helper keeps a
+non-compliant agent from silently producing mis-located qdiscs.
+
+Out of scope on purpose:
+
+- `start_netns_run` and `start_netns_show` accept `client`,
+  `router`, and `server` freely — iperf3 and friends must run
+  inside the leaves. The constraint is only on netem-side
+  handlers, because that is the only place where a
+  topologically-wrong choice produces silently-wrong results.
+- A human driving `npte netem ...` from a shell can shape
+  anywhere they like. The MCP layer is opinionated; the
+  underlying primitive is not.
+
 ## When editing this package
 
 1. **Adding a new `start_*` tool.** Confirm the target verb is in
@@ -181,7 +221,16 @@ those, the work belongs in a sudoers-allowlisted verb, not here.
    Re-read invariant #4. Keep cross-cutting framing in
    `instructions`; keep per-tool descriptions specific.
 
-4. **Editing `startProc`.** It is the choke point for every
+4. **Editing `start_netem_apply` or `start_netem_clear`.** Touch
+   invariant #6. Verify the `validateNetemTarget` helper still
+   names the same `<ns> <iface>` set as the four `jsonschema`
+   description strings, and that the helper is still called
+   before `startProc` in both handlers. If `lab create`'s naming
+   ever changes in `internal/cli/lab/`, update the helper, the
+   four descriptions, AND the lab-shaping paragraph in
+   `serve.go`'s instructions block in the same change.
+
+5. **Editing `startProc`.** It is the choke point for every
    privileged invocation. Changes that affect argv composition (the
    `[]string{"/usr/bin/sudo", "-n", sm.exePath}` prefix, sudo
    non-interactivity, the session layout) are security-relevant. The

@@ -89,6 +89,18 @@ func serveMain(ctx context.Context, args []string) error {
 		"prevents you from invoking npte via Bash. For non-privileged " +
 		"operations (e.g., `npte --help`, `npte doctor`, `npte tutorial`, " +
 		"or reading files under <session_root>) you MUST prefer Bash.\n\n" +
+		"Lab shaping convention. After `lab create`, the topology is " +
+		"three namespaces: `client`, `router`, `server`. Veths are " +
+		"`client.if-router <-> router.if-client` and " +
+		"`server.if-router <-> router.if-server`. For all path-level " +
+		"shaping (delay, rate, loss, AQM experiments), netem MUST be " +
+		"installed at the router: `router if-client` for router->client " +
+		"egress and `router if-server` for router->server egress. Both " +
+		"directions live at the hub, which is the canonical bottleneck. " +
+		"Do NOT apply netem to a leaf-side interface " +
+		"(`client if-router`, `server if-router`); the path's " +
+		"bottleneck does not live there and the resulting throughput " +
+		"numbers will not correspond to any reproducible scenario.\n\n" +
 		"Process lifecycle: pair every successful start_* with `wait` " +
 		"on the returned procId. Use `kill` to send SIGINT. A `wait` " +
 		"returning terminated=true reaps the proc (one-shot); subsequent " +

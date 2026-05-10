@@ -55,6 +55,24 @@ If the answer is yes — or "maybe" — the change does not belong here.
 Split it out as its own subcommand (the `gateway` shape is the
 template) and let the user invoke it with a password prompt.
 
+## Topology naming is load-bearing for the MCP
+
+The namespace names (`client`, `router`, `server`) and the veth
+interface names (`if-client`, `if-server` on the router side;
+`if-router` on each leaf) are quoted verbatim in the "Lab shaping
+convention" paragraph of the MCP server's handshake `instructions`
+block (`internal/cli/mcp/serve.go`). That paragraph teaches the
+agent where to install netem (always at the router, never at a
+leaf) and refers to specific `<ns> <iface>` pairs.
+
+If you rename any namespace or interface, change the leaf/hub
+count, or add a fourth node, **update the MCP instructions
+paragraph in the same change.** Drifting names there is silent:
+the agent will follow stale guidance and install qdiscs on
+interfaces that no longer exist (failure) or, worse, on
+correctly-named interfaces in the wrong topological role (silently
+wrong results).
+
 ## Related files
 
 - `internal/cli/sudoers/sudoers.go` — emits the NOPASSWD snippet
@@ -62,3 +80,6 @@ template) and let the user invoke it with a password prompt.
   classes are allowlisted, update both.
 - `internal/cli/tutorial/chapters/090-sudoers.md` — user-facing
   description of the same boundary.
+- `internal/cli/mcp/serve.go` — handshake `instructions` block
+  quotes this package's namespace and interface names; see the
+  "Topology naming is load-bearing for the MCP" section above.
