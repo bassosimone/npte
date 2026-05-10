@@ -45,7 +45,7 @@ func (sm *sessionManager) NetemApply(ctx context.Context, req *mcp.CallToolReque
 			args = append(args, kv.key, kv.value)
 		}
 	}
-	args = append(args, input.Netns, input.Iface)
+	args = append(args, "--", input.Netns, input.Iface)
 	out, err := sm.startProc(args)
 	return nil, out, err
 }
@@ -60,6 +60,6 @@ type netemClearInput struct {
 // tool's registration in [serveMain] for the agent-facing description.
 func (sm *sessionManager) NetemClear(ctx context.Context, req *mcp.CallToolRequest,
 	input *netemClearInput) (*mcp.CallToolResult, *startOutput, error) {
-	out, err := sm.startProc([]string{"netem", "clear", input.Netns, input.Iface})
+	out, err := sm.startProc([]string{"netem", "clear", "--", input.Netns, input.Iface})
 	return nil, out, err
 }
