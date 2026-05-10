@@ -17,7 +17,7 @@ chmod 755 "$stage/usr/sbin/npte"
 
 install -d "$stage/usr/share/man/man8"
 sed -e "s/@VERSION@/$ver/g" -e "s/@DATE@/$(date -u +%Y-%m-%d)/g" \
-    scripts/npte.8 > "$stage/usr/share/man/man8/npte.8"
+    man/npte.8 > "$stage/usr/share/man/man8/npte.8"
 gzip -9n "$stage/usr/share/man/man8/npte.8"
 chmod 644 "$stage/usr/share/man/man8/npte.8.gz"
 
