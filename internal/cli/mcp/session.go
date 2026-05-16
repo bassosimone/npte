@@ -174,24 +174,21 @@ func (sm *sessionManager) startProc(nptArgs []string) (*sessionProc, error) {
 		return nil, err
 	}
 
-	// TODO(bassosimone): add mockable [os.OpenFile] inside [*testable.Environ]
-	// and use the mock instead of using the real API
-
 	// Create the required files
 	const openFlags = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
-	exitFile, err := os.OpenFile(filepath.Join(procDir, "exitcode.txt"), openFlags, 0600)
+	exitFile, err := sm.env.OpenFile(filepath.Join(procDir, "exitcode.txt"), openFlags, 0600)
 	if err != nil {
 		return nil, err
 	}
 	pool.Add(exitFile)
 
-	stdoutFile, err := os.OpenFile(filepath.Join(procDir, "stdout.txt"), openFlags, 0600)
+	stdoutFile, err := sm.env.OpenFile(filepath.Join(procDir, "stdout.txt"), openFlags, 0600)
 	if err != nil {
 		return nil, err
 	}
 	pool.Add(stdoutFile)
 
-	stderrFile, err := os.OpenFile(filepath.Join(procDir, "stderr.txt"), openFlags, 0600)
+	stderrFile, err := sm.env.OpenFile(filepath.Join(procDir, "stderr.txt"), openFlags, 0600)
 	if err != nil {
 		return nil, err
 	}
