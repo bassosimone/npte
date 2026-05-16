@@ -33,7 +33,7 @@ func validateNetemTarget(netns, iface string) error {
 	return nil
 }
 
-// netemApplyInput is the input schema for the `start_netem_apply` MCP tool.
+// netemApplyInput is the input schema for the `netem_apply` MCP tool.
 //
 // Every npte `netem apply` flag is exposed as a typed field. Values are
 // passed verbatim to npte, which validates them against the tc-netem
@@ -50,10 +50,10 @@ type netemApplyInput struct {
 	CakeBandwidth string `json:"cakeBandwidth,omitempty" jsonschema:"Bandwidth for the 'cake' child qdisc (e.g., \"30mbit\"). Ignored unless child == \"cake\"."`
 }
 
-// NetemApply is the MCP handler for the `start_netem_apply` tool. See the
+// NetemApply is the MCP handler for the `netem_apply` tool. See the
 // tool's registration in [serveMain] for the agent-facing description.
 func (sm *sessionManager) NetemApply(ctx context.Context, req *mcp.CallToolRequest,
-	input *netemApplyInput) (*mcp.CallToolResult, *startOutput, error) {
+	input *netemApplyInput) (*mcp.CallToolResult, *runOutput, error) {
 	if err := validateNetemTarget(input.Netns, input.Iface); err != nil {
 		return nil, nil, err
 	}
@@ -74,23 +74,24 @@ func (sm *sessionManager) NetemApply(ctx context.Context, req *mcp.CallToolReque
 		}
 	}
 	args = append(args, "--", input.Netns, input.Iface)
-	out, err := sm.startProc(args)
+	out, err := sm.runProc(ctx, defaultWaitTimeout, args)
 	return nil, out, err
 }
 
-// netemClearInput is the input schema for the `start_netem_clear` MCP tool.
+// netemClearInput is the input schema for the `netem_clear` MCP tool.
 type netemClearInput struct {
 	Netns string `json:"netns" jsonschema:"Must be \"router\". The MCP only shapes at the canonical hub of the canned lab; shaping at a leaf namespace (client, server) is rejected. See server instructions for the lab shaping convention."`
 	Iface string `json:"iface" jsonschema:"Must be \"if-client\" or \"if-server\" — the two router-side veth endpoints of the canned lab."`
 }
 
-// NetemClear is the MCP handler for the `start_netem_clear` tool. See the
+// NetemClear is the MCP handler for the `netem_clear` tool. See the
 // tool's registration in [serveMain] for the agent-facing description.
 func (sm *sessionManager) NetemClear(ctx context.Context, req *mcp.CallToolRequest,
-	input *netemClearInput) (*mcp.CallToolResult, *startOutput, error) {
+	input *netemClearInput) (*mcp.CallToolResult, *runOutput, error) {
 	if err := validateNetemTarget(input.Netns, input.Iface); err != nil {
 		return nil, nil, err
 	}
-	out, err := sm.startProc([]string{"netem", "clear", "--", input.Netns, input.Iface})
+	out, err := sm.runProc(ctx, defaultWaitTimeout,
+		[]string{"netem", "clear", "--", input.Netns, input.Iface})
 	return nil, out, err
 }

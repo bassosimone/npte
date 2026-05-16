@@ -10,33 +10,33 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// netnsListInput is the input schema for the `start_netns_list` MCP tool.
+// netnsListInput is the input schema for the `netns_list` MCP tool.
 type netnsListInput struct{}
 
-// NetnsList is the MCP handler for the `start_netns_list` tool. See the
+// NetnsList is the MCP handler for the `netns_list` tool. See the
 // tool's registration in [serveMain] for the agent-facing description.
 func (sm *sessionManager) NetnsList(ctx context.Context, req *mcp.CallToolRequest,
-	input *netnsListInput) (*mcp.CallToolResult, *startOutput, error) {
-	out, err := sm.startProc([]string{"netns", "list"})
+	input *netnsListInput) (*mcp.CallToolResult, *runOutput, error) {
+	out, err := sm.runProc(ctx, defaultWaitTimeout, []string{"netns", "list"})
 	return nil, out, err
 }
 
-// netnsShowInput is the input schema for the `start_netns_show` MCP tool.
+// netnsShowInput is the input schema for the `netns_show` MCP tool.
 type netnsShowInput struct {
 	Netns    string   `json:"netns" jsonschema:"Name of the npte-managed network namespace to inspect."`
 	Sections []string `json:"sections,omitempty" jsonschema:"Restrict the dump to these section names (omit or empty to emit all). Valid names: link, addr, route, route6, qdisc, neigh, sockets, pids. Unknown names are silently ignored."`
 }
 
-// NetnsShow is the MCP handler for the `start_netns_show` tool. See the
+// NetnsShow is the MCP handler for the `netns_show` tool. See the
 // tool's registration in [serveMain] for the agent-facing description.
 func (sm *sessionManager) NetnsShow(ctx context.Context, req *mcp.CallToolRequest,
-	input *netnsShowInput) (*mcp.CallToolResult, *startOutput, error) {
+	input *netnsShowInput) (*mcp.CallToolResult, *runOutput, error) {
 	args := []string{"netns", "show"}
 	for _, s := range input.Sections {
 		args = append(args, "--section", s)
 	}
 	args = append(args, "--", input.Netns)
-	out, err := sm.startProc(args)
+	out, err := sm.runProc(ctx, defaultWaitTimeout, args)
 	return nil, out, err
 }
 
@@ -70,6 +70,13 @@ func (sm *sessionManager) NetnsRun(ctx context.Context, req *mcp.CallToolRequest
 	}
 	args = append(args, "--", input.Netns)
 	args = append(args, input.Argv...)
-	out, err := sm.startProc(args)
-	return nil, out, err
+	proc, err := sm.startProc(args)
+	if err != nil {
+		return nil, nil, err
+	}
+	out := &startOutput{
+		ProcDir: proc.procDir,
+		ProcID:  proc.procID,
+	}
+	return nil, out, nil
 }

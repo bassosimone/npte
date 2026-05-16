@@ -26,7 +26,7 @@ the same boundary.
 
 ### 1. The tool surface is bounded to the sudoers allowlist
 
-Every `start_*` tool registered in `serve.go` MUST fork a subcommand
+Every MCP tool registered in `serve.go` MUST fork a subcommand
 that `internal/cli/sudoers` allowlists for NOPASSWD execution
 (currently: `netns *`, `netem *`, `lab *`). Concretely, the argv
 tail passed to `startProc` MUST begin with one of those three verbs.
@@ -51,7 +51,7 @@ package-local CLAUDE.md.
 
 If a new sudoers-allowlisted verb is added in the future, the audit
 for exposing it via MCP is its own separate decision — write a new
-`start_*` handler only after confirming the verb's package
+tool handler only after confirming the verb's package
 (`internal/cli/<name>/CLAUDE.md`) holds the registry and validator
 contract, and the resulting tool input schema cannot smuggle bytes
 past those checks.
@@ -117,8 +117,8 @@ rules apply:
 - **Every agent-supplied positional sits after a GNU `--`
   separator.** vflag (like every getopt-style parser) treats `--`
   as "end of flags": tokens after it are positionals regardless of
-  leading dashes. Each `start_*` handler that takes a positional
-  (`netns_run`, `netns_show`, `netem_apply`, `netem_clear`) inserts
+  leading dashes. Each tool handler that takes a positional
+  (`start_netns_run`, `netns_show`, `netem_apply`, `netem_clear`) inserts
   `--` before the first user-supplied positional in the argv
   composition. This is the structural guarantee that no field of
   an input schema can flip a flag the MCP just set — see invariant
@@ -142,10 +142,11 @@ carry only what is specific to that tool. When editing either:
 - Cross-cutting framing (trust model, sandbox-escape rule, lifecycle
   contract) belongs in `instructions`. Do not duplicate it into
   per-tool descriptions — duplication invites drift.
-- Per-tool descriptions MAY repeat the short `startPreamble` ("See
-  server instructions for trust model, session layout, and process
-  lifecycle.") as a hint to clients that do not surface
-  `instructions` to the LLM. They MUST NOT contradict `instructions`.
+- Per-tool descriptions MAY repeat the short preamble ("See
+  server instructions for trust model and session layout.") as a hint
+  to clients that do not surface `instructions` to the LLM. They MUST
+  NOT contradict `instructions`. Synchronous tools use `runPreamble`;
+  `start_netns_run` uses `startPreamble`.
 - The resolved `absSessionDir` is substituted into `instructions` at
   startup so the agent learns the session path declaratively rather
   than from string surgery. Keep it there; do not add a
@@ -161,10 +162,10 @@ those, the work belongs in a sudoers-allowlisted verb, not here.
 
 ### 6. Netem tools accept only the canonical shaping target
 
-`start_netem_apply` and `start_netem_clear` MUST reject any
+`netem_apply` and `netem_clear` MUST reject any
 `netns` other than `router` and any `iface` other than
 `if-client` or `if-server`. The MCP exposes only the canned lab
-(see `start_lab_create`), whose three-namespace hub-and-spoke
+(see `lab_create`), whose three-namespace hub-and-spoke
 topology puts both path bottlenecks at the router's two veth
 endpoints. Shaping at any other point produces results that do
 not correspond to a documented scenario, and an agent that does
@@ -190,7 +191,7 @@ non-compliant agent from silently producing mis-located qdiscs.
 
 Out of scope on purpose:
 
-- `start_netns_run` and `start_netns_show` accept `client`,
+- `start_netns_run` and `netns_show` accept `client`,
   `router`, and `server` freely — iperf3 and friends must run
   inside the leaves. The constraint is only on netem-side
   handlers, because that is the only place where a
@@ -201,7 +202,7 @@ Out of scope on purpose:
 
 ## When editing this package
 
-1. **Adding a new `start_*` tool.** Confirm the target verb is in
+1. **Adding a new tool.** Confirm the target verb is in
    the sudoers allowlist (`internal/cli/sudoers/sudoers.go`).
    Confirm the target package holds its own audit invariants
    (`internal/cli/<name>/CLAUDE.md`). Add a typed input schema with
@@ -221,7 +222,7 @@ Out of scope on purpose:
    Re-read invariant #4. Keep cross-cutting framing in
    `instructions`; keep per-tool descriptions specific.
 
-4. **Editing `start_netem_apply` or `start_netem_clear`.** Touch
+4. **Editing `netem_apply` or `netem_clear`.** Touch
    invariant #6. Verify the `validateNetemTarget` helper still
    names the same `<ns> <iface>` set as the four `jsonschema`
    description strings, and that the helper is still called

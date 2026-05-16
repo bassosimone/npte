@@ -23,9 +23,11 @@ func serveMain(ctx context.Context, args []string) error {
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Speak the Model Context Protocol over stdio, exposing npte's "+
-			"privileged primitives as the `start`, `wait`, and `kill` "+
-			"tools. Intended to be wired as a stdio MCP server in an "+
-			"agent's `.mcp.json`. Experimental.",
+			"privileged primitives as MCP tools. Most tools run "+
+			"synchronously; `start_netns_run` starts a background "+
+			"process paired with `wait` and `kill`. Intended to be "+
+			"wired as a stdio MCP server in an agent's `.mcp.json`. "+
+			"Experimental.",
 		"Trust model: the MCP server runs outside the agent's sandbox "+
 			"and is the agent's only authorized channel for invoking "+
 			"npte; the privileged side is kept safe by npte itself "+
@@ -68,12 +70,11 @@ func serveMain(ctx context.Context, args []string) error {
 		"sandbox and relies on npte's own privilege drop and per-command " +
 		"sandboxing.\n\n" +
 		"Session root for this invocation: " + absSessionDir + "\n" +
-		"Every start_* call writes argv.json, stdout.txt, stderr.txt, " +
-		"and (after termination) exitcode.txt to " +
-		"<session_root>/<procId>/. Read these via Bash; the MCP never " +
-		"reads them back. procIds are UUIDv7, so `ls <session_root>/` " +
-		"is chronological. To enumerate every command run this session " +
-		"with its exit code:\n\n" +
+		"Every tool call writes argv.json, stdout.txt, stderr.txt, " +
+		"and exitcode.txt to <session_root>/<procId>/. Read these via " +
+		"Bash; the MCP never reads them back. procIds are UUIDv7, so " +
+		"`ls <session_root>/` is chronological. To enumerate every " +
+		"command run this session with its exit code:\n\n" +
 		"    for d in <session_root>/*/; do\n" +
 		"      pid=$(basename \"$d\")\n" +
 		"      ec=$(cat \"$d/exitcode.txt\" 2>/dev/null || echo running)\n" +
@@ -85,11 +86,11 @@ func serveMain(ctx context.Context, args []string) error {
 		"invocation, also UUIDv7-named; prior sessions are not " +
 		"reachable from this server but their on-disk contents persist " +
 		"for archival.\n\n" +
-		"Sandbox-escape rule: use a start_* tool ONLY when your sandbox " +
+		"Sandbox-escape rule: use an MCP tool ONLY when your sandbox " +
 		"prevents you from invoking npte via Bash. For non-privileged " +
 		"operations (e.g., `npte --help`, `npte doctor`, `npte tutorial`, " +
 		"or reading files under <session_root>) you MUST prefer Bash.\n\n" +
-		"Lab shaping convention. After `lab create`, the topology is " +
+		"Lab shaping convention. After `lab_create`, the topology is " +
 		"three namespaces: `client`, `router`, `server`. Veths are " +
 		"`client.if-router <-> router.if-client` and " +
 		"`server.if-router <-> router.if-server`. For all path-level " +
@@ -101,8 +102,15 @@ func serveMain(ctx context.Context, args []string) error {
 		"(`client if-router`, `server if-router`); the path's " +
 		"bottleneck does not live there and the resulting throughput " +
 		"numbers will not correspond to any reproducible scenario.\n\n" +
-		"Process lifecycle: pair every successful start_* with `wait` " +
-		"on the returned procId. Use `kill` to send SIGINT. A `wait` " +
+		"Tool semantics. Most tools (netns_list, netns_show, " +
+		"netem_apply, netem_clear, lab_create, lab_destroy) run " +
+		"synchronously: the call blocks until the underlying npte " +
+		"command finishes (≤30 s timeout) and the exit code is " +
+		"returned inline. No wait or kill needed.\n\n" +
+		"start_netns_run is the exception: it starts a long-lived " +
+		"background process and returns immediately with a procId. " +
+		"Pair every successful start_netns_run with `wait` on the " +
+		"returned procId. Use `kill` to send SIGINT. A `wait` " +
 		"returning terminated=true reaps the proc (one-shot); subsequent " +
 		"wait/kill on the same procId fail with \"no such process\". The " +
 		"procDir survives the reap."
@@ -114,24 +122,29 @@ func serveMain(ctx context.Context, args []string) error {
 		&mcp.ServerOptions{Instructions: instructions},
 	)
 
-	// Common preamble for every start_* tool description. Kept short
-	// because the trust-bridge framing and lifecycle contract live in
-	// server-level instructions (above); this is the fallback for
-	// clients that don't surface instructions to the LLM.
+	// Preamble for synchronous tools that run a privileged npte
+	// invocation to completion and return the result inline.
+	const runPreamble = "Run a privileged npte invocation " +
+		"synchronously. Returns the exit code and session directory " +
+		"directly; no wait or kill needed. See server instructions " +
+		"for trust model and session layout. "
+
+	// Preamble for start_netns_run, which is the only tool that
+	// starts a long-lived background process requiring wait/kill.
 	const startPreamble = "Start a privileged npte invocation as a " +
 		"background process. See server instructions for trust model, " +
 		"session layout, and process lifecycle. "
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name: "start_netns_list",
-		Description: startPreamble +
+		Name: "netns_list",
+		Description: runPreamble +
 			"This tool runs `npte netns list`, which writes one " +
 			"npte-managed network namespace name per line to stdout " +
 			"(stdout is empty if there are none).",
 	}, mgr.NetnsList)
 	mcp.AddTool(server, &mcp.Tool{
-		Name: "start_netns_show",
-		Description: startPreamble +
+		Name: "netns_show",
+		Description: runPreamble +
 			"This tool runs `npte netns show`, which dumps a fixed " +
 			"set of diagnostic sections for a single npte-managed " +
 			"namespace (link, addr, route, route6, qdisc, neigh, " +
@@ -157,8 +170,8 @@ func serveMain(ctx context.Context, args []string) error {
 			"`env` sets environment variables.",
 	}, mgr.NetnsRun)
 	mcp.AddTool(server, &mcp.Tool{
-		Name: "start_netem_apply",
-		Description: startPreamble +
+		Name: "netem_apply",
+		Description: runPreamble +
 			"This tool runs `npte netem apply`, which installs " +
 			"`root handle 1: netem` on the given interface inside " +
 			"the given namespace with the requested shaping knobs. " +
@@ -166,19 +179,19 @@ func serveMain(ctx context.Context, args []string) error {
 			"be set. Flag values are passed verbatim to tc; see `man " +
 			"tc-netem` for the value grammar. NOT idempotent: " +
 			"re-applying on an already-shaped interface fails. Clear " +
-			"first with `start_netem_clear`.",
+			"first with `netem_clear`.",
 	}, mgr.NetemApply)
 	mcp.AddTool(server, &mcp.Tool{
-		Name: "start_netem_clear",
-		Description: startPreamble +
+		Name: "netem_clear",
+		Description: runPreamble +
 			"This tool runs `npte netem clear`, which removes the " +
 			"root qdisc (and any child attached at parent 1:) from " +
 			"the given interface inside the given namespace. " +
 			"Idempotent: tolerated if no qdisc is present.",
 	}, mgr.NetemClear)
 	mcp.AddTool(server, &mcp.Tool{
-		Name: "start_lab_create",
-		Description: startPreamble +
+		Name: "lab_create",
+		Description: runPreamble +
 			"This tool runs `npte lab create`, which creates npte's " +
 			"canned three-node lab topology: leaf namespaces `client` " +
 			"and `server`, each sharing a veth pair with hub " +
@@ -189,8 +202,8 @@ func serveMain(ctx context.Context, args []string) error {
 			"wired (no host uplink, no NAT).",
 	}, mgr.LabCreate)
 	mcp.AddTool(server, &mcp.Tool{
-		Name: "start_lab_destroy",
-		Description: startPreamble +
+		Name: "lab_destroy",
+		Description: runPreamble +
 			"This tool runs `npte lab destroy`, which tears down the " +
 			"canned three-node lab (destroys the `client`, `server`, " +
 			"and `router` namespaces). Does NOT touch host-side " +
@@ -199,7 +212,7 @@ func serveMain(ctx context.Context, args []string) error {
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "wait",
-		Description: "Wait for a process started by any start_* tool " +
+		Description: "Wait for a process started by start_netns_run " +
 			"to terminate, up to the specified timeout. Returns " +
 			"`terminated=true` and the exit code if the process " +
 			"finished within the timeout; returns `terminated=false` " +
@@ -214,8 +227,8 @@ func serveMain(ctx context.Context, args []string) error {
 	}, mgr.Wait)
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "kill",
-		Description: "Send a signal to a process started by any " +
-			"start_* tool. Currently only SIGINT (\"INT\" or " +
+		Description: "Send a signal to a process started by " +
+			"start_netns_run. Currently only SIGINT (\"INT\" or " +
 			"\"SIGINT\") is supported; SIGKILL cannot be relayed " +
 			"through sudo and is intentionally not exposed. Returns " +
 			"an error if the process has already terminated or has " +
