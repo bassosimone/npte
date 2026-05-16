@@ -16,6 +16,7 @@ package testenv
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"io/fs"
 	"os"
@@ -95,6 +96,7 @@ func Setup(t TB) *Stubs {
 		ReadFile:  func(string) ([]byte, error) { return nil, nil },
 		WriteFile: func(string, []byte, os.FileMode) error { return nil },
 		Lstat:     func(name string) (os.FileInfo, error) { return regularFileInfo(name), nil },
+		OpenFile:  func(string, int, os.FileMode) (*os.File, error) { return nil, errOpenFileNotStubbed },
 		Remove:    func(string) error { return nil },
 		ReadDir:   func(string) ([]os.DirEntry, error) { return nil, nil },
 		RunCommand: func(cmd *exec.Cmd) error {
@@ -124,6 +126,8 @@ func Setup(t TB) *Stubs {
 	}
 	return s
 }
+
+var errOpenFileNotStubbed = errors.New("testenv: OpenFile not stubbed for this test")
 
 // regularFileInfo implements [os.FileInfo] for a fake regular file. It is
 // returned by the stubbed Lstat so that registry.RequireManaged accepts

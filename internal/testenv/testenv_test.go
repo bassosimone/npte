@@ -76,6 +76,13 @@ func TestSetup_lstatReturnsRegularFile(t *testing.T) {
 	assert.Nil(t, info.Sys())
 }
 
+func TestSetup_openFileReturnsError(t *testing.T) {
+	Setup(t)
+	f, err := testable.Env.OpenFile("/x", 0, 0o644)
+	assert.ErrorIs(t, err, errOpenFileNotStubbed)
+	assert.Nil(t, f)
+}
+
 func TestSetup_otherStubsAreNoOps(t *testing.T) {
 	Setup(t)
 	assert.NoError(t, testable.Env.MkdirAll("/x", 0o755))
