@@ -10,6 +10,7 @@ import (
 	"os/exec"
 
 	"github.com/bassosimone/deferexit"
+	"github.com/bassosimone/runtimex"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/rogpeppe/go-internal/lockedfile"
 )
@@ -34,6 +35,9 @@ type Environ struct {
 	Remove           func(name string) error
 	ReadDir          func(name string) ([]os.DirEntry, error)
 	RunCommand       func(cmd *exec.Cmd) error
+	StartCommand     func(cmd *exec.Cmd) error
+	WaitCommand      func(cmd *exec.Cmd) error
+	ProcessSignal    func(cmd *exec.Cmd, sig os.Signal) error
 	LookPath         func(file string) (string, error)
 	Executable       func() (string, error)
 	LockFile         func(path string) (func(), error)
@@ -62,7 +66,17 @@ func NewEnvironOS() *Environ {
 		RunCommand: func(cmd *exec.Cmd) error {
 			return cmd.Run()
 		},
-		LookPath:   exec.LookPath,
+		StartCommand: func(cmd *exec.Cmd) error {
+			return cmd.Start()
+		},
+		WaitCommand: func(cmd *exec.Cmd) error {
+			return cmd.Wait()
+		},
+		ProcessSignal: func(cmd *exec.Cmd, sig os.Signal) error {
+			runtimex.Assert(cmd.Process != nil)
+			return cmd.Process.Signal(sig)
+		},
+		LookPath: exec.LookPath,
 		Executable: os.Executable,
 		LockFile: func(path string) (func(), error) {
 			return lockedfile.MutexAt(path).Lock()

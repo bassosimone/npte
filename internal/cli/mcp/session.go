@@ -127,8 +127,8 @@ func (sm *sessionManager) runProc(
 	// by killing the process and moving on. Note that our options
 	// for escalating the killing are very limited here.
 	if !wait.Terminated {
-		proc.MaybeKill(syscall.SIGINT)
-		proc.MaybeKill(syscall.SIGTERM)
+		sm.MaybeKill(proc, syscall.SIGINT)
+		sm.MaybeKill(proc, syscall.SIGTERM)
 		const extraWaitTimeout = 5 * time.Second
 		wait = sm.WaitSessionProc(ctx, proc, extraWaitTimeout)
 	}
@@ -210,7 +210,7 @@ func (sm *sessionManager) startProc(nptArgs []string) (*sessionProc, error) {
 	}
 
 	// Start the background command
-	err = cmd.Start()
+	err = sm.env.StartCommand(cmd)
 
 	// Create process structure
 	proc := &sessionProc{
@@ -250,12 +250,9 @@ func (sm *sessionManager) startProc(nptArgs []string) (*sessionProc, error) {
 // reaper waits for the process to terminate and writes the exitcode file
 // on disk. We close the [*sessionProc] done channel when done.
 func (sm *sessionManager) reaper(proc *sessionProc) {
-	// Invariant: processes passed to this function must have been started
-	runtimex.Assert(proc.cmd.Process != nil)
-
 	// Wait and obtain the process exitcode
 	var exitcode int
-	err := proc.cmd.Wait()
+	err := sm.env.WaitCommand(proc.cmd)
 	if err != nil {
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
@@ -379,12 +376,12 @@ func (sm *sessionManager) Kill(ctx context.Context, req *mcp.CallToolRequest,
 	}
 
 	// Kill the child process by PID
-	return nil, &killOutput{}, p.MaybeKill(sigNo)
+	return nil, &killOutput{}, sm.MaybeKill(p, sigNo)
 
 }
 
-// MaybeKill kills the project if running and otherwise does nothing.
-func (sp *sessionProc) MaybeKill(sigNo syscall.Signal) error {
+// MaybeKill kills the process if running and otherwise does nothing.
+func (sm *sessionManager) MaybeKill(sp *sessionProc, sigNo syscall.Signal) error {
 	// Avoid killing if it has already terminated
 	select {
 	case <-sp.done:
@@ -393,8 +390,7 @@ func (sp *sessionProc) MaybeKill(sigNo syscall.Signal) error {
 	}
 
 	// Kill the child process by PID
-	runtimex.Assert(sp.cmd.Process != nil)
-	return sp.cmd.Process.Signal(sigNo)
+	return sm.env.ProcessSignal(sp.cmd, sigNo)
 }
 
 // Cleanup is the server shutdown sweep: it sends SIGTERM to every process
@@ -409,7 +405,7 @@ func (sm *sessionManager) Cleanup(ctx context.Context) error {
 
 	// Kill each currently running process
 	for _, proc := range procs {
-		proc.MaybeKill(syscall.SIGTERM)
+		sm.MaybeKill(proc, syscall.SIGTERM)
 	}
 
 	// Wait for each process to terminate or context to expire

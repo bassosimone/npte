@@ -49,6 +49,34 @@ func TestNewEnvironOS_RunCommand(t *testing.T) {
 	require.NoError(t, env.RunCommand(cmd))
 }
 
+func TestNewEnvironOS_StartCommand(t *testing.T) {
+	env := NewEnvironOS()
+	cmd := exec.Command(os.Args[0], "-test.run=^$")
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
+	require.NoError(t, env.StartCommand(cmd))
+	require.NoError(t, cmd.Wait())
+}
+
+func TestNewEnvironOS_WaitCommand(t *testing.T) {
+	env := NewEnvironOS()
+	cmd := exec.Command(os.Args[0], "-test.run=^$")
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
+	require.NoError(t, cmd.Start())
+	require.NoError(t, env.WaitCommand(cmd))
+}
+
+func TestNewEnvironOS_ProcessSignal(t *testing.T) {
+	env := NewEnvironOS()
+	cmd := exec.Command(os.Args[0], "-test.run=^$")
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
+	require.NoError(t, cmd.Start())
+	require.NoError(t, env.ProcessSignal(cmd, os.Interrupt))
+	_ = cmd.Wait()
+}
+
 // TestNewEnvironOS_LogFatalOnError0_nilIsNoOp covers the fast path:
 // passing nil must do nothing (no log, no panic, no exit).
 func TestNewEnvironOS_LogFatalOnError0_nilIsNoOp(t *testing.T) {

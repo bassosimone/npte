@@ -102,6 +102,17 @@ func Setup(t TB) *Stubs {
 			s.Commands = append(s.Commands, argv)
 			return nil
 		},
+		StartCommand: func(cmd *exec.Cmd) error {
+			argv := append([]string{}, cmd.Args...)
+			s.Commands = append(s.Commands, argv)
+			return nil
+		},
+		WaitCommand: func(cmd *exec.Cmd) error {
+			return nil
+		},
+		ProcessSignal: func(cmd *exec.Cmd, sig os.Signal) error {
+			return nil
+		},
 		LookPath:   func(file string) (string, error) { return "/usr/bin/" + file, nil },
 		Executable: func() (string, error) { return SelfPath, nil },
 		LockFile:   func(string) (func(), error) { return func() {}, nil },

@@ -123,6 +123,29 @@ func TestSetup_runCommandRecordsArgv(t *testing.T) {
 	}, s.Commands)
 }
 
+func TestSetup_startCommandRecordsArgv(t *testing.T) {
+	s := Setup(t)
+	cmd := exec.Command("/usr/bin/sudo", "-n", "/usr/local/bin/npte", "netns", "create", "foo")
+
+	require.NoError(t, testable.Env.StartCommand(cmd))
+
+	assert.Equal(t, [][]string{
+		{"/usr/bin/sudo", "-n", "/usr/local/bin/npte", "netns", "create", "foo"},
+	}, s.Commands)
+}
+
+func TestSetup_waitCommandReturnsNil(t *testing.T) {
+	Setup(t)
+	cmd := exec.Command("/bin/true")
+	assert.NoError(t, testable.Env.WaitCommand(cmd))
+}
+
+func TestSetup_processSignalReturnsNil(t *testing.T) {
+	Setup(t)
+	cmd := exec.Command("/bin/true")
+	assert.NoError(t, testable.Env.ProcessSignal(cmd, nil))
+}
+
 // TestSetup_logFatalOnError0NilIsNoOp covers the nil-error fast path of
 // the LogFatalOnError0 stub.
 func TestSetup_logFatalOnError0NilIsNoOp(t *testing.T) {
