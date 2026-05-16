@@ -118,7 +118,8 @@ rules apply:
   separator.** vflag (like every getopt-style parser) treats `--`
   as "end of flags": tokens after it are positionals regardless of
   leading dashes. Each tool handler that takes a positional
-  (`start_netns_run`, `netns_show`, `netem_apply`, `netem_clear`) inserts
+  (`start_netns_run`, `netns_show`, `shape_download`, `shape_upload`,
+  `shape_clear`) inserts
   `--` before the first user-supplied positional in the argv
   composition. This is the structural guarantee that no field of
   an input schema can flip a flag the MCP just set — see invariant
@@ -145,8 +146,9 @@ carry only what is specific to that tool. When editing either:
 - Per-tool descriptions MAY repeat the short preamble ("See
   server instructions for trust model and session layout.") as a hint
   to clients that do not surface `instructions` to the LLM. They MUST
-  NOT contradict `instructions`. Synchronous tools use `runPreamble`;
-  `start_netns_run` uses `startPreamble`.
+  NOT contradict `instructions`. Single-step synchronous tools use
+  `runPreamble`; multi-step synchronous tools (shape_*) use
+  `shapePreamble`; `start_netns_run` uses `startPreamble`.
 - The resolved `absSessionDir` is substituted into `instructions` at
   startup so the agent learns the session path declaratively rather
   than from string surgery. Keep it there; do not add a
@@ -160,40 +162,25 @@ Do not add code paths in this package that exec, mount, or otherwise
 require elevated capabilities directly. If a feature seems to need
 those, the work belongs in a sudoers-allowlisted verb, not here.
 
-### 6. Netem tools accept only the canonical shaping target
+### 6. Shape tools hardcode the canonical shaping targets
 
-`netem_apply` and `netem_clear` MUST reject any
-`netns` other than `router` and any `iface` other than
-`if-client` or `if-server`. The MCP exposes only the canned lab
-(see `lab_create`), whose three-namespace hub-and-spoke
-topology puts both path bottlenecks at the router's two veth
-endpoints. Shaping at any other point produces results that do
-not correspond to a documented scenario, and an agent that does
-so silently is hard to catch from the spool alone.
+`shape_download`, `shape_upload`, and `shape_clear` operate on the
+canned lab's canonical shaping targets: `router:if-client` (download
+path, router→client egress) and `router:if-server` (upload path,
+router→server egress). The target namespace and interface are
+hardcoded in the handler implementations — the agent never supplies
+them, so there is no validation step and no opportunity for the agent
+to shape at a wrong location.
 
-Two layers cooperate:
-
-- A `validateNetemTarget` helper in `netem.go` enforces the
-  allowlist before `startProc` is called. Failure surfaces as a
-  clean MCP tool error rather than running a wrong-place qdisc.
-- The `jsonschema` descriptions on the four affected fields
-  (`Netns`/`Iface` on `netemApplyInput` and `netemClearInput`)
-  quote the allowed values so the agent reads the rule at the
-  moment of argument selection. They MUST stay in sync with the
-  helper.
-
-The lab-shaping paragraph in `serve.go`'s `instructions` block
-teaches the *why* (which hub is canonical, why leaves are
-wrong); this invariant is the *structural guarantee*. Both are
-load-bearing: the paragraph keeps the agent from burning calls
-on retries with the wrong namespace, the helper keeps a
-non-compliant agent from silently producing mis-located qdiscs.
+`shape_download` and `shape_upload` each clear the target interface
+before applying, so they are always safe to call regardless of prior
+state. `shape_clear` clears both interfaces.
 
 Out of scope on purpose:
 
 - `start_netns_run` and `netns_show` accept `client`,
   `router`, and `server` freely — iperf3 and friends must run
-  inside the leaves. The constraint is only on netem-side
+  inside the leaves. The constraint is only on shape-side
   handlers, because that is the only place where a
   topologically-wrong choice produces silently-wrong results.
 - A human driving `npte netem ...` from a shell can shape
@@ -222,14 +209,14 @@ Out of scope on purpose:
    Re-read invariant #4. Keep cross-cutting framing in
    `instructions`; keep per-tool descriptions specific.
 
-4. **Editing `netem_apply` or `netem_clear`.** Touch
-   invariant #6. Verify the `validateNetemTarget` helper still
-   names the same `<ns> <iface>` set as the four `jsonschema`
-   description strings, and that the helper is still called
-   before `startProc` in both handlers. If `lab create`'s naming
-   ever changes in `internal/cli/lab/`, update the helper, the
-   four descriptions, AND the lab-shaping paragraph in
-   `serve.go`'s instructions block in the same change.
+4. **Editing `shape_download`, `shape_upload`, or `shape_clear`.**
+   Touch invariant #6. The target namespace and interface are
+   hardcoded in `shapeApply` and `ShapeClear` — verify they still
+   match the canned lab's naming (`router`, `if-client`,
+   `if-server`). If `lab create`'s naming ever changes in
+   `internal/cli/lab/`, update the hardcoded strings in `netem.go`
+   AND the tool-semantics paragraph in `serve.go`'s instructions
+   block in the same change.
 
 5. **Editing `startProc`.** It is the choke point for every
    privileged invocation. Changes that affect argv composition (the

@@ -4,43 +4,17 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// validateNetemTarget enforces the MCP-layer allowlist for the netem
-// tools: only the canonical hub of the canned lab (`router`) and its
-// two veth endpoints (`if-client`, `if-server`) are accepted. See
-// invariant #6 in CLAUDE.md.
-func validateNetemTarget(netns, iface string) error {
-	if netns != "router" {
-		return fmt.Errorf(
-			"netns must be \"router\" (got %q); the MCP only shapes "+
-				"at the canonical hub of the canned lab. Shaping at "+
-				"a leaf namespace (client, server) is rejected. See "+
-				"server instructions for the lab shaping convention",
-			netns,
-		)
-	}
-	if iface != "if-client" && iface != "if-server" {
-		return fmt.Errorf(
-			"iface must be \"if-client\" (router->client egress) or "+
-				"\"if-server\" (router->server egress); got %q",
-			iface,
-		)
-	}
-	return nil
-}
-
-// netemApplyInput is the input schema for the `netem_apply` MCP tool.
+// shapeInput is the input schema for the `shape_download` and
+// `shape_upload` MCP tools.
 //
-// Every npte `netem apply` flag is exposed as a typed field. Values are
-// passed verbatim to npte, which validates them against the tc-netem
-// grammar; surface those errors to the agent via stderr.txt.
-type netemApplyInput struct {
-	Netns         string `json:"netns" jsonschema:"Must be \"router\". The MCP only shapes at the canonical hub of the canned lab; shaping at a leaf namespace (client, server) is rejected. See server instructions for the lab shaping convention."`
-	Iface         string `json:"iface" jsonschema:"Must be \"if-client\" (router->client egress) or \"if-server\" (router->server egress)."`
+// The target namespace and interface are implicit in the tool name:
+// shape_download operates on router:if-client (router->client egress);
+// shape_upload operates on router:if-server (router->server egress).
+type shapeInput struct {
 	Delay         string `json:"delay,omitempty" jsonschema:"Pass-through to netem 'delay' (e.g., \"10ms\", \"10ms 2ms distribution paretonormal\")."`
 	Loss          string `json:"loss,omitempty" jsonschema:"Pass-through to netem 'loss' (e.g., \"1%\", \"gemodel 0.1 0.05 0.9 0.95\")."`
 	Limit         string `json:"limit,omitempty" jsonschema:"Pass-through to netem 'limit' in packets (e.g., \"1000\")."`
@@ -50,17 +24,18 @@ type netemApplyInput struct {
 	CakeBandwidth string `json:"cakeBandwidth,omitempty" jsonschema:"Bandwidth for the 'cake' child qdisc (e.g., \"30mbit\"). Ignored unless child == \"cake\"."`
 }
 
-// NetemApply is the MCP handler for the `netem_apply` tool. See the
-// tool's registration in [serveMain] for the agent-facing description.
-func (sm *sessionManager) NetemApply(ctx context.Context, req *mcp.CallToolRequest,
-	input *netemApplyInput) (*mcp.CallToolResult, *runOutput, error) {
-	if err := validateNetemTarget(input.Netns, input.Iface); err != nil {
-		return nil, nil, err
+// shapeApply clears any existing qdisc then applies a fresh netem
+// configuration on the given (netns, iface) pair.
+func (sm *sessionManager) shapeApply(
+	ctx context.Context, netns, iface string, input *shapeInput) (*multiRunOutput, error) {
+	clearResult, err := sm.runProc(ctx, defaultWaitTimeout,
+		[]string{"netem", "clear", "--", netns, iface})
+	if err != nil {
+		return nil, err
 	}
+
 	args := []string{"netem", "apply"}
-	for _, kv := range []struct {
-		key, value string
-	}{
+	for _, kv := range []struct{ key, value string }{
 		{"--delay", input.Delay},
 		{"--loss", input.Loss},
 		{"--limit", input.Limit},
@@ -73,25 +48,58 @@ func (sm *sessionManager) NetemApply(ctx context.Context, req *mcp.CallToolReque
 			args = append(args, kv.key, kv.value)
 		}
 	}
-	args = append(args, "--", input.Netns, input.Iface)
-	out, err := sm.runProc(ctx, defaultWaitTimeout, args)
+	args = append(args, "--", netns, iface)
+
+	applyResult, err := sm.runProc(ctx, defaultWaitTimeout, args)
+	if err != nil {
+		return nil, err
+	}
+
+	return &multiRunOutput{
+		Steps: []*runStep{
+			clearResult.toStep("clear"),
+			applyResult.toStep("apply"),
+		},
+	}, nil
+}
+
+// ShapeDownload is the MCP handler for the `shape_download` tool. See
+// the tool's registration in [serveMain] for the agent-facing description.
+func (sm *sessionManager) ShapeDownload(ctx context.Context, req *mcp.CallToolRequest,
+	input *shapeInput) (*mcp.CallToolResult, *multiRunOutput, error) {
+	out, err := sm.shapeApply(ctx, "router", "if-client", input)
 	return nil, out, err
 }
 
-// netemClearInput is the input schema for the `netem_clear` MCP tool.
-type netemClearInput struct {
-	Netns string `json:"netns" jsonschema:"Must be \"router\". The MCP only shapes at the canonical hub of the canned lab; shaping at a leaf namespace (client, server) is rejected. See server instructions for the lab shaping convention."`
-	Iface string `json:"iface" jsonschema:"Must be \"if-client\" or \"if-server\" — the two router-side veth endpoints of the canned lab."`
+// ShapeUpload is the MCP handler for the `shape_upload` tool. See
+// the tool's registration in [serveMain] for the agent-facing description.
+func (sm *sessionManager) ShapeUpload(ctx context.Context, req *mcp.CallToolRequest,
+	input *shapeInput) (*mcp.CallToolResult, *multiRunOutput, error) {
+	out, err := sm.shapeApply(ctx, "router", "if-server", input)
+	return nil, out, err
 }
 
-// NetemClear is the MCP handler for the `netem_clear` tool. See the
+// shapeClearInput is the (empty) input schema for the `shape_clear` MCP tool.
+type shapeClearInput struct{}
+
+// ShapeClear is the MCP handler for the `shape_clear` tool. See the
 // tool's registration in [serveMain] for the agent-facing description.
-func (sm *sessionManager) NetemClear(ctx context.Context, req *mcp.CallToolRequest,
-	input *netemClearInput) (*mcp.CallToolResult, *runOutput, error) {
-	if err := validateNetemTarget(input.Netns, input.Iface); err != nil {
+func (sm *sessionManager) ShapeClear(ctx context.Context, req *mcp.CallToolRequest,
+	input *shapeClearInput) (*mcp.CallToolResult, *multiRunOutput, error) {
+	clearDown, err := sm.runProc(ctx, defaultWaitTimeout,
+		[]string{"netem", "clear", "--", "router", "if-client"})
+	if err != nil {
 		return nil, nil, err
 	}
-	out, err := sm.runProc(ctx, defaultWaitTimeout,
-		[]string{"netem", "clear", "--", input.Netns, input.Iface})
-	return nil, out, err
+	clearUp, err := sm.runProc(ctx, defaultWaitTimeout,
+		[]string{"netem", "clear", "--", "router", "if-server"})
+	if err != nil {
+		return nil, nil, err
+	}
+	return nil, &multiRunOutput{
+		Steps: []*runStep{
+			clearDown.toStep("clear download"),
+			clearUp.toStep("clear upload"),
+		},
+	}, nil
 }

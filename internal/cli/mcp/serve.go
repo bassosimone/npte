@@ -90,23 +90,16 @@ func serveMain(ctx context.Context, args []string) error {
 		"prevents you from invoking npte via Bash. For non-privileged " +
 		"operations (e.g., `npte --help`, `npte doctor`, `npte tutorial`, " +
 		"or reading files under <session_root>) you MUST prefer Bash.\n\n" +
-		"Lab shaping convention. After `lab_create`, the topology is " +
-		"three namespaces: `client`, `router`, `server`. Veths are " +
-		"`client.if-router <-> router.if-client` and " +
-		"`server.if-router <-> router.if-server`. For all path-level " +
-		"shaping (delay, rate, loss, AQM experiments), netem MUST be " +
-		"installed at the router: `router if-client` for router->client " +
-		"egress and `router if-server` for router->server egress. Both " +
-		"directions live at the hub, which is the canonical bottleneck. " +
-		"Do NOT apply netem to a leaf-side interface " +
-		"(`client if-router`, `server if-router`); the path's " +
-		"bottleneck does not live there and the resulting throughput " +
-		"numbers will not correspond to any reproducible scenario.\n\n" +
-		"Tool semantics. Most tools (netns_list, netns_show, " +
-		"netem_apply, netem_clear, lab_create, lab_destroy) run " +
-		"synchronously: the call blocks until the underlying npte " +
-		"command finishes (≤30 s timeout) and the exit code is " +
-		"returned inline. No wait or kill needed.\n\n" +
+		"Tool semantics. `lab_create` and `lab_destroy` manage the " +
+		"canned three-node topology (client, router, server). " +
+		"`shape_download` conditions the client's download path " +
+		"(router→client egress); `shape_upload` conditions the " +
+		"upload path (router→server egress). Both clear existing " +
+		"shaping before applying, so they are always safe to call. " +
+		"`shape_clear` removes shaping from both paths. " +
+		"`netns_list` and `netns_show` are read-only introspection. " +
+		"All of the above run synchronously (≤30 s timeout) and " +
+		"return exit codes inline; no wait or kill needed.\n\n" +
 		"start_netns_run is the exception: it starts a long-lived " +
 		"background process and returns immediately with a procId. " +
 		"Pair every successful start_netns_run with `wait` on the " +
@@ -169,26 +162,46 @@ func serveMain(ctx context.Context, args []string) error {
 			"inside the namespace (first element is the program); " +
 			"`env` sets environment variables.",
 	}, mgr.NetnsRun)
+	// Preamble for shape tools, which run multiple npte invocations
+	// sequentially and return the result of each step.
+	const shapePreamble = "Run one or more privileged npte invocations " +
+		"synchronously. Returns an ordered list of steps, each with " +
+		"its own exit code and session directory; no wait or kill " +
+		"needed. See server instructions for trust model and session " +
+		"layout. "
+
 	mcp.AddTool(server, &mcp.Tool{
-		Name: "netem_apply",
-		Description: runPreamble +
-			"This tool runs `npte netem apply`, which installs " +
-			"`root handle 1: netem` on the given interface inside " +
-			"the given namespace with the requested shaping knobs. " +
-			"At least one of delay/loss/limit/rate/slot/child must " +
-			"be set. Flag values are passed verbatim to tc; see `man " +
-			"tc-netem` for the value grammar. NOT idempotent: " +
-			"re-applying on an already-shaped interface fails. Clear " +
-			"first with `netem_clear`.",
-	}, mgr.NetemApply)
+		Name: "shape_download",
+		Description: shapePreamble +
+			"Condition the client's download path (router→client " +
+			"egress). Clears any existing qdisc on the interface " +
+			"first, then applies `npte netem apply` with the " +
+			"requested shaping knobs. At least one of " +
+			"delay/loss/limit/rate/slot/child must be set. Flag " +
+			"values are passed verbatim to tc; see `man tc-netem` " +
+			"for the value grammar. Always safe to call — the " +
+			"implicit clear makes it idempotent.",
+	}, mgr.ShapeDownload)
 	mcp.AddTool(server, &mcp.Tool{
-		Name: "netem_clear",
-		Description: runPreamble +
-			"This tool runs `npte netem clear`, which removes the " +
-			"root qdisc (and any child attached at parent 1:) from " +
-			"the given interface inside the given namespace. " +
-			"Idempotent: tolerated if no qdisc is present.",
-	}, mgr.NetemClear)
+		Name: "shape_upload",
+		Description: shapePreamble +
+			"Condition the client's upload path (router→server " +
+			"egress). Clears any existing qdisc on the interface " +
+			"first, then applies `npte netem apply` with the " +
+			"requested shaping knobs. At least one of " +
+			"delay/loss/limit/rate/slot/child must be set. Flag " +
+			"values are passed verbatim to tc; see `man tc-netem` " +
+			"for the value grammar. Always safe to call — the " +
+			"implicit clear makes it idempotent.",
+	}, mgr.ShapeUpload)
+	mcp.AddTool(server, &mcp.Tool{
+		Name: "shape_clear",
+		Description: shapePreamble +
+			"Remove all shaping from both the download " +
+			"(router→client) and upload (router→server) paths. " +
+			"Idempotent: tolerated if no qdisc is present on " +
+			"either interface.",
+	}, mgr.ShapeClear)
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "lab_create",
 		Description: runPreamble +

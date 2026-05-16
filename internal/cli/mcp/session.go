@@ -83,6 +83,31 @@ type runOutput struct {
 	Terminated bool   `json:"terminated" jsonschema:"True if the process terminated within the timeout; false if the wait timed out and the process is still running. Acts as the validity flag for exitCode."`
 }
 
+// runStep is one sub-step within a multi-step MCP tool invocation.
+type runStep struct {
+	Step       string `json:"step" jsonschema:"Human-readable label identifying this sub-step."`
+	ProcDir    string `json:"procDir" jsonschema:"Absolute path to the per-process directory under the current MCP session. Contains argv.json, stdout.txt, stderr.txt, and exitcode.txt."`
+	ProcID     string `json:"procId" jsonschema:"Opaque UUIDv7 identifying the process within the session."`
+	ExitCode   int    `json:"exitCode" jsonschema:"Exit code of the terminated process. Meaningful only when terminated is true."`
+	Terminated bool   `json:"terminated" jsonschema:"True if the process terminated within the timeout; false otherwise."`
+}
+
+func (ro *runOutput) toStep(label string) *runStep {
+	return &runStep{
+		Step:       label,
+		ProcDir:    ro.ProcDir,
+		ProcID:     ro.ProcID,
+		ExitCode:   ro.ExitCode,
+		Terminated: ro.Terminated,
+	}
+}
+
+// multiRunOutput is the output schema for MCP tools that run multiple
+// npte invocations sequentially and return the result of each step.
+type multiRunOutput struct {
+	Steps []*runStep `json:"steps" jsonschema:"Ordered list of sub-steps executed by this tool call. Each entry corresponds to one privileged npte invocation."`
+}
+
 // runProc starts a privileged npte invocation, waits for it to
 // terminate (up to waitTimeout), and returns the combined result.
 // If the process does not finish in time, it is killed and given
