@@ -4,6 +4,7 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"slices"
 	"time"
@@ -52,7 +53,8 @@ type runCommandInput struct {
 	Netns   string            `json:"netns" jsonschema:"Name of the npte-managed network namespace to enter."`
 	Env     map[string]string `json:"env,omitempty" jsonschema:"Environment variables to set in the child, as a {name: value} map. Each entry becomes one '-e KEY=VALUE' flag. Keys must be valid environment-variable names; values are passed verbatim."`
 	Argv    []string          `json:"argv" jsonschema:"Command and arguments to run inside the namespace. The first element is the program name (resolved via PATH inside the sandbox); the rest are its arguments. Must be non-empty."`
-	Timeout string            `json:"timeout" jsonschema:"Maximum time to wait for the command to finish, as a Go duration string (e.g., \"30s\", \"2m\", \"1h\"). The tool returns as soon as the command terminates or this duration elapses, whichever comes first."`
+	Timeout string            `json:"timeout" jsonschema:"Maximum time to wait for each individual run, as a Go duration string (e.g., \"30s\", \"2m\", \"1h\"). Applied per run, not to the whole series: with count=5 and timeout=\"30s\", each of the five runs gets its own 30 s budget."`
+	Count   int               `json:"count,omitempty" jsonschema:"Number of times to run the command sequentially (default 1). Each invocation gets its own procId and session directory. The tool blocks until all invocations complete (or one times out)."`
 }
 
 // startCommandInput is the input schema for the `start_command` MCP tool.
@@ -91,13 +93,25 @@ func commandArgs(netns string, env map[string]string, argv []string) []string {
 // the npte side is defense-in-depth; the `--` here is the structural
 // guarantee.
 func (sm *sessionManager) RunCommand(ctx context.Context, req *mcp.CallToolRequest,
-	input *runCommandInput) (*mcp.CallToolResult, *runOutput, error) {
+	input *runCommandInput) (*mcp.CallToolResult, *multiRunOutput, error) {
 	timeout, err := time.ParseDuration(input.Timeout)
 	if err != nil {
 		return nil, nil, err
 	}
-	out, err := sm.runProc(ctx, timeout, commandArgs(input.Netns, input.Env, input.Argv))
-	return nil, out, err
+	count := input.Count
+	if count <= 0 {
+		count = 1
+	}
+	args := commandArgs(input.Netns, input.Env, input.Argv)
+	multi := &multiRunOutput{}
+	for i := range count {
+		out, err := sm.runProc(ctx, timeout, args)
+		if err != nil {
+			return nil, nil, err
+		}
+		multi.Steps = append(multi.Steps, out.toStep(fmt.Sprintf("run %d", i+1)))
+	}
+	return nil, multi, nil
 }
 
 // StartCommand is the MCP handler for the `start_command` tool. See

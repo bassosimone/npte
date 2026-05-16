@@ -101,7 +101,8 @@ func serveMain(ctx context.Context, args []string) error {
 		"`run_command` runs a command inside a namespace synchronously " +
 		"(caller-specified timeout) and returns the exit code inline — " +
 		"use it for commands whose result you need before proceeding " +
-		"(e.g., an iperf3 client, curl, ping -c). " +
+		"(e.g., an iperf3 client, curl, ping -c). Set `count` > 1 to " +
+		"repeat the command; each run is captured separately. " +
 		"All of the above need no wait or kill.\n\n" +
 		"`start_command` is the exception: it starts a long-lived " +
 		"background process and returns immediately with a procId. " +
@@ -171,7 +172,11 @@ func serveMain(ctx context.Context, args []string) error {
 			"and returns the exit code inline. Use this for commands " +
 			"whose result you need before proceeding (e.g., an iperf3 " +
 			"client, curl, ping -c). Set `timeout` to match the " +
-			"expected duration of the command. " +
+			"expected duration of a single run (it applies per " +
+			"run, not to the whole series). Set `count` > 1 to " +
+			"repeat the same command sequentially (each run gets its " +
+			"own procId and session directory); results are returned " +
+			"as an ordered list of steps. " +
 			sandboxDesc,
 	}, mgr.RunCommand)
 	mcp.AddTool(server, &mcp.Tool{
