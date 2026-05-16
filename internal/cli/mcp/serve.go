@@ -5,6 +5,7 @@ package mcp
 import (
 	"context"
 	"errors"
+	"io"
 	"path/filepath"
 	"time"
 
@@ -278,7 +279,10 @@ func serveMain(ctx context.Context, args []string) error {
 	}, mgr.Kill)
 
 	// Run the server until there's an error
-	err1 := server.Run(ctx, &mcp.StdioTransport{})
+	err1 := server.Run(ctx, &mcp.IOTransport{
+		Reader: io.NopCloser(env.Stdin),
+		Writer: nopWriteCloser{env.Stdout},
+	})
 
 	// Make sure we kill process that are still running
 	err2 := serveCleanup(mgr)
@@ -287,6 +291,10 @@ func serveMain(ctx context.Context, args []string) error {
 	env.LogFatalOnError0(errors.Join(err1, err2))
 	return nil
 }
+
+type nopWriteCloser struct{ io.Writer }
+
+func (nopWriteCloser) Close() error { return nil }
 
 func serveCleanup(mgr *sessionManager) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
