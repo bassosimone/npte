@@ -11,8 +11,8 @@ arch="$(go env GOARCH)"
 
 set -x
 install -d "$stage/usr/sbin"
-ldflags_extra="-X github.com/bassosimone/npte/internal/cli/sudoers.installPath=/usr/sbin/npte"
-go build -ldflags="-s -w -X main.version=$ver $ldflags_extra" -o "$stage/usr/sbin/npte" .
+ldflags_buildcfg="github.com/bassosimone/npte/internal/buildcfg"
+go build -ldflags="-s -w -X $ldflags_buildcfg.Version=$ver -X $ldflags_buildcfg.InstallPath=/usr/sbin/npte" -o "$stage/usr/sbin/npte" .
 chmod 755 "$stage/usr/sbin/npte"
 
 install -d "$stage/usr/share/man/man8"

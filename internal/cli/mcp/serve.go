@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/bassosimone/npte/internal/buildcfg"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
@@ -112,10 +113,8 @@ func serveMain(ctx context.Context, args []string) error {
 		"wait/kill on the same procId fail with \"no such process\". The " +
 		"procDir survives the reap."
 
-	// TODO(bassosimone): need to figure out a way to share the version across
-	// multiple components, probably ./internal/version/version.go.
 	server := mcp.NewServer(
-		&mcp.Implementation{Name: "npte", Version: "v0.5.0"},
+		&mcp.Implementation{Name: "npte", Version: buildcfg.Version},
 		&mcp.ServerOptions{Instructions: instructions},
 	)
 

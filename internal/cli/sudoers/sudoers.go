@@ -7,24 +7,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bassosimone/npte/internal/buildcfg"
 	"github.com/bassosimone/npte/internal/logx"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/npte/internal/validate"
 	"github.com/bassosimone/runtimex"
 	"github.com/bassosimone/vflag"
 )
-
-// installPath is the absolute path where npte must be installed for
-// the emitted sudoers snippet to take effect. Sudoers Cmnd lookups
-// are by absolute path, so the snippet binds to a single, fixed path
-// rather than to whatever os.Executable() happens to return when
-// `npte sudoers` is invoked. If the user's binary lives somewhere
-// else, the right answer is to install it here, not to teach the
-// snippet about per-host paths.
-//
-// It is a variable so that `./scripts/makedeb.bash` can override
-// this value to `/usr/sbin/npte` for the debian package.
-var installPath = "/usr/local/sbin/npte"
 
 // Main is the main of the sudoers subcommand.
 func Main(ctx context.Context, args []string) error {
@@ -38,7 +27,7 @@ func Main(ctx context.Context, args []string) error {
 			"NOPASSWD. Other npte subcommands (gateway, container, "+
 			"tutorial, ...) are not covered and continue to prompt for "+
 			"the sudo password.",
-		"The snippet binds the allowlist to "+installPath+", which is "+
+		"The snippet binds the allowlist to "+buildcfg.InstallPath+", which is "+
 			"where `sudo make install` from the npte source tree places "+
 			"the binary. If your npte binary lives elsewhere, install it "+
 			"at that path before activating the snippet — sudoers Cmnd "+
@@ -110,16 +99,16 @@ func Main(ctx context.Context, args []string) error {
 var snippet = `
 # This snippet allows running the following commands without a password:
 #
-# - ` + installPath + ` netns *
-# - ` + installPath + ` netem *
-# - ` + installPath + ` lab *
+# - ` + buildcfg.InstallPath + ` netns *
+# - ` + buildcfg.InstallPath + ` netem *
+# - ` + buildcfg.InstallPath + ` lab *
 #
 # The user who is granted permission is the one who invoked
 # the 'npte sudoers' command.
 
-%[1]s ALL=(root) NOPASSWD: ` + installPath + ` netns *
-%[1]s ALL=(root) NOPASSWD: ` + installPath + ` netem *
-%[1]s ALL=(root) NOPASSWD: ` + installPath + ` lab *
+%[1]s ALL=(root) NOPASSWD: ` + buildcfg.InstallPath + ` netns *
+%[1]s ALL=(root) NOPASSWD: ` + buildcfg.InstallPath + ` netem *
+%[1]s ALL=(root) NOPASSWD: ` + buildcfg.InstallPath + ` lab *
 
 # Install this snippet by pasting it into /etc/sudoers via:
 #

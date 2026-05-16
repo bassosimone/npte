@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bassosimone/npte/internal/buildcfg"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/stretchr/testify/assert"
@@ -45,8 +46,10 @@ type TB interface {
 
 // SelfPath is the absolute path returned by the stubbed Executable; it is
 // also the cmd.Path / cmd.Args[0] of every captured RunCommand entry that
-// originates from `npte lab`'s self-recursion.
-const SelfPath = "/usr/local/sbin/npte"
+// originates from `npte lab`'s self-recursion. It delegates to
+// [buildcfg.InstallPath] so the test stubs and the sudoers snippet always
+// agree on the canonical path.
+var SelfPath = buildcfg.InstallPath
 
 // Stubs holds the buffers and the captured exit code for a test.
 type Stubs struct {

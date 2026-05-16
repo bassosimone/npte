@@ -5,9 +5,9 @@ package main
 import (
 	"context"
 	"os"
-	"runtime/debug"
 
 	"github.com/bassosimone/deferexit"
+	"github.com/bassosimone/npte/internal/buildcfg"
 	"github.com/bassosimone/npte/internal/cli/container"
 	"github.com/bassosimone/npte/internal/cli/doctor"
 	"github.com/bassosimone/npte/internal/cli/gateway"
@@ -21,18 +21,6 @@ import (
 	"github.com/bassosimone/vclip"
 	"github.com/bassosimone/vflag"
 )
-
-// version contains the program version string, set during init from build info.
-var version string
-
-func init() {
-	if version == "" {
-		version = "(devel)"
-		if binfo, ok := debug.ReadBuildInfo(); ok && binfo.Main.Version != "" {
-			version = binfo.Main.Version
-		}
-	}
-}
 
 func main() {
 	// The default testable.Env routes exits through deferexit as panics;
@@ -63,7 +51,7 @@ func realMain() {
 			"client-router-server topology for the common case.",
 		"Run `npte tutorial` for a walkthrough.",
 	)
-	disp.AddVersionHandlers(version)
+	disp.AddVersionHandlers(buildcfg.Version)
 	disp.AddCommand("container", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
 	disp.AddCommand("doctor", vclip.CommandFunc(doctor.Main), "Check for required external commands.")
 	disp.AddCommand("gateway", vclip.CommandFunc(gateway.Main), "Manage namespaces as internet gateways.")
