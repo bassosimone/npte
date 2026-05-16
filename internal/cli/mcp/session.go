@@ -144,7 +144,7 @@ func (sm *sessionManager) runProc(
 	return output, nil
 }
 
-// startOutput is the output schema for the `start_netns_run` MCP tool,
+// startOutput is the output schema for the `start_command` MCP tool,
 // which starts a background process requiring explicit wait/kill.
 type startOutput struct {
 	ProcDir string `json:"procDir" jsonschema:"Absolute path to the per-process directory under the current MCP session. Contains argv.json (the full sudo-prefixed argv), stdout.txt (child stdout), stderr.txt (child stderr), and exitcode.txt (written when the process terminates). Read these files via your normal filesystem access; the MCP server only writes them and never reads them back."`
@@ -287,7 +287,7 @@ func (sm *sessionManager) reaper(proc *sessionProc) {
 
 // waitInput is the input schema for the `wait` MCP tool.
 type waitInput struct {
-	ProcID  string `json:"procId" jsonschema:"The procId returned by start_netns_run."`
+	ProcID  string `json:"procId" jsonschema:"The procId returned by start_command."`
 	Timeout string `json:"timeout" jsonschema:"Maximum time to wait, as a Go duration string (e.g., \"30s\", \"1m500ms\", \"2h\"). The call returns as soon as the process terminates or this duration elapses, whichever comes first."`
 }
 
@@ -352,7 +352,7 @@ func (sm *sessionManager) WaitSessionProc(
 
 // killInput is the input schema for the `kill` MCP tool.
 type killInput struct {
-	ProcID string `json:"procId" jsonschema:"The procId returned by start_netns_run."`
+	ProcID string `json:"procId" jsonschema:"The procId returned by start_command."`
 	Signal string `json:"signal" jsonschema:"Signal name to deliver. Currently only \"INT\" (or \"SIGINT\") is accepted. SIGKILL is deliberately unsupported because sudo cannot relay it to the privileged child."`
 }
 

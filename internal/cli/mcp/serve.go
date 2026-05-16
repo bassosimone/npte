@@ -24,7 +24,7 @@ func serveMain(ctx context.Context, args []string) error {
 	usage.AddDescription(
 		"Speak the Model Context Protocol over stdio, exposing npte's "+
 			"privileged primitives as MCP tools. Most tools run "+
-			"synchronously; `start_netns_run` starts a background "+
+			"synchronously; `start_command` starts a background "+
 			"process paired with `wait` and `kill`. Intended to be "+
 			"wired as a stdio MCP server in an agent's `.mcp.json`. "+
 			"Experimental.",
@@ -98,11 +98,14 @@ func serveMain(ctx context.Context, args []string) error {
 		"shaping before applying, so they are always safe to call. " +
 		"`shape_clear` removes shaping from both paths. " +
 		"`netns_list` and `netns_show` are read-only introspection. " +
-		"All of the above run synchronously (≤30 s timeout) and " +
-		"return exit codes inline; no wait or kill needed.\n\n" +
-		"start_netns_run is the exception: it starts a long-lived " +
+		"`run_command` runs a command inside a namespace synchronously " +
+		"(caller-specified timeout) and returns the exit code inline — " +
+		"use it for commands whose result you need before proceeding " +
+		"(e.g., an iperf3 client, curl, ping -c). " +
+		"All of the above need no wait or kill.\n\n" +
+		"`start_command` is the exception: it starts a long-lived " +
 		"background process and returns immediately with a procId. " +
-		"Pair every successful start_netns_run with `wait` on the " +
+		"Pair every successful `start_command` with `wait` on the " +
 		"returned procId. Use `kill` to send SIGINT. A `wait` " +
 		"returning terminated=true reaps the proc (one-shot); subsequent " +
 		"wait/kill on the same procId fail with \"no such process\". The " +
@@ -122,7 +125,7 @@ func serveMain(ctx context.Context, args []string) error {
 		"directly; no wait or kill needed. See server instructions " +
 		"for trust model and session layout. "
 
-	// Preamble for start_netns_run, which is the only tool that
+	// Preamble for start_command, which is the only tool that
 	// starts a long-lived background process requiring wait/kill.
 	const startPreamble = "Start a privileged npte invocation as a " +
 		"background process. See server instructions for trust model, " +
@@ -146,22 +149,42 @@ func serveMain(ctx context.Context, args []string) error {
 			"`sections` field to restrict the dump; if omitted, all " +
 			"sections are emitted.",
 	}, mgr.NetnsShow)
+	// Sandbox description shared by run_command and start_command.
+	const sandboxDesc = "Privilege is dropped back to the invoking " +
+		"user (via runuser), and the command is ALWAYS wrapped " +
+		"in npte's bubblewrap sandbox: the host filesystem is " +
+		"read-only at /, the MCP server's working directory is " +
+		"rebound read-write, /tmp is a fresh tmpfs, /proc and " +
+		"/dev are freshly mounted, and PID/IPC/UTS namespaces " +
+		"are unshared. The MCP enforces --sandbox " +
+		"unconditionally; there is no way for an agent to " +
+		"disable it. The `argv` field is the command to invoke " +
+		"inside the namespace (first element is the program); " +
+		"`env` sets environment variables."
+
 	mcp.AddTool(server, &mcp.Tool{
-		Name: "start_netns_run",
+		Name: "run_command",
+		Description: runPreamble +
+			"Run a command inside an npte-managed network namespace " +
+			"synchronously: blocks until the command finishes or the " +
+			"caller-specified `timeout` elapses, whichever comes first, " +
+			"and returns the exit code inline. Use this for commands " +
+			"whose result you need before proceeding (e.g., an iperf3 " +
+			"client, curl, ping -c). Set `timeout` to match the " +
+			"expected duration of the command. " +
+			sandboxDesc,
+	}, mgr.RunCommand)
+	mcp.AddTool(server, &mcp.Tool{
+		Name: "start_command",
 		Description: startPreamble +
-			"This tool runs a command inside an npte-managed network " +
-			"namespace. Privilege is dropped back to the invoking " +
-			"user (via runuser), and the command is ALWAYS wrapped " +
-			"in npte's bubblewrap sandbox: the host filesystem is " +
-			"read-only at /, the MCP server's working directory is " +
-			"rebound read-write, /tmp is a fresh tmpfs, /proc and " +
-			"/dev are freshly mounted, and PID/IPC/UTS namespaces " +
-			"are unshared. The MCP enforces --sandbox " +
-			"unconditionally; there is no way for an agent to " +
-			"disable it. The `argv` field is the command to invoke " +
-			"inside the namespace (first element is the program); " +
-			"`env` sets environment variables.",
-	}, mgr.NetnsRun)
+			"Start a command inside an npte-managed network namespace " +
+			"as a background process. Returns immediately with a " +
+			"procId; pair with `wait` to observe termination and " +
+			"`kill` to send SIGINT. Use this for long-lived processes " +
+			"that must outlive the tool call (e.g., an iperf3 server, " +
+			"a persistent listener). " +
+			sandboxDesc,
+	}, mgr.StartCommand)
 	// Preamble for shape tools, which run multiple npte invocations
 	// sequentially and return the result of each step.
 	const shapePreamble = "Run one or more privileged npte invocations " +
@@ -225,7 +248,7 @@ func serveMain(ctx context.Context, args []string) error {
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "wait",
-		Description: "Wait for a process started by start_netns_run " +
+		Description: "Wait for a process started by start_command " +
 			"to terminate, up to the specified timeout. Returns " +
 			"`terminated=true` and the exit code if the process " +
 			"finished within the timeout; returns `terminated=false` " +
@@ -241,7 +264,7 @@ func serveMain(ctx context.Context, args []string) error {
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "kill",
 		Description: "Send a signal to a process started by " +
-			"start_netns_run. Currently only SIGINT (\"INT\" or " +
+			"start_command. Currently only SIGINT (\"INT\" or " +
 			"\"SIGINT\") is supported; SIGKILL cannot be relayed " +
 			"through sudo and is intentionally not exposed. Returns " +
 			"an error if the process has already terminated or has " +

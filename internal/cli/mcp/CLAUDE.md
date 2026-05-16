@@ -58,19 +58,20 @@ past those checks.
 
 ### 2. `netns run` MUST inject `--sandbox` unconditionally
 
-The agent's user-supplied code path is `start_netns_run`. That tool
-MUST inject `--sandbox` into the forked argv, and the argv MUST be
-composed such that no field of `netnsRunInput` (the netns name, the
-env map, the argv slice) can be parsed as a flag — in particular,
-none of them may flip `--sandbox=false`.
+The agent's user-supplied code paths are `run_command` and
+`start_command`. Both tools MUST inject `--sandbox` into the forked
+argv, and the argv MUST be composed such that no field of
+`runCommandInput` or `startCommandInput` (the netns name, the env
+map, the argv slice) can be parsed as a flag — in particular, none
+of them may flip `--sandbox=false`.
 
 Three layers cooperate:
 
-- `NetnsRun` in `netns.go` hardcodes `--sandbox` as the second token
-  of the argv tail: `[]string{"netns", "run", "--sandbox", ...}`.
+- `commandArgs` in `netns.go` hardcodes `--sandbox` as the second
+  token of the argv tail: `[]string{"netns", "run", "--sandbox", ...}`.
 - A GNU `--` separator is inserted **before the netns positional**:
-  `args = append(args, "--", input.Netns)`. This is the structural
-  guarantee. Without it, `input.Netns = "--sandbox=false"` is parsed
+  `args = append(args, "--", netns)`. This is the structural
+  guarantee. Without it, `netns = "--sandbox=false"` is parsed
   as a flag — vflag is still in flag-parsing mode when it reaches
   the first positional, and `DisablePermute` does not engage until
   *after* a positional has been consumed — and the inner command
@@ -118,8 +119,8 @@ rules apply:
   separator.** vflag (like every getopt-style parser) treats `--`
   as "end of flags": tokens after it are positionals regardless of
   leading dashes. Each tool handler that takes a positional
-  (`start_netns_run`, `netns_show`, `shape_download`, `shape_upload`,
-  `shape_clear`) inserts
+  (`run_command`, `start_command`, `netns_show`, `shape_download`,
+  `shape_upload`, `shape_clear`) inserts
   `--` before the first user-supplied positional in the argv
   composition. This is the structural guarantee that no field of
   an input schema can flip a flag the MCP just set — see invariant
@@ -127,7 +128,7 @@ rules apply:
   that produced this rule. `DisablePermute` on the npte side is
   defense-in-depth, not the primary boundary.
 
-The exception is the `start_netns_run` `Env` field: the MCP layer
+The exception is the `Env` field (on both input types): the MCP layer
 sorts entries before serializing to `-e KEY=VALUE` tokens so that the
 argv is deterministic (and the `argv.json` session file is
 reproducible).
@@ -148,7 +149,7 @@ carry only what is specific to that tool. When editing either:
   to clients that do not surface `instructions` to the LLM. They MUST
   NOT contradict `instructions`. Single-step synchronous tools use
   `runPreamble`; multi-step synchronous tools (shape_*) use
-  `shapePreamble`; `start_netns_run` uses `startPreamble`.
+  `shapePreamble`; `start_command` uses `startPreamble`.
 - The resolved `absSessionDir` is substituted into `instructions` at
   startup so the agent learns the session path declaratively rather
   than from string surgery. Keep it there; do not add a
@@ -178,7 +179,7 @@ state. `shape_clear` clears both interfaces.
 
 Out of scope on purpose:
 
-- `start_netns_run` and `netns_show` accept `client`,
+- `start_command` and `netns_show` accept `client`,
   `router`, and `server` freely — iperf3 and friends must run
   inside the leaves. The constraint is only on shape-side
   handlers, because that is the only place where a
@@ -200,10 +201,12 @@ Out of scope on purpose:
    positional can still be parsed as a flag (see invariants #2 and
    #3).
 
-2. **Editing `start_netns_run`.** Touch invariant #2. Read it twice.
-   Verify that `--sandbox` injection, the `--` separator before
-   `input.Netns`, and `vflag.DisablePermute` upstream all remain in
-   place. Add a regression test if the change is non-trivial.
+2. **Editing `run_command` or `start_command`.** Touch invariant #2.
+   Read it twice. Both handlers share `commandArgs`, which builds the
+   `--sandbox`-injected argv. Verify that `--sandbox` injection, the
+   `--` separator before `input.Netns`, and `vflag.DisablePermute`
+   upstream all remain in place. Add a regression test if the change
+   is non-trivial.
 
 3. **Editing `serve.go`'s `instructions` or tool descriptions.**
    Re-read invariant #4. Keep cross-cutting framing in
