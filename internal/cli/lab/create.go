@@ -50,7 +50,7 @@ func createMain(ctx context.Context, args []string) error {
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell script instead of executing it.")
 	fset.MinPositionalArgs = 0
 	fset.MaxPositionalArgs = 0
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	self := selfPath("npte lab create")
 

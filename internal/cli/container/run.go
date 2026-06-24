@@ -78,7 +78,7 @@ func runMain(ctx context.Context, args []string) error {
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = math.MaxInt
 	fset.DisablePermute = true
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	rootfs := fset.Args()[0]
 	if !filepath.IsAbs(rootfs) {

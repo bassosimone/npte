@@ -55,7 +55,7 @@ func createMain(ctx context.Context, args []string) error {
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell script instead of executing it.")
 	fset.MinPositionalArgs = 3
 	fset.MaxPositionalArgs = 3
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	ns := fset.Args()[0]
 	subnet := fset.Args()[1]

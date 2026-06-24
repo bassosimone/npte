@@ -80,6 +80,8 @@ https://github.com/bassosimone/npte/tree/main/internal/cli/tutorial/chapters).
 
 - `tutorial` — render the embedded tutorial chapters.
 
+- `gencerts` — generate self-signed TLS certificates for testing.
+
 - `netns` — primitive operations on a single network namespace.
 
 - `gateway` — turn a namespace into a host-NAT'd internet gateway.
@@ -111,6 +113,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 - [github.com/bassosimone/closepool](https://pkg.go.dev/github.com/bassosimone/closepool)
 - [github.com/bassosimone/deferexit](https://pkg.go.dev/github.com/bassosimone/deferexit)
+- [github.com/bassosimone/pkitest](https://pkg.go.dev/github.com/bassosimone/pkitest)
 - [github.com/bassosimone/runtimex](https://pkg.go.dev/github.com/bassosimone/runtimex)
 - [github.com/bassosimone/textwrap](https://pkg.go.dev/github.com/bassosimone/textwrap)
 - [github.com/bassosimone/vclip](https://pkg.go.dev/github.com/bassosimone/vclip)

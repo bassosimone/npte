@@ -49,7 +49,7 @@ func serveMain(ctx context.Context, args []string) error {
 	fset.Stdout = env.Stdout
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	exe, err := env.Executable()
 	env.LogFatalOnError0(err)

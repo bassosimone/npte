@@ -22,6 +22,8 @@ github.com/bassosimone/iotest v0.0.0-20260615120301-80d65feb58b0 h1:+vjzcPRzdP3s
 github.com/bassosimone/iotest v0.0.0-20260615120301-80d65feb58b0/go.mod h1:GdX9BtGCgBjdG7cZ9H//VwDVtR/+f40+5FkUC1sFS4Q=
 github.com/bassosimone/must v0.0.0-20260617064914-34c9ef153034 h1:yAkSXiasCHsvJXk31u7NBTS17i7f8V68iYtWlD03D/o=
 github.com/bassosimone/must v0.0.0-20260617064914-34c9ef153034/go.mod h1:X8favkED/wBR4BjopDnUOFraGSn/CDvfzZQ2DIwoTXI=
+github.com/bassosimone/pkitest v0.0.0-20260615122033-8e73e7843b18 h1:dNOhG10i6EvSjaftSK3uUZ/fhUowQRv60Yaw0ltZUl8=
+github.com/bassosimone/pkitest v0.0.0-20260615122033-8e73e7843b18/go.mod h1:bqzLG3IMUj5JMll07HmlkHW/3S89+lsnbQN9RQwQ/80=
 github.com/bassosimone/runtimex v0.0.0-20260615112505-ee72c4f0769e h1:J3ERL+Iben+Aog/hfy+qcRuhzH6dZceq/v1GuEyqlPA=
 github.com/bassosimone/runtimex v0.0.0-20260615112505-ee72c4f0769e/go.mod h1:GDr46yuJzuDkzOMI1/9Voo3s7VmYBU/6pkuaI5FR7gE=
 github.com/bassosimone/textwrap v0.0.0-20260623161521-ecf2c54815db h1:rN1QctJhpbovn64oa/nt5b8fHuFevkXLOw4244XCGKo=

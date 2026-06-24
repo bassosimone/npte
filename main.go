@@ -11,6 +11,7 @@ import (
 	"github.com/bassosimone/npte/internal/cli/container"
 	"github.com/bassosimone/npte/internal/cli/doctor"
 	"github.com/bassosimone/npte/internal/cli/gateway"
+	"github.com/bassosimone/npte/internal/cli/gencerts"
 	"github.com/bassosimone/npte/internal/cli/lab"
 	"github.com/bassosimone/npte/internal/cli/mcp"
 	"github.com/bassosimone/npte/internal/cli/netem"
@@ -55,6 +56,7 @@ func realMain() {
 	disp.AddCommand("container", vclip.CommandFunc(container.Main), "Manage lightweight containers.")
 	disp.AddCommand("doctor", vclip.CommandFunc(doctor.Main), "Check for required external commands.")
 	disp.AddCommand("gateway", vclip.CommandFunc(gateway.Main), "Manage namespaces as internet gateways.")
+	disp.AddCommand("gencerts", vclip.CommandFunc(gencerts.Main), "Generate self-signed TLS certificates for testing.")
 	disp.AddCommand("lab", vclip.CommandFunc(lab.Main), "Compose a fixed three-node client/router/server lab.")
 	disp.AddCommand("mcp", vclip.CommandFunc(mcp.Main), "Serve npte over MCP for agents (experimental).")
 	disp.AddCommand("netem", vclip.CommandFunc(netem.Main), "Apply or clear traffic shaping.")

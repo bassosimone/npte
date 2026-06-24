@@ -34,7 +34,7 @@ func Main(ctx context.Context, args []string) error {
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.MaxPositionalArgs = 0
-	runtimex.PanicOnError0(fset.Parse(args)) // we are using vflag.ExitOnError
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	red := env.LogRenderer.NewStyle().Foreground(lipgloss.Color("1"))
 	green := env.LogRenderer.NewStyle().Foreground(lipgloss.Color("2"))

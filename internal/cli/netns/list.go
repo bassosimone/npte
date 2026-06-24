@@ -33,7 +33,7 @@ func listMain(ctx context.Context, args []string) error {
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.MaxPositionalArgs = 0
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	unlock := registry.MustLock(ctx, env, false)
 	defer unlock()

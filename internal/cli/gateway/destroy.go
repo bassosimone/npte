@@ -47,7 +47,7 @@ func destroyMain(ctx context.Context, args []string) error {
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell script instead of executing it.")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = 1
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	ns := fset.Args()[0]
 	if err := validate.NetnsName(ns); err != nil {

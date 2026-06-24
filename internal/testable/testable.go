@@ -76,7 +76,7 @@ func NewEnvironOS() *Environ {
 			runtimex.Assert(cmd.Process != nil)
 			return cmd.Process.Signal(sig)
 		},
-		LookPath: exec.LookPath,
+		LookPath:   exec.LookPath,
 		Executable: os.Executable,
 		LockFile: func(path string) (func(), error) {
 			return lockedfile.MutexAt(path).Lock()

@@ -159,7 +159,7 @@ func netemMain(ctx context.Context, args []string) error {
 	fset.StringVar(&profileName, 0, "profile", "Named shaping profile to apply (empty = clear only).")
 	fset.MinPositionalArgs = 0
 	fset.MaxPositionalArgs = 0
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	var prof profile
 	if profileName != "" {

@@ -69,7 +69,7 @@ func bootMain(ctx context.Context, args []string) error {
 	fset.StringSliceVar(&binds, 0, "bind", "Pass-through to nspawn `--bind=VALUE` (repeatable).")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = 1
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	rootfs := fset.Args()[0]
 	if !filepath.IsAbs(rootfs) {

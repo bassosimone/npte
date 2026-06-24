@@ -113,7 +113,7 @@ func runMain(ctx context.Context, args []string) error {
 	fset.MinPositionalArgs = 2
 	fset.MaxPositionalArgs = math.MaxInt
 	fset.DisablePermute = true
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	// NOPASSWD audit invariant: this command is part of the set that
 	// `npte sudoers` allowlists for sudo execution without a password

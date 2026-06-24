@@ -45,7 +45,7 @@ func Main(ctx context.Context, args []string) error {
 	fset.UsagePrinter = usage
 	fset.AutoHelp('h', "help", "Print this help text and exit.")
 	fset.MaxPositionalArgs = 1
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	chapters := loadChapters()
 

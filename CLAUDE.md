@@ -45,6 +45,9 @@ npte netns   create|destroy|connect|      — primitive kernel operations on one
 npte gateway create|destroy               — turn a namespace into an internet gateway
                                             (uplink veth + host MASQUERADE/FORWARD)
 
+npte gencerts                              — generate self-signed TLS certificates
+                                            for testing (cert.pem + key.pem)
+
 npte netem   apply|clear                  — thin wrapper around `tc qdisc ... netem`
                                             on a single <ns> <if>; supports an optional
                                             child qdisc at parent 1: for AQM experiments
@@ -108,7 +111,7 @@ Tutorial chapters live in `internal/cli/tutorial/chapters/NNN-*.md` and are embe
 via `go:embed`. The leading `NNN-` prefix orders them; `tutorial.Main` strips the
 prefix, extracts the `# Title`, and auto-generates the TOC. Chapter slugs are stable
 (`netns-basics`, `routing`, `netem`, `bufferbloat`, `browser`, `containers`, `podman`,
-`sudoers`, `sandbox`, `mcp`).
+`sudoers`, `sandbox`, `mcp`, `gencerts`).
 
 ## Conventions
 

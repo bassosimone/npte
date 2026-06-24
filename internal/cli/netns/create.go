@@ -49,7 +49,7 @@ func createMain(ctx context.Context, args []string) error {
 	fset.BoolVar(&dryRun, 'n', "dry-run", "Print the shell script instead of executing it.")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = 1
-	runtimex.PanicOnError0(fset.Parse(args))
+	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	// NOPASSWD audit invariant: this command is part of the set that
 	// `npte sudoers` allowlists for sudo execution without a password
