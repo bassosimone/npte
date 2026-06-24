@@ -67,7 +67,7 @@ npte mcp     serve                        — stdio MCP server exposing the
                                             cannot shell to sudo. Forks
                                             `sudo npte ...` as a child;
                                             inherits the sudoers and
-                                            `--sandbox` bounds. Experimental.
+                                            `--sandbox` bounds.
 ```
 
 Every leaf subcommand that touches the kernel supports `--dry-run`, which prints a

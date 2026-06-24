@@ -58,7 +58,7 @@ func realMain() {
 	disp.AddCommand("gateway", vclip.CommandFunc(gateway.Main), "Manage namespaces as internet gateways.")
 	disp.AddCommand("gencerts", vclip.CommandFunc(gencerts.Main), "Generate self-signed TLS certificates for testing.")
 	disp.AddCommand("lab", vclip.CommandFunc(lab.Main), "Compose a fixed three-node client/router/server lab.")
-	disp.AddCommand("mcp", vclip.CommandFunc(mcp.Main), "Serve npte over MCP for agents (experimental).")
+	disp.AddCommand("mcp", vclip.CommandFunc(mcp.Main), "Serve npte over MCP for agents.")
 	disp.AddCommand("netem", vclip.CommandFunc(netem.Main), "Apply or clear traffic shaping.")
 	disp.AddCommand("netns", vclip.CommandFunc(netns.Main), "Manage network namespaces.")
 	disp.AddCommand("sudoers", vclip.CommandFunc(sudoers.Main), "Print a sudoers snippet for the invoking user.")

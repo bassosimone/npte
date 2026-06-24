@@ -28,8 +28,7 @@ func serveMain(ctx context.Context, args []string) error {
 			"privileged primitives as MCP tools. Most tools run "+
 			"synchronously; `start_command` starts a background "+
 			"process paired with `wait` and `kill`. Intended to be "+
-			"wired as a stdio MCP server in an agent's `.mcp.json`. "+
-			"Experimental.",
+			"wired as a stdio MCP server in an agent's `.mcp.json`.",
 		"Trust model: the MCP server runs outside the agent's sandbox "+
 			"and is the agent's only authorized channel for invoking "+
 			"npte; the privileged side is kept safe by npte itself "+

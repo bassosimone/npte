@@ -22,7 +22,7 @@ func Main(ctx context.Context, args []string) error {
 	disp.AddDescription(
 		"Expose npte's privileged primitives over the Model Context "+
 			"Protocol (MCP), so an agent running in its own sandbox can "+
-			"invoke npte without shelling out to sudo. Experimental.",
+			"invoke npte without shelling out to sudo.",
 		"The MCP server is a trust bridge, not a sandbox: it runs "+
 			"outside the agent's sandbox and relies on npte's own "+
 			"privilege drop and per-command sandboxing to keep the "+
