@@ -20,6 +20,15 @@ import (
 // validator passes. The split is mechanical (no atom contains a
 // space) so it does not need to be co-located with validation.
 
+// TODO(bassosimone): these validators are looser than tc in a few
+// corners: atomPct accepts percentages above 100, and netemDelayRe
+// accepts `distribution` without a jitter, both of which tc rejects
+// at runtime. This never weakens the NOPASSWD bound (the byte shapes
+// stay bounded either way); it only means --dry-run can bless a
+// script that fails loud when pasted. Consider tightening (move the
+// distribution group inside the jitter group; range-check percent
+// atoms) if that round-trip corner turns out to matter in practice.
+
 // Atom regex fragments shared by the per-flag netem validators below.
 // Each fragment is unanchored and uses non-capturing groups so it
 // can be composed into a parent `^(?: ... )$` without altering group

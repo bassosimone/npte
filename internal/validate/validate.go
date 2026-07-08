@@ -55,6 +55,13 @@ func IfaceName(name string) error {
 	if name[0] == '-' {
 		return fmt.Errorf("iface name %q must not start with a hyphen", name)
 	}
+	// TODO(bassosimone): consider also rejecting '%'. The kernel's
+	// dev_valid_name() accepts it, but interface-creation paths route
+	// names containing '%' through dev_alloc_name() template expansion
+	// (veth%d -> veth0). Today npte only uses user-supplied iface names
+	// in lookup positions, where '%' is merely a failed lookup, but the
+	// expansion semantics would be a trap for a future verb that creates
+	// an interface with a user-supplied name.
 	for _, r := range name {
 		if r == '/' || r == ':' || unicode.IsSpace(r) {
 			return fmt.Errorf("iface name %q contains forbidden character %q", name, r)
