@@ -28,8 +28,8 @@ func Main(ctx context.Context, args []string) error {
 			"tutorial, ...) are not covered and continue to prompt for "+
 			"the sudo password.",
 		"The snippet binds the allowlist to "+buildcfg.InstallPath+", which is "+
-			"where `sudo make install` from the npte source tree places "+
-			"the binary. If your npte binary lives elsewhere, install it "+
+			"where the README's install instructions place the binary. "+
+			"If your npte binary lives elsewhere, install it "+
 			"at that path before activating the snippet — sudoers Cmnd "+
 			"lookups are by absolute path and will not match a different "+
 			"location.",
