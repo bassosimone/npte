@@ -39,6 +39,12 @@ func createMain(ctx context.Context, args []string) error {
 			"bits in the argument are ignored. The command is not idempotent: re-running "+
 			"it will fail loud on the first conflicting step. To recover, run `npte "+
 			"gateway destroy` first.",
+		"BUGS: the veth pair is created in the host namespace and one end is then "+
+			"moved into <ns>; the two steps are not atomic. If <ns> does not exist "+
+			"(or the move fails for any other reason), the fully-formed pair is left "+
+			"behind on the host, and the stale fixed-name \"if-host\" end makes every "+
+			"subsequent `npte gateway create` fail with EEXIST. Recover with "+
+			"`sudo ip link del if-host` (deleting either end removes the whole pair).",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run. The script sets no shell "+
@@ -103,6 +109,19 @@ func createMain(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(validate.IfaceName(hostIface))
 	runtimex.PanicOnError0(validate.IfaceName(nsIface))
 
+	// Create-then-move is not atomic: if the move fails, the fully-formed
+	// pair stays behind on the host and the fixed-name "if-host" end blocks
+	// every subsequent `gateway create` (see BUGS in the help text).
+	//
+	// TODO(bassosimone): investigate replacing the two steps with the single
+	// atomic form `ip link add <hostIface> type veth peer name <nsIface>
+	// netns <ns>`, which creates the device in the current namespace and the
+	// peer directly inside <ns>: if <ns> does not exist, nothing is created.
+	// Beware the near-miss variant that puts `netns` on the *device* instead
+	// of the peer: when the peer carries no netns attribute of its own it
+	// inherits the device's target namespace, so BOTH ends land inside <ns>.
+	// Requires a live root smoke test (and updating the pinned dry-run
+	// scripts in the tests) before switching.
 	logx.Details("npte: create uplink veth pair %q <-> %q", hostIface, nsIface)
 	subprocess.MustRun(ctx, dryRun, "ip", "link", "add", hostIface, "type", "veth", "peer", "name", nsIface)
 

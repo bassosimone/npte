@@ -29,6 +29,11 @@ func connectMain(ctx context.Context, args []string) error {
 		"Both namespaces must already exist (see `npte netns create`). Addressing "+
 			"is a separate concern; this command brings the two ends up with no "+
 			"L3 configuration.",
+		"BUGS: the veth pair is created in the host namespace and the two ends are "+
+			"then moved; the steps are not atomic. If a move fails (e.g. a namespace "+
+			"disappeared out-of-band after the registry check), the leftover ends stay "+
+			"on the host and block reconnecting the same pair with EEXIST. Recover with "+
+			"`sudo ip link del if-<right>` (deleting either end removes the whole pair).",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run. The script sets no shell "+
@@ -91,6 +96,14 @@ func connectMain(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(validate.IfaceName(leftIf))
 	runtimex.PanicOnError0(validate.IfaceName(rightIf))
 
+	// Create-then-move is not atomic: a failed move leaves the pair behind
+	// on the host (see BUGS in the help text).
+	//
+	// TODO(bassosimone): investigate creating both ends in place atomically
+	// (`ip link add <leftIf> netns <left> type veth peer name <rightIf>
+	// netns <right>`). See the fuller TODO in gateway/create.go — including
+	// the gotcha that a peer without its own netns attribute inherits the
+	// device's target namespace — before changing either site.
 	logx.Details("npte: create veth pair %q <-> %q", leftIf, rightIf)
 	subprocess.MustRun(ctx, dryRun, "ip", "link", "add", leftIf, "type", "veth", "peer", "name", rightIf)
 
