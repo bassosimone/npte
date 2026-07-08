@@ -21,8 +21,17 @@ func destroyMain(ctx context.Context, args []string) error {
 	usage := vflag.NewDefaultUsagePrinter()
 	usage.AddDescription(
 		"Undoes `npte gateway create`: removes all host-side iptables rules "+
-			"tagged \"npte:gw:<ns>\" via an atomic iptables-save/restore pipeline, "+
+			"tagged \"npte:gw:<ns>\" via an iptables-save/restore pipeline, "+
 			"and removes the host-side veth if it still exists.",
+		"BUGS: the save/restore sweep rewrites every iptables table on the "+
+			"host, which resets all packet/byte counters to zero, and any rule "+
+			"that another actor (Docker, libvirt, ...) inserts during the brief "+
+			"save-to-restore window is silently discarded — iptables-restore "+
+			"applies each table atomically, but the sequence as a whole is an "+
+			"unlocked read-modify-write. These side effects are accepted in "+
+			"exchange for robustness: the tag-based sweep removes tagged rules "+
+			"of any shape, regardless of which npte version created them. Avoid "+
+			"running this while other software is reconfiguring the host firewall.",
 		"Safe to run in any order relative to `npte netns destroy`. If the "+
 			"namespace was already destroyed, the host-side veth is gone (the "+
 			"kernel cleans a veth when its far-end namespace disappears); the "+
@@ -70,6 +79,14 @@ func destroyMain(ctx context.Context, args []string) error {
 	// substantially safer false-positive behavior on modern hosts.
 	commentToken := `--comment "` + tag + `"`
 
+	// Known, accepted side effects (see the BUGS paragraph in the help
+	// text): the restore rewrites every table in the save output, so all
+	// host-wide counters reset to zero, and rules inserted by another
+	// actor during the save-to-restore window are lost. The sweep is
+	// kept anyway because it deletes tagged rules of any shape,
+	// independent of the npte version that created them; the symmetric
+	// alternative (exact `iptables -D` mirrors of what create added)
+	// breaks on version drift and duplicate rules.
 	logx.Details("npte: remove host-side iptables rules tagged %q", tag)
 	subprocess.MustPipeline(ctx, dryRun,
 		[]string{"iptables-save"},
