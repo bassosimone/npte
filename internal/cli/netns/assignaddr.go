@@ -24,7 +24,8 @@ func assignAddrMain(ctx context.Context, args []string) error {
 		"Assigns an IP address to an interface inside a network namespace. "+
 			"The <cidr> argument must include a prefix length; both IPv4 and "+
 			"IPv6 use the same syntax, so invoke this command twice for "+
-			"dual-stack configurations.",
+			"dual-stack configurations. Note that a middle namespace forwards "+
+			"IPv4 only — see BUGS in `npte netns create --help`.",
 		"The kernel auto-installs the connected route for the prefix, which "+
 			"is enough for peer reachability on the link. Default routes and "+
 			"other policy routing are a separate concern.",

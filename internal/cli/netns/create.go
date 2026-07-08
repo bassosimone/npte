@@ -33,6 +33,12 @@ func createMain(ctx context.Context, args []string) error {
 		"The namespace name must match ^[a-z][a-z0-9]*$ and is capped at 12 characters "+
 			"so that peer-facing interfaces named \"if-<peer>\" (see `npte netns connect`) "+
 			"fit in IFNAMSIZ (15 usable bytes).",
+		"BUGS: only IPv4 forwarding is enabled; net.ipv6.conf.all.forwarding stays 0. "+
+			"A namespace can therefore route IPv4 but silently drops IPv6 it would need "+
+			"to forward, even though `assign-addr` and `add-route` accept IPv6 arguments "+
+			"(on-link IPv6 between two directly connected namespaces still works, since "+
+			"no forwarding is involved). To build an IPv6 router, additionally run "+
+			"`sudo ip netns exec <ns> sysctl -w net.ipv6.conf.all.forwarding=1`.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run. The script sets no shell "+

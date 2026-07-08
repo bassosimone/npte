@@ -27,7 +27,9 @@ func addRouteMain(ctx context.Context, args []string) error {
 			"The <via> argument is a bare next-hop IP address.",
 		"When <dest> is a CIDR, its address family must match <via>. When "+
 			"<dest> is \"default\", the family is inferred from <via>, so a "+
-			"default route can be installed for either family.",
+			"default route can be installed for either family. Note that a "+
+			"middle namespace forwards IPv4 only — see BUGS in "+
+			"`npte netns create --help`.",
 		"The namespace must already exist (see `npte netns create`) and <via> "+
 			"must be reachable on a directly connected interface inside it "+
 			"(see `npte netns assign-addr`).",
