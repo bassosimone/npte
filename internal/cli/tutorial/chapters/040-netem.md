@@ -132,13 +132,25 @@ Re-run iperf3. RTT is now around 50ms — each packet pays its
 one-way delay on the way out and another on the way back — and
 the throughput drops further as the BDP ceiling tightens.
 
+Shaping on `client/if-router` is convenient for showing that the
+two directions of one veth link are shaped at its two endpoints,
+but it is not the most faithful emulation. The delayed queue now
+lives inside the sender's own network stack, and TCP Small
+Queues reacts to that local backpressure: the sender "feels" its
+own emulated propagation delay in a way no real sender does.
+Delay belongs on an intermediate hop, outside the endpoint's
+stack. The rest of this chapter therefore shapes both directions
+on `router` — as does `npte lab netem`.
+
 In practice, propagation delay is never perfectly constant. Add
 **jitter** (random variation around the base delay) by passing
-the longer netem grammar through `--delay`:
+the longer netem grammar through `--delay`. First clear the two
+qdiscs installed above, then install one qdisc per leaf-facing
+interface of `router`:
 
     sudo npte netem clear router if-client
 
-    sudo npte netem clear router if-server
+    sudo npte netem clear client if-router
 
     sudo npte netem apply router if-client \
         --delay "25ms 5ms distribution paretonormal"
@@ -154,7 +166,7 @@ verbatim to `tc` — see `man tc-netem` for the full grammar.
 When you are done, clear both directions:
 
     sudo npte netem clear router if-client
-    sudo npte netem clear client if-router
+    sudo npte netem clear router if-server
 
 `netem clear` removes the root qdisc on the named interface;
 without arguments, it is idempotent (re-running it on an already
