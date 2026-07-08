@@ -5,11 +5,11 @@ go 1.25.7
 require (
 	github.com/bassosimone/closepool v0.0.0-20260622072442-c2ef49d20318
 	github.com/bassosimone/deferexit v0.0.0-20260622074722-e5e245b2f690
-	github.com/bassosimone/pkitest v0.0.0-20260615122033-8e73e7843b18
-	github.com/bassosimone/runtimex v0.0.0-20260615112505-ee72c4f0769e
+	github.com/bassosimone/pkitest v0.0.0-20260708093733-a6664538a85c
+	github.com/bassosimone/runtimex v0.0.0-20260708083610-01df83158243
 	github.com/bassosimone/textwrap v0.0.0-20260623161521-ecf2c54815db
-	github.com/bassosimone/vclip v0.0.0-20260623171605-f585a395e8a3
-	github.com/bassosimone/vflag v0.0.0-20260623165635-b59716a8b461
+	github.com/bassosimone/vclip v0.0.0-20260708125114-5c8b09a335a1
+	github.com/bassosimone/vflag v0.0.0-20260708122727-2e70ff20f9ce
 	github.com/charmbracelet/glamour v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/google/uuid v1.6.0
@@ -23,13 +23,13 @@ require (
 	github.com/alecthomas/chroma/v2 v2.27.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/bassosimone/flagparser v0.0.0-20260615115304-f1a0193b86ca // indirect
-	github.com/bassosimone/flagscanner v0.0.0-20260615112222-a68f4ee842c2 // indirect
-	github.com/bassosimone/must v0.0.0-20260617064914-34c9ef153034 // indirect
+	github.com/bassosimone/flagparser v0.0.0-20260708090239-8563911331ee // indirect
+	github.com/bassosimone/flagscanner v0.0.0-20260708082732-b5cac5102a3e // indirect
+	github.com/bassosimone/must v0.0.0-20260708105316-861dd9e8d24d // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/x/ansi v0.11.7 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
-	github.com/charmbracelet/x/exp/slice v0.0.0-20260622092256-25656177ba8e // indirect
+	github.com/charmbracelet/x/exp/slice v0.0.0-20260705004817-2cc9a8fe1146 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
@@ -53,8 +53,8 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.6 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.44.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/text v0.39.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
