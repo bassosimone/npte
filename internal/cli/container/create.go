@@ -31,9 +31,10 @@ func createMain(ctx context.Context, args []string) error {
 			"host. For non-Debian/Ubuntu derivatives (Kali, Devuan), drop to "+
 			"`debootstrap` directly — the same applies to --include=, --variant=, "+
 			"custom mirrors, and other debootstrap knobs.",
-		"<rootfs> must be an absolute path; the target directory must not "+
-			"exist or must be empty (debootstrap refuses to populate a non-"+
-			"empty tree). For safety, pick a path that is fully root-owned "+
+		"<rootfs> must be an absolute path; the target directory should not "+
+			"exist or should be empty — debootstrap does not check, and "+
+			"extracts over whatever is already there. For safety, pick a "+
+			"path that is fully root-owned "+
 			"end-to-end — e.g. /var/lib/machines/<name>, the systemd-nspawn "+
 			"convention. debootstrap runs as root and writes through whatever "+
 			"path you hand it; an unprivileged owner along the path can "+
