@@ -1,6 +1,6 @@
 # Network Performance Testing Environment
 
-[![Build Status](https://github.com/bassosimone/npte/actions/workflows/go.yml/badge.svg)](https://github.com/bassosimone/npte/actions) [![codecov](https://codecov.io/gh/bassosimone/npte/branch/main/graph/badge.svg)](https://codecov.io/gh/bassosimone/npte)
+[![Go Status](https://github.com/bassosimone/npte/actions/workflows/go.yml/badge.svg)](https://github.com/bassosimone/npte/actions) [![Python Status](https://github.com/bassosimone/npte/actions/workflows/python.yml/badge.svg)](https://github.com/bassosimone/npte/actions) [![codecov](https://codecov.io/gh/bassosimone/npte/branch/main/graph/badge.svg)](https://codecov.io/gh/bassosimone/npte)
 
 `npte` (Network Performance Testing Environment) tests how a network client
 behaves on a realistic access link, using isolated network namespaces, traffic
@@ -51,13 +51,15 @@ sudo dpkg -i npte_*.deb
 ```
 
 `makedeb.bash` builds the binary, stages the file tree, and runs
-`dpkg-deb` to assemble the archive. The package installs the binary
-at `/usr/sbin/npte` (rather than `/usr/local/sbin/npte`, which is
-reserved for hand-installed binaries by Debian convention); the
-`npte sudoers` snippet emitted by a packaged build is adjusted
-accordingly via build-time ldflags. If `dpkg -i` complains about
-missing runtime dependencies, run `sudo apt-get -f install` to
-pull them in.
+`dpkg-deb` to assemble the archive. Building the package also requires
+[uv](https://docs.astral.sh/uv/) to stage the Python package; this is
+a build-machine dependency only, so `npte doctor` does not
+check for it. The package installs the binary at `/usr/sbin/npte`
+(rather than `/usr/local/sbin/npte`, which is reserved for hand-installed
+binaries by Debian convention); the `npte sudoers` snippet emitted by
+a packaged build is adjusted accordingly via build-time ldflags. If
+`dpkg -i` complains about missing runtime dependencies, run
+`sudo apt-get -f install` to pull them in.
 
 ## Quick Start
 
@@ -102,6 +104,13 @@ https://github.com/bassosimone/npte/tree/main/internal/cli/tutorial/chapters).
 
 All the subcommands that modify the kernel state also support the `--dry-run`
 flag, which prints a round-trippable shell script to stdout instead of executing.
+
+## Python Package (Experimental)
+
+The [`python/`](python/) directory contains an experimental Python package
+for driving the lab from scripts, under the same sudoers(5) assumption as
+the `mcp` subcommand. See the package docstrings for usage. The Debian
+package ships it under `/usr/lib/python3/dist-packages`.
 
 ## License
 
