@@ -17,6 +17,15 @@ func log(color string, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	style := current.LogRenderer.NewStyle().Foreground(lipgloss.Color(color))
 	msg = style.Render(strings.TrimRight(msg, "\n"))
+	// TODO(bassosimone): panicking on a failed log write is questionable:
+	// the failure is unreportable (the report channel is the broken thing)
+	// and the alternative to continuing is aborting a possibly half-done
+	// kernel mutation because the user's pager exited. In production the
+	// panic is mostly moot anyway: on EPIPE for fd 2 the Go runtime
+	// re-raises SIGPIPE and the process dies silently before Fprintln
+	// returns, so this only fires for non-fd-2 writers (e.g. test mocks).
+	// Genuinely surviving `npte ... 2>&1 | head` would require ignoring
+	// SIGPIPE at startup in addition to swallowing the error here.
 	_ = runtimex.PanicOnError1(fmt.Fprintln(current.Stderr, msg))
 }
 
