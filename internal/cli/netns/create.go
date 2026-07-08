@@ -39,6 +39,10 @@ func createMain(ctx context.Context, args []string) error {
 			"(on-link IPv6 between two directly connected namespaces still works, since "+
 			"no forwarding is involved). To build an IPv6 router, additionally run "+
 			"`sudo ip netns exec <ns> sysctl -w net.ipv6.conf.all.forwarding=1`.",
+		"Registration with npte is the last step, so if the command fails partway "+
+			"through, the namespace exists but is not managed and `npte netns destroy` "+
+			"refuses it. Recover with `sudo ip netns del <name>` (and optionally "+
+			"`sudo rm -rf /etc/netns/<name>`), then re-run this command.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run. The script sets no shell "+
