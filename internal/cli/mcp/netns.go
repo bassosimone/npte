@@ -104,6 +104,18 @@ func (sm *sessionManager) RunCommand(ctx context.Context, req *mcp.CallToolReque
 	}
 	args := commandArgs(input.Netns, input.Env, input.Argv)
 	multi := &multiRunOutput{}
+	// TODO(bassosimone): timeouts and errors are different channels here:
+	// runProc returns an error only for plumbing failures, while a per-run
+	// timeout comes back as out.Terminated == false with a nil error, so
+	// this loop keeps launching runs after a timeout even though the Count
+	// schema text says we stop when one run times out. Worse, on a dead
+	// ctx (client gone) every WaitSessionProc returns instantly — including
+	// runProc's 5s kill grace — so the loop degenerates into forking and
+	// signaling up to count root children back-to-back (startProc
+	// deliberately uses exec.Command without ctx because start_command
+	// children must outlive the request, so cancellation does not gate the
+	// fork itself). Consider `if ctx.Err() != nil || !out.Terminated {
+	// break }` plus an upper cap on count.
 	for i := range count {
 		out, err := sm.runProc(ctx, timeout, args)
 		if err != nil {
