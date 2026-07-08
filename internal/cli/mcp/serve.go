@@ -104,7 +104,9 @@ func serveMain(ctx context.Context, args []string) error {
 		"use it for commands whose result you need before proceeding " +
 		"(e.g., an iperf3 client, curl, ping -c). Set `count` > 1 to " +
 		"repeat the command; each run is captured separately. " +
-		"All of the above need no wait or kill.\n\n" +
+		"All of the above need no wait or kill, except a " +
+		"`run_command` run that outlives its timeout (see the " +
+		"tool description).\n\n" +
 		"`start_command` is the exception: it starts a long-lived " +
 		"background process and returns immediately with a procId. " +
 		"Pair every successful `start_command` with `wait` on the " +
@@ -175,7 +177,11 @@ func serveMain(ctx context.Context, args []string) error {
 			"run, not to the whole series). Set `count` > 1 to " +
 			"repeat the same command sequentially (each run gets its " +
 			"own procId and session directory); results are returned " +
-			"as an ordered list of steps. " +
+			"as an ordered list of steps. If a run is still alive when " +
+			"`timeout` elapses, it is signaled and given a short grace " +
+			"period; a run that survives that too comes back with " +
+			"terminated=false, and its procId remains valid for `wait` " +
+			"and `kill` — use them to reclaim the process. " +
 			sandboxDesc,
 	}, mgr.RunCommand)
 	mcp.AddTool(server, &mcp.Tool{
