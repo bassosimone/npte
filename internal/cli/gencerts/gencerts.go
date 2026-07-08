@@ -46,6 +46,25 @@ func Main(ctx context.Context, args []string) error {
 	runtimex.PanicOnError0(fset.Parse(args)) // cannot fail: using vflag.ExitOnError
 
 	// Fallback to sensible defaults when no SANs are specified
+	//
+	// TODO(bassosimone): this fallback puts an IP string literal into the
+	// dNSName SAN (and the CN), which RFC 5280/6125 do not allow: dNSName
+	// must be a hostname; IPs belong in the iPAddress SAN only. The bogus
+	// DNS SAN is inert in practice (verifiers match an IP peer against
+	// iPAddress SANs, which we also set correctly), but the right shape is:
+	// when NEITHER flag is given, default to 127.0.0.1 as IP SAN plus
+	// "localhost" as DNS SAN (the conventional loopback pair); when only
+	// --ip-addr is given, leave DNSNames empty rather than fabricating a
+	// name (a SAN-only cert with just iPAddress entries is conformant and
+	// exactly right for lab use), with CN = ipAddrs[0] (CN carries no
+	// syntax constraint and modern verifiers ignore it). This requires an
+	// upstream pkitest change first: relax the MANDATORY doc on DNSNames
+	// (and CommonName) to OPTIONAL — the code already accepts them empty —
+	// and, while there, drop x509.KeyUsageKeyEncipherment from the
+	// template: RFC 8813 forbids keyEncipherment when the SPKI indicates
+	// id-ecPublicKey, which is what an ECDSA P-256 key marshals to
+	// (harmless in practice; verifiers check digitalSignature for ECDSA
+	// suites and ignore the stray bit). Then bump the pkitest dep here.
 	if len(ipAddrs) <= 0 {
 		ipAddrs = []string{"127.0.0.1"}
 	}
