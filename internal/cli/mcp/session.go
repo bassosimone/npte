@@ -239,6 +239,15 @@ func (sm *sessionManager) startProc(nptArgs []string) (*sessionProc, error) {
 	}
 
 	// Remember the proc
+	//
+	// TODO(bassosimone): this insert races with [sessionManager.Cleanup]:
+	// a tool handler still executing when server.Run returns can insert
+	// here after Cleanup has already swept the table, so that child is
+	// never signaled at shutdown and survives the server as an orphaned
+	// root process. Whether the window is actually reachable depends on
+	// whether the SDK drains in-flight requests before Run returns.
+	// Consider a shutdown flag set by Cleanup under procsMu: once set,
+	// startProc should refuse to start new children.
 	sm.procsMu.Lock()
 	sm.procs[procID] = proc
 	sm.procsMu.Unlock()
