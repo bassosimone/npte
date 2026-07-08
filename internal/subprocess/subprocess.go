@@ -1,6 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Package subprocess contains code to exec subprocesses.
+//
+// TODO(bassosimone): dry-run output is not round-trippable when an argv
+// word contains `#`: go-shellquote does not quote it, so the rendered
+// line re-parses with everything after `#` as a comment (e.g., `tc qdisc
+// del dev if#0 root || true` targets `if` and loses the guard). This is
+// reachable because validate.IfaceName permits `#` and `netns run`
+// forwards arbitrary command bytes. Affects every render site here and
+// in pipeline.go. Fixing means force-quoting words containing `#` (fork
+// go-shellquote or own the quoter) and/or rejecting `#` in IfaceName,
+// plus an adversarial render→shellquote.Split round-trip test.
 package subprocess
 
 import (
