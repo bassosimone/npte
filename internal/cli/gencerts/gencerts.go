@@ -59,7 +59,7 @@ func Main(ctx context.Context, args []string) error {
 		ip := net.ParseIP(candidate)
 		if ip == nil {
 			logx.Error("npte gencerts: invalid IP address: %s", candidate)
-			env.Exit(1)
+			env.Exit(2)
 			return nil
 		}
 		ips = append(ips, ip)

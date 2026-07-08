@@ -48,7 +48,7 @@ func TestMain(t *testing.T) {
 	}, {
 		name:          "invalid IP address",
 		args:          []string{"--ip-addr", "notanip"},
-		wantExit:      1,
+		wantExit:      2,
 		wantStderrHas: []string{"invalid IP address", "notanip"},
 	}, {
 		name: "MkdirAll failure",
