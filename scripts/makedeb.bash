@@ -11,11 +11,19 @@ arch="$(go env GOARCH)"
 
 set -x
 
-# Build the binary.
+# Build and install the binary.
 install -d "$stage/usr/sbin"
 ldflags_buildcfg="github.com/bassosimone/npte/internal/buildcfg"
 go build -ldflags="-s -w -X $ldflags_buildcfg.Version=$ver -X $ldflags_buildcfg.InstallPath=/usr/sbin/npte" -o "$stage/usr/sbin/npte" .
 chmod 755 "$stage/usr/sbin/npte"
+
+# Build and install Python package.
+install -d "$stage/usr/lib/python3/dist-packages"
+uv pip install --link-mode=copy --target "$stage/x" ./python
+mv "$stage/x/npte" "$stage/usr/lib/python3/dist-packages"
+rm -r "$stage/x"
+# uv applies the build user's umask; force policy-compliant 755/644.
+chmod -R u=rwX,go=rX "$stage/usr/lib/python3/dist-packages/npte"
 
 # Install manpage.
 install -d "$stage/usr/share/man/man8"
@@ -32,6 +40,10 @@ install -m 644 dist/debian/copyright "$stage/usr/share/doc/npte/"
 install -d "$stage/DEBIAN"
 sed -e "s/@VERSION@/$ver/g" -e "s/@ARCH@/$arch/g" \
     dist/debian/control > "$stage/DEBIAN/control"
+
+# Install maintainer scripts.
+install -m 755 dist/debian/postinst "$stage/DEBIAN/"
+install -m 755 dist/debian/prerm "$stage/DEBIAN/"
 
 # Generate md5sums of every shipped file (everything outside DEBIAN/).
 # Paths are filesystem-relative without a leading slash, per dpkg format.

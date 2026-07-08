@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+case "$1" in
+    configure)
+        python3 -m compileall -q "/usr/lib/python3/dist-packages/npte"
+        ;;
+esac
