@@ -32,6 +32,15 @@ func destroyMain(ctx context.Context, args []string) error {
 			"exchange for robustness: the tag-based sweep removes tagged rules "+
 			"of any shape, regardless of which npte version created them. Avoid "+
 			"running this while other software is reconfiguring the host firewall.",
+		"BUGS: the SNAT rule that `npte gateway create` installs inside the "+
+			"namespace is NOT removed; only host-side state is cleaned. This "+
+			"follows from the intended lifecycle — create namespaces, layer a "+
+			"gateway on top, destroy both — where the rule vanishes together "+
+			"with the namespace (`npte netns destroy`). It only matters when "+
+			"the namespace is kept and later re-made a gateway with a different "+
+			"<subnet>: the stale rule still rewrites the source to the old "+
+			"address, breaking uplink traffic. Recover with `sudo ip netns "+
+			"exec <ns> iptables -t nat -F POSTROUTING` before re-creating.",
 		"Safe to run in any order relative to `npte netns destroy`. If the "+
 			"namespace was already destroyed, the host-side veth is gone (the "+
 			"kernel cleans a veth when its far-end namespace disappears); the "+
@@ -95,6 +104,11 @@ func destroyMain(ctx context.Context, args []string) error {
 		[]string{"grep", "-Fv", "--", commentToken},
 		[]string{"iptables-restore"},
 	)
+
+	// TODO(bassosimone): investigate also sweeping the namespace-side nat
+	// table (tolerating an already-destroyed namespace) so that a namespace
+	// kept alive across gateway re-creations does not retain a stale SNAT
+	// rule pointing at the old subnet (see BUGS in the help text).
 
 	logx.Details("npte: remove host-side veth %q (may already be gone)", hostIface)
 	subprocess.MustRunTolerant(ctx, dryRun, "ip", "link", "del", hostIface)
