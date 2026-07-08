@@ -108,6 +108,10 @@ func createMain(ctx context.Context, args []string) error {
 	plen := prefix.Bits()
 	hostCIDR := netip.PrefixFrom(hostAddr, plen).String()
 	nsCIDR := netip.PrefixFrom(nsAddr, plen).String()
+	// TODO(bassosimone): a namespace named "host" passes validate.NetnsName
+	// but makes hostIface == nsIface == "if-host", so the `ip link add`
+	// below fails with a raw kernel error instead of a validation message.
+	// Consider rejecting the degenerate name "host" (here or in validate).
 	hostIface := "if-" + ns
 	nsIface := "if-host"
 	tag := "npte:gw:" + ns

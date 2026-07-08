@@ -96,6 +96,11 @@ func connectMain(ctx context.Context, args []string) error {
 		return nil
 	}
 
+	// TODO(bassosimone): a namespace named "host" passes validate.NetnsName
+	// but yields an "if-host" end here, which transiently lives in the host
+	// namespace and can collide with a concurrent `gateway create` (whose
+	// pair also transiently owns "if-host"). Consider rejecting the
+	// degenerate name "host" (see the sibling TODO in gateway/create.go).
 	leftIf := "if-" + right
 	rightIf := "if-" + left
 	runtimex.PanicOnError0(validate.IfaceName(leftIf))
