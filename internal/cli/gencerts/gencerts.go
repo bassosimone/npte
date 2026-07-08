@@ -83,6 +83,11 @@ func Main(ctx context.Context, args []string) error {
 	return nil
 }
 
+// TODO(bassosimone): the 0600 mode only applies when the file is created;
+// overwriting an existing key.pem keeps its current permission bits, so a
+// pre-existing 0644 file would hold the fresh private key world-readable.
+// Consider removing the target before writing (or chmod after), and extend
+// the test's WriteFile mock to record and pin the requested mode.
 func mustWriteFiles(env *testable.Environ, ssc *pkitest.SelfSignedCert, outputDir string) {
 	env.LogFatalOnError0(env.WriteFile(filepath.Join(outputDir, "cert.pem"), ssc.CertPEM, 0600))
 	logx.Details("certificate file: %s", filepath.Join(outputDir, "cert.pem"))
