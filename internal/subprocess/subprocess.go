@@ -126,6 +126,12 @@ func RunTolerant(ctx context.Context, dryRun bool, argv0 string, args ...string)
 	cmd.Stdin = env.Stdin
 	cmd.Stdout = env.Stdout
 	cmd.Stderr = env.Stderr
+	// TODO(bassosimone): this swallows every RunCommand error, not just
+	// non-zero exits: failure to start (ENOENT, EACCES) and ctx
+	// cancellation are silenced too, which is broader than the "|| true"
+	// idiom we advertise (the shell still fails loud when the command
+	// cannot be started). Consider suppressing only *exec.ExitError and
+	// returning everything else.
 	_ = env.RunCommand(cmd)
 
 	return nil

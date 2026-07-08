@@ -132,6 +132,13 @@ func Pipeline(ctx context.Context, dryRun bool, stages ...[]string) error {
 	wg.Wait()
 
 	// Assemble resulting error or nil if there's no error.
+	//
+	// TODO(bassosimone): unlike the start path above, Wait errors are
+	// joined bare, so a failure surfaces as an anonymous "exit status N"
+	// with no hint of which stage produced it (e.g. grep exiting 1 when
+	// it selects no lines looks the same as iptables-restore failing).
+	// Consider wrapping each error with the stage index and argv0 like
+	// the start-failure message does.
 	return errors.Join(errs...)
 }
 
