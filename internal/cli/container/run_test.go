@@ -44,6 +44,16 @@ func TestRun(t *testing.T) {
 			"systemd-nspawn -D /var/lib/machines/test --network-namespace-path=/run/netns/client --capability=CAP_NET_ADMIN --bind=/dev/net/tun -- openvpn --config /etc/openvpn/client.conf",
 		},
 	}, {
+		// DisablePermute contract: flag-like tokens after <rootfs> —
+		// including flags npte itself recognizes — belong to the inner
+		// command and must not be consumed as npte flags.
+		name:     "dry-run flags after rootfs go to the inner command",
+		args:     []string{"--dry-run", "/var/lib/machines/test", "inner", "-n", "--netns", "client"},
+		wantExit: -1,
+		wantOut: []any{
+			"systemd-nspawn -D /var/lib/machines/test -- inner -n --netns client",
+		},
+	}, {
 		name:     "rejects relative rootfs",
 		args:     []string{"--dry-run", "rel/path"},
 		wantExit: 2,

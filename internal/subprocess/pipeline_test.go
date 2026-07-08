@@ -148,6 +148,41 @@ func TestPipeline_Live_StartFailureCleanup(t *testing.T) {
 	assert.Contains(t, err.Error(), "start:")
 }
 
+// TestPipeline_Live_StageFailure covers the case where every stage
+// starts but one exits non-zero: the joined Wait errors must surface,
+// and the pipe-close choreography must let the surrounding stages
+// terminate rather than wedge (the test completing at all pins that).
+func TestPipeline_Live_StageFailure(t *testing.T) {
+	var stdout bytes.Buffer
+	orig := testable.Env
+	env := testable.NewEnvironOS()
+	env.Stdout = &stdout
+	env.Stderr = io.Discard
+	env.LookPath = func(name string) (string, error) {
+		switch name {
+		case "iptables-save":
+			return "/bin/echo", nil
+		case "grep":
+			return "/bin/grep", nil
+		case "iptables-restore":
+			return "/bin/cat", nil
+		default:
+			return "", fmt.Errorf("unexpected: %s", name)
+		}
+	}
+	testable.Env = env
+	t.Cleanup(func() { testable.Env = orig })
+
+	// echo "hello" | grep -F nomatch | cat → grep exits 1
+	err := Pipeline(context.Background(), false,
+		[]string{"iptables-save", "hello"},
+		[]string{"grep", "-F", "nomatch"},
+		[]string{"iptables-restore"},
+	)
+	assert.ErrorContains(t, err, "exit status 1")
+	assert.Equal(t, "", stdout.String())
+}
+
 // TestPipeline_Live_LookPathError pins the deps-allowlist gate inside
 // the stage setup loop: a non-allowlisted argv0 must surface as an
 // allowlist error before any exec.Cmd is built or Start is called, so

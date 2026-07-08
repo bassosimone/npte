@@ -3,6 +3,7 @@
 package validate
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -71,6 +72,14 @@ func TestIfaceName(t *testing.T) {
 			assert.ErrorContains(t, err, tc.wantErr)
 		})
 	}
+}
+
+// The netns-name cap exists so that "if-<ns>" fits IFNAMSIZ; pin the
+// relationship so bumping one limit without the other fails loud.
+func TestNetnsNameFitsIfaceName(t *testing.T) {
+	longest := strings.Repeat("a", netnsNameMaxLen)
+	assert.NoError(t, NetnsName(longest))
+	assert.NoError(t, IfaceName("if-"+longest))
 }
 
 func TestIPAddr(t *testing.T) {

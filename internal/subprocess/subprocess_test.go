@@ -161,23 +161,22 @@ func TestRunTolerant_Live_Success(t *testing.T) {
 	assert.NoError(t, captured)
 }
 
+// Make sure that RunTolerant suppresses a non-zero exit. The control run
+// through Run proves that the same invocation really fails with exit
+// status 1; tolerated, it must return nil.
 func TestRunTolerant_Live_Failure(t *testing.T) {
-	var captured error
 	orig := testable.Env
 	env := testable.NewEnvironOS()
 	env.Stdout = io.Discard
 	env.Stderr = io.Discard
-	env.LookPath = func(string) (string, error) { return os.Args[0], nil }
-	env.LogFatalOnError0 = func(err error) { captured = err }
+	env.LookPath = func(string) (string, error) { return "/bin/false", nil }
 	testable.Env = env
 	t.Cleanup(func() { testable.Env = orig })
 
-	// "-test.run=^XXXNOTEXIST$" will cause the test binary to exit 0, but
-	// we can force a non-zero exit with an impossible flag. Use a flag that
-	// Go test ignores gracefully — instead, run "false" via /bin/false.
-	env.LookPath = func(string) (string, error) { return "/bin/false", nil }
-	MustRunTolerant(context.Background(), false, "ip")
-	assert.NoError(t, captured)
+	err := Run(context.Background(), false, "ip")
+	assert.ErrorContains(t, err, "exit status 1")
+
+	assert.NoError(t, RunTolerant(context.Background(), false, "ip"))
 }
 
 // Make sure that PipeTo refuses to run commands that are not in the
