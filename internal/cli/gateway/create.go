@@ -45,6 +45,11 @@ func createMain(ctx context.Context, args []string) error {
 			"behind on the host, and the stale fixed-name \"if-host\" end makes every "+
 			"subsequent `npte gateway create` fail with EEXIST. Recover with "+
 			"`sudo ip link del if-host` (deleting either end removes the whole pair).",
+		"BUGS: the host-side \"if-<ns>\" uplink persists for the gateway's lifetime "+
+			"and occupies the name that `npte netns connect` transiently needs on the "+
+			"host whenever one of the peers is named <ns>, so such connects fail with "+
+			"EEXIST. Wire all `npte netns connect` links involving <ns> before running "+
+			"this command.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run. The script sets no shell "+

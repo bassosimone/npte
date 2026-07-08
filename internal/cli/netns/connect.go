@@ -34,6 +34,11 @@ func connectMain(ctx context.Context, args []string) error {
 			"disappeared out-of-band after the registry check), the leftover ends stay "+
 			"on the host and block reconnecting the same pair with EEXIST. Recover with "+
 			"`sudo ip link del if-<right>` (deleting either end removes the whole pair).",
+		"BUGS: for the same reason, the transient host-side names can collide with "+
+			"interfaces already present on the host. In particular, `npte gateway "+
+			"create <gw> ...` leaves a permanent \"if-<gw>\" uplink interface on the "+
+			"host, so a later connect involving <gw> fails with EEXIST. Wire all "+
+			"connections for a namespace before turning it into a gateway.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run. The script sets no shell "+
@@ -103,7 +108,9 @@ func connectMain(ctx context.Context, args []string) error {
 	// (`ip link add <leftIf> netns <left> type veth peer name <rightIf>
 	// netns <right>`). See the fuller TODO in gateway/create.go — including
 	// the gotcha that a peer without its own netns attribute inherits the
-	// device's target namespace — before changing either site.
+	// device's target namespace — before changing either site. Atomic
+	// creation would also remove the host-namespace name collision with
+	// `gateway create`'s persistent "if-<ns>" uplink (see BUGS).
 	logx.Details("npte: create veth pair %q <-> %q", leftIf, rightIf)
 	subprocess.MustRun(ctx, dryRun, "ip", "link", "add", leftIf, "type", "veth", "peer", "name", rightIf)
 
