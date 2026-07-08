@@ -76,6 +76,14 @@ func markerPath(name string) string {
 // the kernel lock is not taken (dry-run is a side-effect-free preview
 // and does not need to be serialized against concurrent npte
 // invocations). The returned unlock function is a no-op in that case.
+//
+// TODO(bassosimone): the env parameter is only honored for LockFile:
+// the `install -d` goes through subprocess.Run, which reads the global
+// testable.Env for its stdout and RunCommand. A caller passing a
+// non-global Environ would get split-brain behavior (dry-run line on
+// the global stdout, lock from the parameter). Every real caller
+// passes testable.Env itself, so consider dropping the parameter and
+// using the global throughout, matching Register/Unregister.
 func Lock(ctx context.Context, env *testable.Environ, dryRun bool) (func(), error) {
 	if err := subprocess.Run(ctx, dryRun, "install", "-d", "-m", "0755", netnsDir); err != nil {
 		return nil, err
