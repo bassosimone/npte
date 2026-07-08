@@ -50,4 +50,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.out
+          flags: go
           fail_ci_if_error: true

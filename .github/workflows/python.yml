@@ -1,0 +1,38 @@
+name: Python
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Test
+        run: uv run pytest python/tests
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Measure Coverage
+        run: uv run pytest --cov=npte --cov-report=xml python/tests
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: python
+          fail_ci_if_error: true
