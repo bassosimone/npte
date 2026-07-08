@@ -22,8 +22,8 @@ func Main(ctx context.Context, args []string) error {
 	disp.AddDescription(
 		"Manage Linux network namespaces as composable primitives. Each subcommand "+
 			"performs one operation: create or destroy a namespace, wire two namespaces "+
-			"with a veth pair, assign addresses to interfaces, add routes, or bless a "+
-			"namespace as an internet gateway.",
+			"with a veth pair, assign addresses to interfaces, add routes, or run a "+
+			"command inside a namespace.",
 		"Every verb except `create` operates only on a namespace previously created "+
 			"by `npte netns create`, tracked via a marker file at "+
 			"`/run/npte/netns/<name>`. `list` enumerates managed namespaces; `show` "+

@@ -119,7 +119,7 @@ independent interfaces living in different namespaces.
 
 The kernel auto-installs the connected route for `10.0.1.0/24` on each
 side, which is enough for the two namespaces to reach each other over
-this link. No explicit `npte netem add-route` is needed here.
+this link. No explicit `npte netns add-route` is needed here.
 
 Verify, starting with the trivial case and working up:
 
