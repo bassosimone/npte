@@ -55,6 +55,11 @@ func Main(ctx context.Context, args []string) error {
 	// deps.LookPath: it is deliberately excluded from deps.All, and
 	// `npte mcp serve` execs exactly this path. See the deps.SudoPath
 	// invariant — do not "simplify" this into a deps.All entry.
+	//
+	// TODO(bassosimone): Lstat does not follow symlinks, so a dangling
+	// /usr/bin/sudo (e.g., a stale alternatives link) passes this check;
+	// it also says nothing about executability. Stat would be slightly
+	// stronger but testable.Environ currently only exposes Lstat.
 	if _, err := env.Lstat(deps.SudoPath); err != nil {
 		status := red.Render("MISSING (sudo)")
 		fmt.Fprintf(env.Stdout, "checking for %s... %s\n", deps.SudoPath, status)
