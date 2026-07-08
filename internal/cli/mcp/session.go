@@ -398,11 +398,13 @@ func (sm *sessionManager) Kill(ctx context.Context, req *mcp.CallToolRequest,
 //
 // Signaling the root sudo child from this unprivileged process works
 // because the sudo front-end keeps its real uid equal to the invoking
-// user (verified empirically with sudo-rs, 2026-07). Caveat: when sudo
-// has a controlling tty it runs a pty monitor that drops relayed
-// SIGINT/SIGQUIT ("keyboard signals"); the MCP server has no tty, so
-// SIGINT goes through here. SIGTERM is relayed unconditionally either
-// way, which keeps the runProc escalation and Cleanup robust.
+// user (verified empirically with sudo-rs, 2026-07). The pty monitor
+// used when sudo has a controlling tty drops only tty-generated
+// SIGINT/SIGQUIT (the kernel already delivered those to the foreground
+// process group); a SIGINT sent with kill(2), like this one, terminates
+// the command with or without a tty (verified empirically with sudo-rs,
+// 2026-07). SIGTERM is relayed unconditionally, which keeps the runProc
+// escalation and Cleanup robust.
 func (sm *sessionManager) MaybeKill(sp *sessionProc, sigNo syscall.Signal) error {
 	// Avoid killing if it has already terminated
 	select {
