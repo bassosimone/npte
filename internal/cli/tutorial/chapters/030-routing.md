@@ -135,7 +135,8 @@ each leaf and add more.
 If you lose track of what you created, `npte netns list` enumerates
 the namespaces npte owns, one per line, and `npte netns show <name>`
 dumps a fixed set of diagnostics for one — interfaces, addresses,
-routing tables, qdiscs, neighbour table, and listening sockets.
+routing tables, qdiscs, neighbour table, listening sockets, and
+the processes running inside.
 Use `--section` to restrict the dump (e.g. `--section route
 --section qdisc`). npte tracks ownership via a marker file at
 `/run/npte/netns/<name>`, written by `create` and removed by

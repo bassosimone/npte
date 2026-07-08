@@ -54,7 +54,7 @@ func showMain(ctx context.Context, args []string) error {
 	var wantSections []string
 	fset.StringSliceVar(&wantSections, 0, "section",
 		"Emit only the named `section` (repeatable). Valid names: "+
-			"link, addr, route, route6, qdisc, neigh, sockets. Unknown "+
+			"link, addr, route, route6, qdisc, neigh, sockets, pids. Unknown "+
 			"names are silently ignored.")
 	fset.MinPositionalArgs = 1
 	fset.MaxPositionalArgs = 1
