@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/bassosimone/closepool"
+	"github.com/bassosimone/npte/internal/deps"
 	"github.com/bassosimone/npte/internal/testable"
 	"github.com/bassosimone/runtimex"
 	"github.com/google/uuid"
@@ -196,8 +197,12 @@ func (sm *sessionManager) startProc(nptArgs []string) (*sessionProc, error) {
 
 	// Create the command to execute
 	//
-	// Use an explicit sudo path to avoid PATH hijacking
-	args := append([]string{"/usr/bin/sudo", "-n", sm.exePath}, nptArgs...)
+	// SECURITY: sudo is exec'd at a fixed path, never resolved via
+	// PATH and never via deps.LookPath — sudo is deliberately excluded
+	// from deps.All. See the deps.SudoPath invariant for the full
+	// rationale (PATH hijacking of the trust bridge; keeping sudo out
+	// of the subprocess allowlist).
+	args := append([]string{deps.SudoPath, "-n", sm.exePath}, nptArgs...)
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = stdoutFile
 	cmd.Stderr = stderrFile

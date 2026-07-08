@@ -223,10 +223,21 @@ Out of scope on purpose:
 
 5. **Editing `startProc`.** It is the choke point for every
    privileged invocation. Changes that affect argv composition (the
-   `[]string{"/usr/bin/sudo", "-n", sm.exePath}` prefix, sudo
+   `[]string{deps.SudoPath, "-n", sm.exePath}` prefix, sudo
    non-interactivity, the session layout) are security-relevant. The
    `-n` flag is what turns "verb is outside the allowlist" into a
    clean exit-non-zero failure rather than a hung password prompt.
+
+   sudo is exec'd at the fixed path `deps.SudoPath` and MUST NEVER be
+   resolved through PATH or through `deps.LookPath` — it is
+   deliberately excluded from `deps.All`, and a regression test in
+   `internal/deps` enforces the exclusion. This server runs
+   unprivileged next to a coding agent; a PATH-resolved sudo is a
+   hijacking target that would silently replace the whole trust
+   bridge, and an allowlisted sudo would let any subprocess call site
+   cross the privilege boundary. Full rationale on `deps.SudoPath`.
+   Do not "fix" `npte doctor` by adding sudo to `deps.All` either —
+   doctor checks the fixed path with a stat for exactly this reason.
 
 ## References
 

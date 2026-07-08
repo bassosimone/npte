@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -37,14 +38,16 @@ func TestMain_Dependencies(t *testing.T) {
 	tests := []struct {
 		name         string
 		found        map[string]string
+		sudoMissing  bool
 		wantExit     int
 		wantContains []string
 		wantMissing  []string // substrings that must NOT appear
 	}{{
-		name:        "all present",
-		found:       allPresent,
-		wantExit:    -1,
-		wantMissing: []string{"MISSING", "apt install"},
+		name:         "all present",
+		found:        allPresent,
+		wantExit:     -1,
+		wantContains: []string{"checking for /usr/bin/sudo... /usr/bin/sudo"},
+		wantMissing:  []string{"MISSING", "apt install"},
 	}, {
 		// Both `ip` and `tc` ship in the iproute2 Debian package, so when
 		// both are absent the apt-install hint must list iproute2 only once.
@@ -67,12 +70,14 @@ func TestMain_Dependencies(t *testing.T) {
 		wantExit:     1,
 		wantContains: []string{"MISSING (iproute2)", "apt install iproute2\n"},
 	}, {
-		name:     "all missing",
-		found:    nil,
-		wantExit: 1,
+		name:        "all missing",
+		found:       nil,
+		sudoMissing: true,
+		wantExit:    1,
 		wantContains: []string{
 			"MISSING",
-			"apt install iproute2 iptables grep procps kmod coreutils util-linux systemd-container debootstrap bubblewrap",
+			"MISSING (sudo)",
+			"apt install iproute2 iptables grep procps kmod coreutils util-linux systemd-container debootstrap bubblewrap sudo",
 		},
 	}}
 
@@ -93,6 +98,12 @@ func TestMain_Dependencies(t *testing.T) {
 						return path, nil
 					}
 					return "", &exec.Error{Name: file, Err: exec.ErrNotFound}
+				},
+				Lstat: func(name string) (os.FileInfo, error) {
+					if tc.sudoMissing {
+						return nil, os.ErrNotExist
+					}
+					return nil, nil
 				},
 			}
 
