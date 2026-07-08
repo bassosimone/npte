@@ -47,7 +47,9 @@ func applyMain(ctx context.Context, args []string) error {
 			strings.Join(validate.AllowedChildQdiscs, ", ")+". Per-kind knobs "+
 			"are exposed as separate flags (e.g. --cake-bandwidth) added on "+
 			"demand; reach for `sudo ip netns exec <ns> tc ...` directly if "+
-			"you need a knob this command does not surface.",
+			"you need a knob this command does not surface. A per-kind knob "+
+			"given without its owning --child kind is currently ignored "+
+			"without warning; this MAY become a hard error in the future.",
 		"The command is not idempotent: re-running it on an already-shaped "+
 			"interface will fail loud. Run `npte netem clear <ns> <if>` first.",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
@@ -172,6 +174,11 @@ func applyMain(ctx context.Context, args []string) error {
 		// value whose owning --child kind isn't selected stays unused
 		// (no validation, no append). Add new per-kind knobs by
 		// extending the matching case.
+		//
+		// TODO(bassosimone): consider failing loud when a per-kind knob
+		// is set but its owning --child kind is not selected. The help
+		// text documents the current silent-ignore behavior as subject
+		// to change.
 		switch child {
 		case "cake":
 			if cakeBandwidth != "" {
