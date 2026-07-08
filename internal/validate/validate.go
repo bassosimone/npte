@@ -13,7 +13,7 @@ import (
 // netnsNameMaxLen caps network-namespace names at 12 characters.
 //
 // Rationale: veth interfaces inside a namespace are named "if-<peer>"
-// (see `npte netns connect`) and must fit in IFNAMSIZ (15 bytes
+// (see `npte netns connect`) and must fit in IFNAMSIZ (16 bytes
 // including the trailing NUL, so 15 usable bytes). The "if-" prefix
 // consumes 3 bytes, leaving 12 for the peer namespace name.
 const netnsNameMaxLen = 12

@@ -32,7 +32,7 @@ func createMain(ctx context.Context, args []string) error {
 			"congestion-control choice inside the namespace.",
 		"The namespace name must match ^[a-z][a-z0-9]*$ and is capped at 12 characters "+
 			"so that peer-facing interfaces named \"if-<peer>\" (see `npte netns connect`) "+
-			"fit in IFNAMSIZ (15 bytes).",
+			"fit in IFNAMSIZ (15 usable bytes).",
 		"With --dry-run, prints a round-trippable shell script to stdout instead "+
 			"of executing anything. The output can be pasted into a shell (as root) "+
 			"to reproduce the effect of a live run. The script sets no shell "+
