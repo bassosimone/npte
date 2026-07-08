@@ -26,6 +26,19 @@ type shapeInput struct {
 
 // shapeApply clears any existing qdisc then applies a fresh netem
 // configuration on the given (netns, iface) pair.
+//
+// TODO(bassosimone): the "at least one knob" rule is enforced only
+// npte-side by `netem apply`, which runs after the clear step, so an
+// all-empty input (or cakeBandwidth without child) clears existing
+// shaping and then fails — a state change on a nominally rejected
+// call. An agent that assumes its earlier shaping survived the failed
+// call then measures an unshaped link. Rejecting early would lose
+// nothing: intentional clearing has its own tool (shape_clear) and the
+// tool descriptions already say at least one knob must be set, so an
+// all-empty input has no legitimate reading. Consider rejecting it
+// here before running clear: sequencing a multi-step tool is MCP-side
+// knowledge, so this would not violate the defer-validation-to-npte
+// rule (see CLAUDE.md invariant #3).
 func (sm *sessionManager) shapeApply(
 	ctx context.Context, netns, iface string, input *shapeInput) (*multiRunOutput, error) {
 	clearResult, err := sm.runProc(ctx, defaultWaitTimeout,
