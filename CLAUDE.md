@@ -25,7 +25,8 @@ go test ./...
 go test -coverprofile=coverage.out ./...
 ```
 
-There is no Makefile or CI configuration. The project requires Go 1.25+.
+There is no Makefile; CI lives in `.github/workflows/go.yml` (build, race-enabled
+tests, coverage). The project requires Go 1.25+.
 
 ## Architecture
 
@@ -40,12 +41,13 @@ npte doctor                               — check that required host tools are
 npte tutorial [chapter|all]               — render embedded tutorial chapters
 
 npte netns   create|destroy|connect|      — primitive kernel operations on one namespace
-             assign-addr|add-route|run      at a time; no persisted state
+             assign-addr|add-route|run|     at a time; ownership tracked via marker
+             list|show                      files at /run/npte/netns/<name>
 
 npte gateway create|destroy               — turn a namespace into an internet gateway
                                             (uplink veth + host MASQUERADE/FORWARD)
 
-npte gencerts                              — generate self-signed TLS certificates
+npte gencerts                             — generate self-signed TLS certificates
                                             for testing (cert.pem + key.pem)
 
 npte netem   apply|clear                  — thin wrapper around `tc qdisc ... netem`
@@ -68,6 +70,10 @@ npte mcp     serve                        — stdio MCP server exposing the
                                             `sudo npte ...` as a child;
                                             inherits the sudoers and
                                             `--sandbox` bounds.
+
+npte sudoers                              — print a NOPASSWD sudoers snippet for the
+                                            invoking user, allowlisting the
+                                            `netns`/`netem`/`lab` verbs only
 ```
 
 Every leaf subcommand that touches the kernel supports `--dry-run`, which prints a
@@ -102,7 +108,8 @@ Each subcommand file follows the same shape:
 4. Call `subprocess.MustRun(ctx, dryRun, "ip", "netns", "exec", ...)` (or similar)
    to do the kernel work.
 
-No command persists state; topologies are built imperatively by composing primitives.
+No command persists topology state (the only persisted state is the per-namespace
+ownership marker on tmpfs); topologies are built imperatively by composing primitives.
 `lab` is the one exception — it hard-codes a specific composition.
 
 ### Embedded documentation
