@@ -5,8 +5,10 @@
 import dataclasses
 import json
 import os
+import shlex
 import signal
 import subprocess
+import sys
 import uuid
 from typing import Protocol
 
@@ -135,6 +137,7 @@ class NpteSudoExecutor:
         """
         # Create the argument vector and the process directory.
         full_argv = self._make_argv(argv)
+        print(f"+ {shlex.join(full_argv)}", file=sys.stderr)
         proc_dir = self._make_proc_dir_and_write_argv_json(full_argv)
 
         # Run the process possibly handling the timeout case.
@@ -178,6 +181,7 @@ class NpteSudoExecutor:
         """Start a long-running process using ``sudo npte``."""
         # Create the argument vector and the process directory.
         full_argv = self._make_argv(argv)
+        print(f"+ {shlex.join(full_argv)}", file=sys.stderr)
         proc_dir = self._make_proc_dir_and_write_argv_json(full_argv)
 
         # Open files for collecting stdout and stderr.
