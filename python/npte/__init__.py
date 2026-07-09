@@ -40,7 +40,14 @@ from .lab import NpteLab
 from .msak import NpteMsakClient, NpteMsakServer
 from .ndt7 import NpteNdt7Client, NpteNdt7Server
 from .powersaving import npte_energy_performance_preferences
-from .sweep import NpteCell, NpteClientConfig, NpteGrid, NpteServerConfig, NpteShaping
+from .sweep import (
+    NpteCell,
+    NpteClientConfig,
+    NpteGrid,
+    NpteServerConfig,
+    NpteShaping,
+    npte_symmetric_shaping_matrix,
+)
 from .tools import NpteTools
 
 __all__ = [
@@ -59,4 +66,5 @@ __all__ = [
     "NpteSudoExecutor",
     "NpteTools",
     "npte_energy_performance_preferences",
+    "npte_symmetric_shaping_matrix",
 ]

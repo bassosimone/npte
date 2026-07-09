@@ -34,7 +34,7 @@ class NpteShaping:
     delay: str
 
 
-def symmetric_shaping_matrix(
+def npte_symmetric_shaping_matrix(
     rates: list[str],
     rtts_ms: list[float],
 ) -> Iterator[NpteShaping]:
