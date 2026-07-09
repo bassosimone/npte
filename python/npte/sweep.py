@@ -20,7 +20,8 @@ class NpteServerConfig(Protocol):
 class NpteClientConfig(Protocol):
     """Protocol for client command-line builders."""
 
-    timeout: float
+    @property
+    def timeout(self) -> float: ...
 
     def client_argv(self, server_addr: str) -> list[str]: ...
 
