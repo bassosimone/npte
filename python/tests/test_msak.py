@@ -9,19 +9,25 @@ from npte import NpteMsakClient, NpteMsakServer
 
 
 def test_server_is_frozen():
-    s = NpteMsakServer(binary="/bin/msak-server", datadir="/data", cert="/c.pem", key="/k.pem")
+    s = NpteMsakServer(
+        binary="/bin/msak-server", datadir="/data", cert="/c.pem", key="/k.pem"
+    )
     with pytest.raises(AttributeError):
         s.binary = "other"  # type: ignore[misc]
 
 
 def test_server_defaults():
-    s = NpteMsakServer(binary="/bin/msak-server", datadir="/data", cert="/c.pem", key="/k.pem")
+    s = NpteMsakServer(
+        binary="/bin/msak-server", datadir="/data", cert="/c.pem", key="/k.pem"
+    )
     assert s.cleartext_port == 8080
     assert s.tls_port == 4443
 
 
 def test_server_argv():
-    s = NpteMsakServer(binary="/bin/msak-server", datadir="/data", cert="/c.pem", key="/k.pem")
+    s = NpteMsakServer(
+        binary="/bin/msak-server", datadir="/data", cert="/c.pem", key="/k.pem"
+    )
     assert s.server_argv() == [
         "/bin/msak-server",
         "-ws_addr",

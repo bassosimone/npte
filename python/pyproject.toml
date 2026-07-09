@@ -17,3 +17,6 @@ build-backend = "uv_build"
 # Flat layout: the npte module sits next to pyproject.toml, not under src/.
 [tool.uv.build-backend]
 module-root = ""
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

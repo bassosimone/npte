@@ -214,7 +214,9 @@ def test_make_proc_dir_and_write_argv_json(tmp_path, monkeypatch):
     monkeypatch.setattr("npte.executor.uuid.uuid7", lambda: "proc-uuid")
     exc = object.__new__(NpteSudoExecutor)
     exc._session_dir = str(tmp_path)
-    proc_dir = exc._make_proc_dir_and_write_argv_json(["sudo", "-n", "npte", "lab", "create"])
+    proc_dir = exc._make_proc_dir_and_write_argv_json(
+        ["sudo", "-n", "npte", "lab", "create"]
+    )
     assert proc_dir == os.path.join(str(tmp_path), "proc-uuid")
     assert os.path.isdir(proc_dir)
     with open(os.path.join(proc_dir, "argv.json")) as filep:
@@ -264,7 +266,10 @@ def test_run_sudo_npte_check_raises(executor, monkeypatch):
 
 def test_run_sudo_npte_check_false_no_raise(executor, monkeypatch):
     fake_result = subprocess.CompletedProcess(
-        args=["x"], returncode=1, stdout=b"", stderr=b"",
+        args=["x"],
+        returncode=1,
+        stdout=b"",
+        stderr=b"",
     )
     monkeypatch.setattr("npte.executor.subprocess.run", lambda *a, **kw: fake_result)
     monkeypatch.setattr("npte.executor.uuid.uuid7", lambda: "nocheck-uuid")
@@ -325,7 +330,9 @@ def test_start_sudo_npte(executor, monkeypatch):
         lambda *a, **kw: FakePopen(),
     )
 
-    rp = executor.start_sudo_npte(Argv(subcommand=["netns", "run"], positionals=["server", "./srv"]))
+    rp = executor.start_sudo_npte(
+        Argv(subcommand=["netns", "run"], positionals=["server", "./srv"])
+    )
 
     assert os.path.basename(rp.proc_dir) == "start-uuid"
     assert rp.is_running() is True

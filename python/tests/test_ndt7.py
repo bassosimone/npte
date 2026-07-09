@@ -9,19 +9,25 @@ from npte import NpteNdt7Client, NpteNdt7Server
 
 
 def test_server_is_frozen():
-    s = NpteNdt7Server(binary="/bin/ndt-server", datadir="/data", cert="/c.pem", key="/k.pem")
+    s = NpteNdt7Server(
+        binary="/bin/ndt-server", datadir="/data", cert="/c.pem", key="/k.pem"
+    )
     with pytest.raises(AttributeError):
         s.binary = "other"  # type: ignore[misc]
 
 
 def test_server_defaults():
-    s = NpteNdt7Server(binary="/bin/ndt-server", datadir="/data", cert="/c.pem", key="/k.pem")
+    s = NpteNdt7Server(
+        binary="/bin/ndt-server", datadir="/data", cert="/c.pem", key="/k.pem"
+    )
     assert s.cleartext_port == 8081
     assert s.tls_port == 4444
 
 
 def test_server_argv():
-    s = NpteNdt7Server(binary="/bin/ndt-server", datadir="/data", cert="/c.pem", key="/k.pem")
+    s = NpteNdt7Server(
+        binary="/bin/ndt-server", datadir="/data", cert="/c.pem", key="/k.pem"
+    )
     assert s.server_argv() == [
         "/bin/ndt-server",
         "-ndt7_addr_cleartext",
