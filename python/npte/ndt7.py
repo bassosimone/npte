@@ -1,30 +1,30 @@
-"""Wrappers for starting ``ndt-server`` and running ``ndt7-client``."""
+"""Command-line builders for ``ndt-server`` and ``ndt7-client``."""
 
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from .executor import RunningProcess, TerminatedProcess
-from .lab import NpteLab
+import dataclasses
+
 from .ports import NDT7_CLEARTEXT_PORT, NDT7_TLS_PORT
 
 
-def start_ndt_server(
-    lab: NpteLab,
-    *,
-    binary: str,
-    datadir: str,
-    cert: str,
-    key: str,
-    cleartext_port: int = NDT7_CLEARTEXT_PORT,
-    tls_port: int = NDT7_TLS_PORT,
-) -> RunningProcess:
-    """Start an ndt-server in the lab's server namespace (cleartext + TLS)."""
-    return lab.server.start(
-        [
-            binary,
+@dataclasses.dataclass(frozen=True)
+class NpteNdt7Server:
+    """Configuration for an ndt-server (cleartext + TLS)."""
+
+    binary: str
+    datadir: str
+    cert: str
+    key: str
+    cleartext_port: int = NDT7_CLEARTEXT_PORT
+    tls_port: int = NDT7_TLS_PORT
+
+    def server_argv(self) -> list[str]:
+        return [
+            self.binary,
             "-ndt7_addr_cleartext",
-            f":{cleartext_port}",
+            f":{self.cleartext_port}",
             "-ndt7_addr",
-            f":{tls_port}",
+            f":{self.tls_port}",
             "-ndt5_addr",
             "127.0.0.1:9301",
             "-ndt5_ws_addr",
@@ -36,38 +36,35 @@ def start_ndt_server(
             "-prometheusx.listen-address",
             "127.0.0.1:9990",
             "-cert",
-            cert,
+            self.cert,
             "-key",
-            key,
+            self.key,
             "-datadir",
-            datadir,
+            self.datadir,
             "-compress-results=false",
         ]
-    )
 
 
-def run_ndt7_client(
-    lab: NpteLab,
-    *,
-    binary: str,
-    scheme: str = "ws",
-    port: int = NDT7_CLEARTEXT_PORT,
-    timeout: float = 30,
-) -> TerminatedProcess:
-    """Run an ndt7-client download test in the lab's client namespace."""
-    return lab.client.run(
-        [
+@dataclasses.dataclass(frozen=True)
+class NpteNdt7Client:
+    """Configuration for an ndt7-client download test."""
+
+    binary: str
+    scheme: str = "ws"
+    port: int = NDT7_CLEARTEXT_PORT
+    timeout: float = 30
+
+    def client_argv(self, server_addr: str) -> list[str]:
+        return [
             "/usr/bin/time",
             "-p",
-            binary,
+            self.binary,
             "-server",
-            f"{lab.server.addr}:{port}",
+            f"{server_addr}:{self.port}",
             "-scheme",
-            scheme,
+            self.scheme,
             "-no-verify",
             "-download",
             "-upload=false",
             "-format=json",
-        ],
-        timeout=timeout,
-    )
+        ]

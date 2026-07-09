@@ -1,75 +1,71 @@
-"""Wrappers for starting ``msak-server`` and running ``msak-client``."""
+"""Command-line builders for ``msak-server`` and ``msak-client``."""
 
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import dataclasses
 import uuid
 
-from .executor import RunningProcess, TerminatedProcess
-from .lab import NpteLab
 from .ports import MSAK_CLEARTEXT_PORT, MSAK_TLS_PORT
 
 
-def start_msak_server(
-    lab: NpteLab,
-    *,
-    binary: str,
-    datadir: str,
-    cert: str,
-    key: str,
-    cleartext_port: int = MSAK_CLEARTEXT_PORT,
-    tls_port: int = MSAK_TLS_PORT,
-) -> RunningProcess:
-    """Start an msak-server in the lab's server namespace (cleartext + TLS)."""
-    return lab.server.start(
-        [
-            binary,
+@dataclasses.dataclass(frozen=True)
+class NpteMsakServer:
+    """Configuration for an msak-server (cleartext + TLS)."""
+
+    binary: str
+    datadir: str
+    cert: str
+    key: str
+    cleartext_port: int = MSAK_CLEARTEXT_PORT
+    tls_port: int = MSAK_TLS_PORT
+
+    def server_argv(self) -> list[str]:
+        return [
+            self.binary,
             "-ws_addr",
-            f"{lab.server.addr}:{cleartext_port}",
+            f":{self.cleartext_port}",
             "-wss_addr",
-            f"{lab.server.addr}:{tls_port}",
+            f":{self.tls_port}",
             "-prometheusx.listen-address",
             "127.0.0.1:9991",
             "-cert",
-            cert,
+            self.cert,
             "-key",
-            key,
+            self.key,
             "-datadir",
-            datadir,
+            self.datadir,
         ]
-    )
 
 
-def run_msak_client(
-    lab: NpteLab,
-    *,
-    binary: str,
-    cc: str,
-    scheme: str = "ws",
-    duration: str = "10s",
-    port: int = MSAK_CLEARTEXT_PORT,
-    timeout: float = 30,
-) -> TerminatedProcess:
-    """Run an msak-client download test in the lab's client namespace."""
-    return lab.client.run(
-        [
+@dataclasses.dataclass(frozen=True)
+class NpteMsakClient:
+    """Configuration for an msak-client download test."""
+
+    binary: str
+    cc: str = "cubic"
+    scheme: str = "ws"
+    duration: str = "10s"
+    port: int = MSAK_CLEARTEXT_PORT
+    timeout: float = 30
+
+    def client_argv(self, server_addr: str) -> list[str]:
+        return [
             "/usr/bin/time",
             "-p",
-            binary,
+            self.binary,
             "-server",
-            f"{lab.server.addr}:{port}",
+            f"{server_addr}:{self.port}",
             "-scheme",
-            scheme,
+            self.scheme,
             "-no-verify",
             "-streams",
             "1",
             "-cc",
-            cc,
+            self.cc,
             "-duration",
-            duration,
+            self.duration,
             "-download",
             "-upload=false",
             "-mid",
             str(uuid.uuid7()),
-        ],
-        timeout=timeout,
-    )
+        ]

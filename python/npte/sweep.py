@@ -4,10 +4,25 @@
 
 import dataclasses
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
+from typing import Protocol
 
-from .executor import RunningProcess, TerminatedProcess
+from .executor import TerminatedProcess
 from .lab import NpteLab
+
+
+class NpteServerConfig(Protocol):
+    """Protocol for server command-line builders."""
+
+    def server_argv(self) -> list[str]: ...
+
+
+class NpteClientConfig(Protocol):
+    """Protocol for client command-line builders."""
+
+    timeout: float
+
+    def client_argv(self, server_addr: str) -> list[str]: ...
 
 
 @dataclasses.dataclass(frozen=True)
@@ -34,7 +49,7 @@ class NpteCell:
     def __init__(self) -> None:
         self._download: NpteShaping | None = None
         self._upload: NpteShaping | None = None
-        self._clients: list[Callable[[], TerminatedProcess]] = []
+        self._clients: list[NpteClientConfig] = []
 
     def set_download(self, shaping: NpteShaping) -> None:
         self._download = shaping
@@ -42,7 +57,7 @@ class NpteCell:
     def set_upload(self, shaping: NpteShaping) -> None:
         self._upload = shaping
 
-    def add_client(self, client: Callable[[], TerminatedProcess]) -> None:
+    def add_client(self, client: NpteClientConfig) -> None:
         self._clients.append(client)
 
 
@@ -51,21 +66,21 @@ class NpteGrid:
 
     def __init__(self, lab: NpteLab) -> None:
         self._lab = lab
-        self._servers: list[Callable[[], RunningProcess]] = []
+        self._servers: list[NpteServerConfig] = []
         self._cells: list[NpteCell] = []
 
-    def add_server(self, server: Callable[[], RunningProcess]) -> None:
+    def add_server(self, server: NpteServerConfig) -> None:
         self._servers.append(server)
 
     def add_cell(self, cell: NpteCell) -> None:
         self._cells.append(cell)
 
     def run(self) -> list[TerminatedProcess]:
-        running: list[RunningProcess] = []
+        running = []
         results: list[TerminatedProcess] = []
         try:
-            for start_server in self._servers:
-                running.append(start_server())
+            for server in self._servers:
+                running.append(self._lab.server.start(server.server_argv()))
             time.sleep(0.5)
             for proc in running:
                 if not proc.is_running():
@@ -73,7 +88,12 @@ class NpteGrid:
             for cell in self._cells:
                 self._apply_shaping(cell)
                 for client in cell._clients:
-                    results.append(client())
+                    results.append(
+                        self._lab.client.run(
+                            client.client_argv(self._lab.server.addr),
+                            timeout=client.timeout,
+                        )
+                    )
         finally:
             for proc in running:
                 proc.kill()
