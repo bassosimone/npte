@@ -109,8 +109,9 @@ flag, which prints a round-trippable shell script to stdout instead of executing
 
 The [`python/`](python/) directory contains an experimental Python package
 for driving the lab from scripts, under the same sudoers(5) assumption as
-the `mcp` subcommand. See the package docstrings for usage. The Debian
-package ships it under `/usr/lib/python3/dist-packages`.
+the `mcp` subcommand. See [`python/README.md`](python/README.md) for
+setup, usage examples, and the public API. The Debian package ships it
+under `/usr/lib/python3/dist-packages`.
 
 ## License
 

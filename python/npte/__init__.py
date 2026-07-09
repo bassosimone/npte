@@ -1,35 +1,53 @@
 """
 Drive ``npte`` from Python scripts.
 
-Import all public symbols from this package directly::
+Import all public symbols from this package::
 
     from npte import NpteLab, NpteTools, NpteGrid, ...
 
-Do not rely on the internal module layout (``npte.lab``, ``npte.sweep``,
-etc.) — module names may change without notice. The public API is the
-set of ``Npte``-prefixed classes and ``npte_``-prefixed functions
-re-exported here.
+Do not import from internal modules (``npte.lab``, ``npte.sweep``, etc.)
+— module names may change without notice.  The public API is the set of
+``Npte``-prefixed classes and ``npte_``-prefixed functions exported here.
 
-The main assumption is that you have used ``npte sudoers`` to install
-sudoers(5) rules that allow executing the following commands:
+Prerequisite: install passwordless sudoers rules with ``npte sudoers``.
+See ``python/README.md`` for setup details.
 
-1. ``npte netns *``
-2. ``npte netem *``
-3. ``npte lab *``
+Example — build tools, sweep rates/RTTs/CCs across multiple servers::
 
-with sudo(8) without requiring a password prompt.
+    from npte import (
+        NpteCell,
+        NpteGrid,
+        NpteLab,
+        NpteTools,
+        npte_symmetric_shaping_matrix,
+    )
 
-Minimal example::
-
-    from npte import NpteLab
+    tools = NpteTools()
+    tools.generate_certs()
+    tools.build_msak()
+    tools.build_ndt7()
 
     with NpteLab() as lab:
-        server = lab.server.start(["./httpserver"])
-        lab.client.shape_download(rate="100mbit", delay="25ms")
-        lab.client.shape_upload(rate="20mbit", delay="25ms")
-        lab.client.run(["curl", f"http://{lab.server.addr}:8080/"])
-        server.kill()
-        server.wait()
+        grid = NpteGrid(lab)
+        grid.add_server(tools.iperf3_server())
+        grid.add_server(tools.msak_server())
+        grid.add_server(tools.ndt7_server())
+
+        for shaping in npte_symmetric_shaping_matrix(
+            rates=["100mbit"],
+            rtts=[5, 25],
+        ):
+            for cc in ["bbr", "cubic"]:
+                cell = NpteCell()
+                cell.set_download(shaping)
+                cell.set_upload(shaping)
+                cell.add_client(tools.iperf3_client(cc=cc))
+                cell.add_client(tools.msak_client(cc=cc))
+                cell.add_client(tools.ndt7_client())
+                grid.add_cell(cell)
+
+        for result in grid.run():
+            print(f"exit={result.exitcode} dir={result.proc_dir}")
 """
 
 # SPDX-License-Identifier: GPL-3.0-or-later

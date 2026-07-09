@@ -20,3 +20,7 @@ House rules for the `python/` subtree.
 - Prefer protocol doubles (e.g., `FakeExecutor`) over monkey patching for in-house code.
 - Use monkey patching only for foreign dependencies (`time.sleep`, `uuid.uuid7`, `glob.glob`, etc.).
 - Assert exact equality for deterministic outputs.
+
+## Documentation
+
+- When changing the public API, cross-check: `__init__.py` (exports + docstring examples), `python/README.md` (usage examples), and `__all__`.
