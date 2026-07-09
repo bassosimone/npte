@@ -2,7 +2,10 @@
 name = "npte"
 version = "0.1.0"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "pyright>=1.1.411",
+    "ruff>=0.15.20",
+]
 
 [dependency-groups]
 dev = ["pytest", "pytest-cov"]
