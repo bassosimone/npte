@@ -98,7 +98,14 @@ def test_generate_certs(tmp_path, monkeypatch):
 
     assert len(calls) == 1
     argv, kwargs = calls[0]
-    assert argv == ["/usr/sbin/npte", "gencerts", "-C", certdir, "--ip-addr", "172.16.2.2"]
+    assert argv == [
+        "/usr/sbin/npte",
+        "gencerts",
+        "-C",
+        certdir,
+        "--ip-addr",
+        "172.16.2.2",
+    ]
     assert kwargs["check"] is True
     assert os.path.isdir(certdir)
 
@@ -115,7 +122,14 @@ def test_generate_certs_custom_npte(tmp_path, monkeypatch):
 
     assert len(calls) == 1
     argv, kwargs = calls[0]
-    assert argv == ["/opt/bin/npte", "gencerts", "-C", certdir, "--ip-addr", "172.16.2.2"]
+    assert argv == [
+        "/opt/bin/npte",
+        "gencerts",
+        "-C",
+        certdir,
+        "--ip-addr",
+        "172.16.2.2",
+    ]
     assert kwargs["check"] is True
 
 
@@ -130,8 +144,16 @@ def test_build_msak(tmp_path, monkeypatch):
     tools.build_msak()
 
     assert len(calls) == 2
-    assert calls[0][0] == ["go", "install", "github.com/m-lab/msak/cmd/msak-server@latest"]
-    assert calls[1][0] == ["go", "install", "github.com/m-lab/msak/cmd/msak-client@latest"]
+    assert calls[0][0] == [
+        "go",
+        "install",
+        "github.com/m-lab/msak/cmd/msak-server@latest",
+    ]
+    assert calls[1][0] == [
+        "go",
+        "install",
+        "github.com/m-lab/msak/cmd/msak-client@latest",
+    ]
     for _, kwargs in calls:
         assert kwargs["check"] is True
         assert kwargs["env"]["GOBIN"] == bindir
