@@ -111,9 +111,14 @@ class NpteSudoExecutor:
     later inspection.
     """
 
-    def __init__(self, npte: str) -> None:
+    def __init__(self, npte: str, *, sessions_dir: str | None = None) -> None:
         self._npte = npte
-        self._session_dir = os.path.join(".npte", "sessions", str(uuid.uuid7()))
+        base = (
+            sessions_dir
+            if sessions_dir is not None
+            else os.path.join(".npte", "sessions")
+        )
+        self._session_dir = os.path.join(base, str(uuid.uuid7()))
         os.makedirs(self._session_dir)
 
     def run_sudo_npte(

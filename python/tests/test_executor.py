@@ -207,6 +207,15 @@ def test_executor_init_creates_session_dir(tmp_path, monkeypatch):
     assert os.path.isdir(expected)
 
 
+def test_executor_init_custom_sessions_dir(tmp_path, monkeypatch):
+    monkeypatch.setattr("npte.executor.uuid.uuid7", lambda: "fake-uuid")
+    custom = str(tmp_path / "my-sessions")
+    exc = NpteSudoExecutor("/usr/sbin/npte", sessions_dir=custom)
+    expected = os.path.join(custom, "fake-uuid")
+    assert exc._session_dir == expected
+    assert os.path.isdir(expected)
+
+
 # --- NpteSudoExecutor._make_proc_dir_and_write_argv_json ---
 
 

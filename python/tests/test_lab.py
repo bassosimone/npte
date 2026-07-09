@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from npte.executor import Argv, RunningProcess, TerminatedProcess
+import os
+from typing import cast
+
+from npte.executor import Argv, NpteSudoExecutor, RunningProcess, TerminatedProcess
 from npte.lab import ClientNamespace, Namespace, NpteLab
 
 
@@ -184,3 +187,12 @@ def test_lab_context_manager():
     assert len(exc.calls) == 2
     assert exc.calls[0][1].subcommand == ["lab", "create"]
     assert exc.calls[1][1].subcommand == ["lab", "destroy"]
+
+
+def test_lab_custom_sessions_dir(tmp_path, monkeypatch):
+    monkeypatch.setattr("npte.executor.uuid.uuid7", lambda: "fake-uuid")
+    custom = str(tmp_path / "my-sessions")
+    lab = NpteLab(sessions_dir=custom)
+    expected = os.path.join(custom, "fake-uuid")
+    assert cast(NpteSudoExecutor, lab._exc)._session_dir == expected
+    assert os.path.isdir(expected)

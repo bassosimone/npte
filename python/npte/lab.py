@@ -161,8 +161,16 @@ class NpteLab:
         *,
         npte: str = "/usr/sbin/npte",
         exc: ExecutorProtocol | None = None,
+        sessions_dir: str | None = None,
     ) -> None:
-        exc = exc if exc is not None else NpteSudoExecutor(npte)
+        exc = (
+            NpteSudoExecutor(
+                npte,
+                sessions_dir=sessions_dir,
+            )
+            if exc is None
+            else exc
+        )
         self.client = ClientNamespace(exc=exc, addr="172.16.3.2", name="client")
         self.server = Namespace(exc=exc, addr="172.16.2.2", name="server")
         self._exc = exc
