@@ -15,17 +15,21 @@ from .ndt7 import NpteNdt7Client, NpteNdt7Server
 class NpteTools:
     """Build measurement tools from source and produce configured dataclasses.
 
-    All artifacts live under ``<root>/.npte/``::
+    By default, all artifacts live under ``<root_dir>/.npte/``::
 
         .npte/bin/       go install target
         .npte/certs/     cert.pem, key.pem
         .npte/data/      server datadirs
     """
 
-    def __init__(self, root: str = ".") -> None:
-        self._bindir = os.path.join(root, ".npte", "bin")
-        self._certdir = os.path.join(root, ".npte", "certs")
-        self._datadir = os.path.join(root, ".npte", "data")
+    def __init__(self, root_dir: str = ".", *, data_dir: str | None = None) -> None:
+        self._bindir = os.path.join(root_dir, ".npte", "bin")
+        self._certdir = os.path.join(root_dir, ".npte", "certs")
+        self._datadir = (
+            data_dir
+            if data_dir is not None
+            else os.path.join(root_dir, ".npte", "data")
+        )
 
     def generate_certs(self, *, npte: str = "/usr/sbin/npte") -> None:
         """Generate TLS certificates for the lab server address."""

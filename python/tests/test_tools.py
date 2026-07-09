@@ -17,22 +17,35 @@ from npte import (
 
 
 def test_iperf3_server(tmp_path):
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     assert tools.iperf3_server() == NpteIperf3Server()
 
 
 def test_iperf3_client(tmp_path):
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     assert tools.iperf3_client(cc="bbr") == NpteIperf3Client(cc="bbr")
 
 
 def test_iperf3_client_default_cc(tmp_path):
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     assert tools.iperf3_client() == NpteIperf3Client(cc="cubic")
 
 
+def test_msak_server_custom_datadir(tmp_path):
+    custom = os.path.join(str(tmp_path), "custom-data")
+    tools = NpteTools(root_dir=str(tmp_path), data_dir=custom)
+    bindir = os.path.join(str(tmp_path), ".npte", "bin")
+    certdir = os.path.join(str(tmp_path), ".npte", "certs")
+    assert tools.msak_server() == NpteMsakServer(
+        binary=os.path.join(bindir, "msak-server"),
+        datadir=custom,
+        cert=os.path.join(certdir, "cert.pem"),
+        key=os.path.join(certdir, "key.pem"),
+    )
+
+
 def test_msak_server(tmp_path):
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     bindir = os.path.join(str(tmp_path), ".npte", "bin")
     certdir = os.path.join(str(tmp_path), ".npte", "certs")
     datadir = os.path.join(str(tmp_path), ".npte", "data")
@@ -45,7 +58,7 @@ def test_msak_server(tmp_path):
 
 
 def test_msak_client(tmp_path):
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     bindir = os.path.join(str(tmp_path), ".npte", "bin")
     assert tools.msak_client(cc="bbr") == NpteMsakClient(
         binary=os.path.join(bindir, "msak-client"),
@@ -54,7 +67,7 @@ def test_msak_client(tmp_path):
 
 
 def test_msak_client_default_cc(tmp_path):
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     bindir = os.path.join(str(tmp_path), ".npte", "bin")
     assert tools.msak_client() == NpteMsakClient(
         binary=os.path.join(bindir, "msak-client"),
@@ -63,7 +76,7 @@ def test_msak_client_default_cc(tmp_path):
 
 
 def test_ndt7_server(tmp_path):
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     bindir = os.path.join(str(tmp_path), ".npte", "bin")
     certdir = os.path.join(str(tmp_path), ".npte", "certs")
     datadir = os.path.join(str(tmp_path), ".npte", "data")
@@ -76,7 +89,7 @@ def test_ndt7_server(tmp_path):
 
 
 def test_ndt7_client(tmp_path):
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     bindir = os.path.join(str(tmp_path), ".npte", "bin")
     assert tools.ndt7_client() == NpteNdt7Client(
         binary=os.path.join(bindir, "ndt7-client"),
@@ -92,7 +105,7 @@ def test_generate_certs(tmp_path, monkeypatch):
         "npte.tools.subprocess.run",
         lambda argv, **kw: calls.append((argv, kw)),
     )
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     certdir = os.path.join(str(tmp_path), ".npte", "certs")
     tools.generate_certs()
 
@@ -116,7 +129,7 @@ def test_generate_certs_custom_npte(tmp_path, monkeypatch):
         "npte.tools.subprocess.run",
         lambda argv, **kw: calls.append((argv, kw)),
     )
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     certdir = os.path.join(str(tmp_path), ".npte", "certs")
     tools.generate_certs(npte="/opt/bin/npte")
 
@@ -139,7 +152,7 @@ def test_build_msak(tmp_path, monkeypatch):
         "npte.tools.subprocess.run",
         lambda argv, **kw: calls.append((argv, kw)),
     )
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     bindir = os.path.abspath(os.path.join(str(tmp_path), ".npte", "bin"))
     tools.build_msak()
 
@@ -166,7 +179,7 @@ def test_build_ndt7(tmp_path, monkeypatch):
         "npte.tools.subprocess.run",
         lambda argv, **kw: calls.append((argv, kw)),
     )
-    tools = NpteTools(root=str(tmp_path))
+    tools = NpteTools(root_dir=str(tmp_path))
     bindir = os.path.abspath(os.path.join(str(tmp_path), ".npte", "bin"))
     tools.build_ndt7()
 
