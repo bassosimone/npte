@@ -35,7 +35,7 @@ Example — build tools, sweep rates/RTTs/CCs across multiple servers::
 
         for shaping in npte_symmetric_shaping_matrix(
             rates=["100mbit"],
-            rtts=[5, 25],
+            rtts_ms=[5, 25],
         ):
             for cc in ["bbr", "cubic"]:
                 cell = NpteCell()
