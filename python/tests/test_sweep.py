@@ -4,7 +4,6 @@ import dataclasses
 import os
 
 import pytest
-
 from npte import (
     NpteCell,
     NpteGrid,
@@ -13,7 +12,6 @@ from npte import (
     npte_symmetric_shaping_matrix,
 )
 from npte.executor import Argv, RunningProcess, TerminatedProcess
-
 
 # --- NpteShaping ---
 
@@ -92,7 +90,6 @@ class FakePopen:
 
     def send_signal(self, sig: int) -> None:
         _ = sig
-        pass
 
 
 class FakeExecutor:

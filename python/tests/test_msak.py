@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import pytest
-
 from npte import NpteMsakClient, NpteMsakServer
-
 
 # --- NpteMsakServer ---
 

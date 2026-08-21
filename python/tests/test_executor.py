@@ -6,7 +6,6 @@ import signal
 import subprocess
 
 import pytest
-
 from npte.executor import Argv, NpteSudoExecutor, RunningProcess, TerminatedProcess
 
 # --- Argv ---

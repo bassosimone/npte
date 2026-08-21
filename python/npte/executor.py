@@ -152,6 +152,7 @@ class NpteSudoExecutor:
                 stdin=subprocess.DEVNULL,
                 capture_output=True,
                 timeout=timeout,
+                check=False,
             )
         except subprocess.TimeoutExpired as exc:
             with open(os.path.join(proc_dir, "stdout.txt"), "wb") as filep:
@@ -190,8 +191,11 @@ class NpteSudoExecutor:
         proc_dir = self._make_proc_dir_and_write_argv_json(full_argv)
 
         # Open files for collecting stdout and stderr.
-        stdout_filep = open(os.path.join(proc_dir, "stdout.txt"), "wb")
-        stderr_filep = open(os.path.join(proc_dir, "stderr.txt"), "wb")
+        #
+        # Because the files lifecycle is larger than this function
+        # we suppress the SIM115 false positive.
+        stdout_filep = open(os.path.join(proc_dir, "stdout.txt"), "wb")  # noqa: SIM115
+        stderr_filep = open(os.path.join(proc_dir, "stderr.txt"), "wb")  # noqa: SIM115
 
         # Start the process and get its handle.
         proc = subprocess.Popen(

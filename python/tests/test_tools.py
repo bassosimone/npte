@@ -12,7 +12,6 @@ from npte import (
     NpteTools,
 )
 
-
 # --- Factory methods ---
 
 
