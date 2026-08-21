@@ -17,8 +17,6 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          version: "latest"
 
       - name: Ruff check
         run: uv run ruff check
@@ -36,8 +34,6 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          version: "latest"
 
       - name: Test
         run: uv run pytest python/tests
@@ -49,8 +45,6 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          version: "latest"
 
       - name: Measure Coverage
         run: uv run pytest --cov=npte --cov-report=xml python/tests
