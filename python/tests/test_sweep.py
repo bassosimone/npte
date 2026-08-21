@@ -4,6 +4,7 @@ import dataclasses
 import os
 
 import pytest
+
 from npte import (
     NpteCell,
     NpteGrid,
