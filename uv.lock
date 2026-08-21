@@ -107,27 +107,23 @@ wheels = [
 name = "npte"
 version = "0.1.0"
 source = { editable = "python" }
-dependencies = [
-    { name = "pyright" },
-    { name = "ruff" },
-]
 
 [package.dev-dependencies]
 dev = [
+    { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "pyright", specifier = ">=1.1.411" },
-    { name = "ruff", specifier = ">=0.15.20" },
-]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "pyright", specifier = ">=1.1.411" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "ruff", specifier = ">=0.15.20" },
 ]
 
 [[package]]

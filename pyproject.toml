@@ -1,2 +1,14 @@
 [tool.uv.workspace]
 members = ["python"]
+
+# Configure tools for all workspace members.
+[tool.ruff]
+src = ["python"]
+target-version = "py314"
+include = ["python/**"]
+
+[tool.pyright]
+include = ["python"]
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]
