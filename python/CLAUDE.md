@@ -6,6 +6,8 @@ House rules for the `python/` subtree.
 
 - Use `uv run` for everything — never `pip`, `python -m`, or bare `pytest`.
 - Quality gates: `uv run ruff check`, `uv run ruff format --check`, `uv run pyright`, `uv run pytest`.
+- Tools configuration lives in the workspace root so that gates behave identically for every tool
+- We define dependencies in this directory for the same reason
 
 ## Style
 
