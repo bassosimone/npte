@@ -50,6 +50,10 @@ chmod 644 "$stage/usr/share/man/man8/npte.8.gz"
 install -d "$stage/usr/share/doc/npte"
 install -m 644 dist/debian/copyright "$stage/usr/share/doc/npte/"
 
+# Install lintian overrides.
+install -d "$stage/usr/share/lintian/overrides"
+install -m 644 dist/debian/lintian-overrides "$stage/usr/share/lintian/overrides/npte"
+
 # Install control file with substitutions.
 #
 # Note: binary control files do not allow comments: strip them.
