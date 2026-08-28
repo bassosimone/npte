@@ -3,6 +3,10 @@
 # These are build-machine tools only: do not add them to internal/deps.
 set -euo pipefail
 
+# Debian policy wants 0755 directories; `install -d` applies the build
+# user's umask to the intermediate directories it creates.
+umask 022
+
 cd "$(dirname "$(dirname "$(readlink -f "$0")")")"
 ver="$(git describe --tags | sed 's/^v//')~$(date -u +%Y%m%d%H%M%S)-1"
 stage="$(mktemp -d)"
@@ -24,8 +28,6 @@ install -d "$stage/usr/lib/python3/dist-packages"
 uv pip install --link-mode=copy --target "$stage/x" ./python
 mv "$stage/x/npte" "$stage/usr/lib/python3/dist-packages"
 rm -r "$stage/x"
-# uv applies the build user's umask; force policy-compliant 755/644.
-chmod -R u=rwX,go=rX "$stage/usr/lib/python3/dist-packages/npte"
 
 # Install manpage.
 install -d "$stage/usr/share/man/man8"
