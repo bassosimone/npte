@@ -51,9 +51,11 @@ install -d "$stage/usr/share/doc/npte"
 install -m 644 dist/debian/copyright "$stage/usr/share/doc/npte/"
 
 # Install control file with substitutions.
+#
+# Note: binary control files do not allow comments: strip them.
 install -d "$stage/DEBIAN"
 sed -e "s/@VERSION@/$ver/g" -e "s/@ARCH@/$arch/g" \
-    -e "s/@LIBC@/$libc_ver/g" \
+    -e "s/@LIBC@/$libc_ver/g" -e '/^#/d' \
     dist/debian/control > "$stage/DEBIAN/control"
 
 # Install maintainer scripts.
