@@ -3,13 +3,13 @@ module github.com/bassosimone/npte
 go 1.25.7
 
 require (
-	github.com/bassosimone/closepool v0.0.0-20260823101641-96f861c1173c
-	github.com/bassosimone/deferexit v0.0.0-20260823101823-0f95a017ebaf
-	github.com/bassosimone/pkitest v0.0.0-20260824081820-97f68d45ac20
-	github.com/bassosimone/runtimex v0.0.0-20260823103059-603841e26ca3
-	github.com/bassosimone/textwrap v0.0.0-20260823103449-8d700213ddc3
-	github.com/bassosimone/vclip v0.0.0-20260826162233-c160f756f16c
-	github.com/bassosimone/vflag v0.0.0-20260826080943-520f354fef69
+	github.com/bassosimone/closepool v0.0.0-20260828072703-e4e18db93a56
+	github.com/bassosimone/deferexit v0.0.0-20260828072731-f9256f880c34
+	github.com/bassosimone/pkitest v0.0.0-20260828082631-dc79fe632a24
+	github.com/bassosimone/runtimex v0.0.0-20260828074549-6e2e561f98d1
+	github.com/bassosimone/textwrap v0.0.0-20260828074613-3a15e93369e2
+	github.com/bassosimone/vclip v0.0.0-20260828094436-cb4bf11d5bdd
+	github.com/bassosimone/vflag v0.0.0-20260828092355-3cab5f4711d4
 	github.com/charmbracelet/glamour v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/google/uuid v1.6.0
@@ -23,9 +23,9 @@ require (
 	github.com/alecthomas/chroma/v2 v2.27.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/bassosimone/flagparser v0.0.0-20260824081041-6c062c926c7b // indirect
-	github.com/bassosimone/flagscanner v0.0.0-20260823102942-9c9efa51e541 // indirect
-	github.com/bassosimone/must v0.0.0-20260825074710-ce6682ec0b5f // indirect
+	github.com/bassosimone/flagparser v0.0.0-20260828082109-edbc8ebcae44 // indirect
+	github.com/bassosimone/flagscanner v0.0.0-20260828074539-cf54a52b2823 // indirect
+	github.com/bassosimone/must v0.0.0-20260828084513-347de4e2df4c // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/x/ansi v0.11.8 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
