@@ -1,5 +1,6 @@
 #!/bin/bash
-# Build deps: git, go, uv (stages the Python package), dpkg-deb.
+# Build deps: git, go, objdump (computes the libc6 dependency), uv
+# (stages the Python package), dpkg-deb.
 # These are build-machine tools only: do not add them to internal/deps.
 set -euo pipefail
 
