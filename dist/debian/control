@@ -5,7 +5,7 @@ Priority: optional
 Architecture: @ARCH@
 Maintainer: Simone Basso <bassosimone@gmail.com>
 Homepage: https://github.com/bassosimone/npte
-Depends: bubblewrap, coreutils, debootstrap, grep, iproute2, iptables, kmod, procps, python3 (>= 3.14), systemd-container, util-linux, sudo | sudo-rs
+Depends: bubblewrap, coreutils, debootstrap, grep, iproute2, iptables, kmod, libc6 (>= @LIBC@), procps, python3 (>= 3.14), systemd-container, util-linux, sudo | sudo-rs
 Description: Network Performance Testing Environment
  Builds isolated Linux network namespaces wired with veth pairs and
  shaped via tc/netem, to test how a network client behaves on a

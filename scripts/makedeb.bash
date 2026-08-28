@@ -18,10 +18,19 @@ arch="$(go env GOARCH)"
 set -x
 
 # Build and install the binary.
+#
+# -buildmode=pie yields a PIE so the kernel can randomize the load
+# address (ASLR); npte runs as root, so opt into hardening.
 install -d "$stage/usr/sbin"
 ldflags_buildcfg="github.com/bassosimone/npte/internal/buildcfg"
-go build -ldflags="-s -w -X $ldflags_buildcfg.Version=$ver -X $ldflags_buildcfg.InstallPath=/usr/sbin/npte" -o "$stage/usr/sbin/npte" .
+go build -buildmode=pie -ldflags="-s -w -X $ldflags_buildcfg.Version=$ver -X $ldflags_buildcfg.InstallPath=/usr/sbin/npte" -o "$stage/usr/sbin/npte" .
 chmod 755 "$stage/usr/sbin/npte"
+
+# Compute the libc6 version the binary actually requires: the highest
+# GLIBC_x.y symbol version it references. This mirrors what
+# dpkg-shlibdeps derives for real Debian packages.
+libc_ver="$(objdump -T "$stage/usr/sbin/npte" \
+    | grep -oE 'GLIBC_[0-9.]+' | sed 's/^GLIBC_//' | sort -uV | tail -1)"
 
 # Build and install Python package.
 install -d "$stage/usr/lib/python3/dist-packages"
@@ -43,6 +52,7 @@ install -m 644 dist/debian/copyright "$stage/usr/share/doc/npte/"
 # Install control file with substitutions.
 install -d "$stage/DEBIAN"
 sed -e "s/@VERSION@/$ver/g" -e "s/@ARCH@/$arch/g" \
+    -e "s/@LIBC@/$libc_ver/g" \
     dist/debian/control > "$stage/DEBIAN/control"
 
 # Install maintainer scripts.
