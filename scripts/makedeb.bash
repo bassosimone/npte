@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build deps: git, go, objdump (computes the libc6 dependency), uv
-# (stages the Python package), dpkg-deb.
+# (stages the Python package), dpkg-deb, lintian.
 # These are build-machine tools only: do not add them to internal/deps.
 set -euo pipefail
 
@@ -73,3 +73,6 @@ install -m 755 dist/debian/prerm "$stage/DEBIAN/"
 chmod 644 "$stage/DEBIAN/md5sums"
 
 dpkg-deb --root-owner-group --build "$stage" "npte_${ver}_${arch}.deb"
+
+# Check the package for policy violations.
+lintian --tag-display-limit 0 "npte_${ver}_${arch}.deb"
