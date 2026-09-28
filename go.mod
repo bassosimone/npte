@@ -3,13 +3,13 @@ module github.com/bassosimone/npte
 go 1.26.0
 
 require (
-	github.com/bassosimone/closepool v0.0.0-20260920130209-ecd5a8f12e9b
-	github.com/bassosimone/deferexit v0.0.0-20260920130353-344b1a39a3c4
-	github.com/bassosimone/pkitest v0.0.0-20260920134538-44dc9051d09a
-	github.com/bassosimone/runtimex v0.0.0-20260920130843-b72080259a60
-	github.com/bassosimone/textwrap v0.0.0-20260920134026-7a0b23602d17
-	github.com/bassosimone/vclip v0.0.0-20260920140331-32845f1c2f1a
-	github.com/bassosimone/vflag v0.0.0-20260920135752-105f5b45ed82
+	github.com/bassosimone/closepool v0.0.0-20260928111144-9eef701bea99
+	github.com/bassosimone/deferexit v0.0.0-20260928111243-1ceec2208869
+	github.com/bassosimone/pkitest v0.0.0-20260928112139-c2ca7e68520a
+	github.com/bassosimone/runtimex v0.0.0-20260928111457-f2fe934d5065
+	github.com/bassosimone/textwrap v0.0.0-20260928111620-10df61158669
+	github.com/bassosimone/vclip v0.0.0-20260928114705-86887ca1c7df
+	github.com/bassosimone/vflag v0.0.0-20260928113542-10198c4d0a30
 	github.com/charmbracelet/glamour v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/google/uuid v1.6.0
@@ -23,13 +23,13 @@ require (
 	github.com/alecthomas/chroma/v2 v2.27.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/bassosimone/flagparser v0.0.0-20260920134238-622c743feb8a // indirect
-	github.com/bassosimone/flagscanner v0.0.0-20260920130738-11546ab7262e // indirect
-	github.com/bassosimone/must v0.0.0-20260920134909-0e0911cde875 // indirect
+	github.com/bassosimone/flagparser v0.0.0-20260928111833-44e028b025f9 // indirect
+	github.com/bassosimone/flagscanner v0.0.0-20260928111414-ec0ac9195577 // indirect
+	github.com/bassosimone/must v0.0.0-20260928112453-2a38e7bb20e8 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/x/ansi v0.11.8 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
-	github.com/charmbracelet/x/exp/slice v0.0.0-20260920004010-53e2afe73ae5 // indirect
+	github.com/charmbracelet/x/exp/slice v0.1.0 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
