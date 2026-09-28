@@ -18,7 +18,7 @@ topology for the common case.
 
 ## Install
 
-You need Go >= 1.25.
+You need the `stable` Go version (see https://go.dev/dl/).
 
 ### From source
 
