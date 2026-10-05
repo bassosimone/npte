@@ -28,10 +28,10 @@ github.com/bassosimone/runtimex v0.0.0-20260928111457-f2fe934d5065 h1:kTLEe+4NAR
 github.com/bassosimone/runtimex v0.0.0-20260928111457-f2fe934d5065/go.mod h1:2aW76skIZNS7ljOpIqU3eARVLmtb0AG/Gab4aegSkTA=
 github.com/bassosimone/textwrap v0.0.0-20260928111620-10df61158669 h1:utgi154TR8438lCyqL2mTpiwe6+iB3w5mCpepfXbeew=
 github.com/bassosimone/textwrap v0.0.0-20260928111620-10df61158669/go.mod h1:Abw4PaN0ny+I6/HT5tZV9NwTOz2qqT9MzWWom8g6veo=
-github.com/bassosimone/vclip v0.0.0-20260928114705-86887ca1c7df h1:NjNtWcJmpyC9rS+Jh6kNXiWQk3XHqcF0RkGF0LdSabs=
-github.com/bassosimone/vclip v0.0.0-20260928114705-86887ca1c7df/go.mod h1:B9sokmkOqg110rf4vWJckjSiJaU/pIQFtlg6u/mbhHM=
-github.com/bassosimone/vflag v0.0.0-20260928113542-10198c4d0a30 h1:oMzZTw3qxx6QlClucGecLsyh9nMg1A+E9U9gH/PGTt0=
-github.com/bassosimone/vflag v0.0.0-20260928113542-10198c4d0a30/go.mod h1:1sdjCmDqic4UnClt2ZC0rxQ5eBzHQmYaFhP3ZsrL4Vg=
+github.com/bassosimone/vclip v0.0.0-20261005053301-a4fe6d3e2269 h1:A4zodbefqV+EkvctmCJi66x/FN/jBVDLRvK6wDa5SDw=
+github.com/bassosimone/vclip v0.0.0-20261005053301-a4fe6d3e2269/go.mod h1:uCHEH4eNM9weObnXCAKtkDGLVaFLqzh/l9K4aDIDb0E=
+github.com/bassosimone/vflag v0.0.0-20261001050637-5cd81148840b h1:khCJAvyIbBrAEe4h83P+GaXxDU6kFa41m9EZMP/9kbs=
+github.com/bassosimone/vflag v0.0.0-20261001050637-5cd81148840b/go.mod h1:1sdjCmDqic4UnClt2ZC0rxQ5eBzHQmYaFhP3ZsrL4Vg=
 github.com/charmbracelet/colorprofile v0.4.3 h1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex9t5KX76i20Q=
 github.com/charmbracelet/colorprofile v0.4.3/go.mod h1:/zT4BhpD5aGFpqQQqw7a+VtHCzu+zrQtt1zhMt9mR4Q=
 github.com/charmbracelet/glamour v1.0.0 h1:AWMLOVFHTsysl4WV8T8QgkQ0s/ZNZo7CiE4WKhk8l08=
@@ -52,8 +52,8 @@ github.com/clipperhouse/displaywidth v0.11.0 h1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSE
 github.com/clipperhouse/displaywidth v0.11.0/go.mod h1:bkrFNkf81G8HyVqmKGxsPufD3JhNl3dSqnGhOoSD/o0=
 github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=
 github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
-github.com/dlclark/regexp2/v2 v2.8.0 h1:CekDhPLGfm+GAJmPVFIG+5dqMIQPkyHJll7BbdneDfw=
-github.com/dlclark/regexp2/v2 v2.8.0/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
+github.com/dlclark/regexp2/v2 v2.8.3 h1:4iBHVtmyAsQOOthVo+0v0RxktjLPDOTKx9Nuhf+PpD0=
+github.com/dlclark/regexp2/v2 v2.8.3/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
 github.com/golang-jwt/jwt/v5 v5.3.1 h1:kYf81DTWFe7t+1VvL7eS+jKFVWaUnK9cB1qbwn63YCY=
 github.com/golang-jwt/jwt/v5 v5.3.1/go.mod h1:fxCRLWMO43lRc8nhHWY6LGqRcf+1gQWArsqaEUEa5bE=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
