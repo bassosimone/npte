@@ -18,7 +18,7 @@ topology for the common case.
 
 ## Install
 
-You need the `stable` Go version (see https://go.dev/dl/).
+You need the go version specified in [go.mod](go.mod).
 
 ### From source
 
