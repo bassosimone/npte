@@ -8,8 +8,8 @@ require (
 	github.com/bassosimone/pkitest v0.0.0-20261005145452-7b85881f912d
 	github.com/bassosimone/runtimex v0.0.0-20261005144844-77dc639b0e90
 	github.com/bassosimone/textwrap v0.0.0-20261005145027-6e50b1e009a9
-	github.com/bassosimone/vclip v0.0.0-20261006070757-1ed765ad0339
-	github.com/bassosimone/vflag v0.0.0-20261006065510-ce05c7d76a28
+	github.com/bassosimone/vclip v0.0.0-20261026172840-2e4c3124d8cf
+	github.com/bassosimone/vflag v0.0.0-20261025003130-8306cb7f26c1
 	github.com/charmbracelet/glamour v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/google/uuid v1.6.0
@@ -33,7 +33,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/dlclark/regexp2/v2 v2.9.0 // indirect
+	github.com/dlclark/regexp2/v2 v2.10.1 // indirect
 	github.com/google/jsonschema-go v0.4.3 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
